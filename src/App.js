@@ -1,44 +1,26 @@
-import { useState } from "react";
-import "./App.css";
+import React from "react";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import Navbar from "./components/Navbar";
+import LandingPage from "./pages/LandingPage";
+import TicketForm from "./components/TicketForm";
+import UserTickets from "./components/UserTickets";
+import "./styles/Global.css"; // Import global styles
 
-function App() {
-  const [input, setInput] = useState("");
-
-  const handleClick = (value) => {
-    setInput((prev) => prev + value);
-  };
-
-  const handleClear = () => {
-    setInput("");
-  };
-
-  const handleCalculate = () => {
-    try {
-      setInput(eval(input).toString());
-    } catch {
-      setInput("Error");
-    }
-  };
-
+const App = () => {
   return (
-    <div className="calculator">
-      <input type="text" value={input} readOnly className="display" />
-      <div className="buttons">
-        {["7", "8", "9", "/", "4", "5", "6", "*", "1", "2", "3", "-", "0", ".", "=", "+"].map(
-          (char) => (
-            <button
-              key={char}
-              onClick={() => (char === "=" ? handleCalculate() : handleClick(char))}
-              className="btn"
-            >
-              {char}
-            </button>
-          )
-        )}
-        <button onClick={handleClear} className="btn clear">Clear</button>
+    <Router>
+      <div className="main-background">
+        <Navbar />
+        <div className="container">
+          <Routes>
+            <Route path="/" element={<LandingPage />} />
+            <Route path="/submit-ticket" element={<TicketForm />} />
+            <Route path="/view-tickets" element={<UserTickets />} />
+          </Routes>
+        </div>
       </div>
-    </div>
+    </Router>
   );
-}
+};
 
 export default App;
