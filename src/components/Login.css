@@ -1,0 +1,34 @@
+.login-container {
+  background-color: white;
+  padding: 30px;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+.login-container h2 {
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.demo-credentials {
+  margin-top: 30px;
+  padding: 15px;
+  background-color: #f8f9fa;
+  border-radius: 4px;
+}
+
+.demo-credentials p {
+  margin-bottom: 10px;
+  font-weight: bold;
+}
+
+.demo-credentials ul {
+  margin: 0;
+  padding-left: 20px;
+}
+
+.demo-credentials li {
+  margin-bottom: 5px;
+}

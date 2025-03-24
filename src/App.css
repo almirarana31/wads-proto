@@ -1,10 +1,81 @@
-html, body {
-  height: 100%;
-  width: 100%;
-  background-color: #b1dff9 !important;
+body {
+  font-family: 'Arial', sans-serif;
   margin: 0;
   padding: 0;
-  overflow-x: hidden;
-  overflow-y: hidden;
-  font-family: "Arial", sans-serif;
+  background-color: #B1DFF9;
+}
+
+.app {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+  flex: 1;
+}
+
+h1, h2, h3 {
+  color: #336699;
+}
+
+.btn {
+  padding: 10px 20px;
+  border-radius: 4px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn-primary {
+  background-color: #336699;
+  color: white;
+  border: none;
+}
+
+.btn-primary:hover {
+  background-color: #254e77;
+}
+
+.btn-outline {
+  background-color: transparent;
+  color: #336699;
+  border: 1px solid #336699;
+}
+
+.btn-outline:hover {
+  background-color: #e6f2ff;
+}
+
+.btn-small {
+  padding: 5px 10px;
+  font-size: 14px;
+}
+
+.btn-danger {
+  background-color: #dc3545;
+  color: white;
+  border: none;
+}
+
+.btn-danger:hover {
+  background-color: #c82333;
+}
+
+.loading {
+  text-align: center;
+  padding: 20px;
+  font-size: 18px;
+  color: #336699;
+}
+
+.error-message {
+  background-color: #f8d7da;
+  color: #721c24;
+  padding: 10px;
+  border-radius: 4px;
+  margin-bottom: 15px;
 }

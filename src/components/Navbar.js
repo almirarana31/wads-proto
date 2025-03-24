@@ -1,14 +1,13 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import "../styles/Navbar.css";
+import Logo from "../assets/Logo-Bianca-Clinic-Timeless-Beauty-Blue-1270x812.png"
 
 const Navbar = () => {
   return (
     <nav className="navbar">
-      <div className="logo">
-        <a href="https://www.biancaclinic.com" target="_blank" rel="noopener noreferrer">
-          Bianca Aesthetic
-        </a>
+      <div className="logo-nav">
+      <img src={Logo} href="https://www.biancaclinic.com"></img>
       </div>
       <ul className="nav-links">
       <li><Link to="/">Home</Link></li>
