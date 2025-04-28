@@ -1,21 +1,28 @@
 import React, { useState } from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import { AuthProvider } from './context/AuthContext';
-import { TicketProvider } from './context/TicketContext';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import Header from './components/Header';
 import Home from './components/Home';
-import TicketForm from './components/TicketForm';
-import TicketList from './components/TicketList';
-import TicketManagement from './components/TicketManagement';
-import AdminDashboard from './components/AdminDashboard';
 import Login from './components/Login';
-import AIChat from './components/AIChat';
-import ProtectedRoute from './components/ProtectedRoute';
+import SubmitTicket from './components/SubmitTicket';
+import ViewTickets from './components/ViewTickets';
+import TicketDetail from './components/TicketDetail';
+import TicketConfirmation from './components/TicketConfirmation';
+import AdminDashboard from './components/AdminDashboard';
+import StaffDashboard from './components/StaffDashboard';
 import Unauthorized from './components/Unauthorized';
+import ProtectedRoute from './components/ProtectedRoute';
+import AIChat from './components/AIChat';
+import { AuthProvider } from './context/AuthContext';
+import { TicketProvider } from './context/TicketContext';
+import  StaffTicketResponse  from './components/StaffTicketResponse';
 import './App.css';
 
 function App() {
   const [isChatOpen, setIsChatOpen] = useState(false);
+  
+  const toggleChat = () => {
+    setIsChatOpen(!isChatOpen);
+  };
 
   return (
     <AuthProvider>
@@ -23,21 +30,20 @@ function App() {
         <Router>
           <div className="app">
             <Header />
-            <div className="container">
+            
+            <main className="main-content">
               <Routes>
                 {/* Public routes */}
                 <Route path="/" element={<Home />} />
                 <Route path="/login" element={<Login />} />
+                <Route path="/submit-ticket" element={<SubmitTicket />} />
+                <Route path="/ticket-confirmation" element={<TicketConfirmation />} />
                 <Route path="/unauthorized" element={<Unauthorized />} />
                 
-                {/* Protected routes - any authenticated user */}
-                <Route element={<ProtectedRoute allowedRoles={['admin', 'employee', 'customer']} />}>
-                  <Route path="/view-tickets" element={<TicketList />} />
-                </Route>
-                
-                {/* Customer routes */}
-                <Route element={<ProtectedRoute allowedRoles={['customer']} />}>
-                  <Route path="/submit-ticket" element={<TicketForm />} />
+                {/* Protected routes - Require authentication */}
+                <Route element={<ProtectedRoute allowedRoles={['customer', 'employee', 'admin']} />}>
+                  <Route path="/view-tickets" element={<ViewTickets />} />
+                  <Route path="/ticket/:ticketId" element={<TicketDetail />} />
                 </Route>
                 
                 {/* Admin routes */}
@@ -46,16 +52,22 @@ function App() {
                 </Route>
                 
                 {/* Staff routes */}
-                <Route element={<ProtectedRoute allowedRoles={['admin', 'employee']} />}>
-                  <Route path="/manage-tickets" element={<TicketManagement />} />
+                <Route element={<ProtectedRoute allowedRoles={['employee', 'admin']} />}>
+                  <Route path="/manage-tickets" element={<StaffDashboard />} />
+                  <Route path="/staff/ticket/:ticketId" element={<StaffTicketResponse />} />
                 </Route>
+                
+                {/* Catch-all route */}
+                <Route path="*" element={<Navigate to="/" />} />
               </Routes>
+            </main>
+            
+            {/* AI Chat Feature */}
+            <div className="chat-bubble" onClick={toggleChat}>
+              <i className="chat-icon">💬</i>
             </div>
-            {/* Floating Chat Bubble */}
-            <div className="chat-bubble" onClick={() => setIsChatOpen(!isChatOpen)}>
-              💬
-            </div>
-            {isChatOpen && <AIChat />}
+            
+            {isChatOpen && <AIChat isOpen={isChatOpen} />}
           </div>
         </Router>
       </TicketProvider>

@@ -7,6 +7,11 @@ import './Header.css';
 const Header = () => {
   const { currentUser, logout } = useContext(AuthContext);
 
+  const isGuest = !currentUser;
+  const isCustomer = currentUser?.role === 'customer';
+  const isStaff = currentUser?.role === 'employee';
+  const isAdmin = currentUser?.role === 'admin';
+
   return (
     <header className="header">
       <div className="logo">
@@ -14,33 +19,30 @@ const Header = () => {
           <img src={logo} alt="Bianca Aesthetic Clinic" />
         </Link>
       </div>
+
       <nav className="navigation">
-        <Link to="/">HOME</Link>
-        
-        {/* Only show Submit Ticket if logged in */}
-        {currentUser && (
-          <Link to="/submit-ticket">SUBMIT TICKET</Link>
-        )}
-        
-        {/* Only show View Tickets if logged in */}
-        {currentUser && (
-          <Link to="/view-tickets">VIEW TICKETS</Link>
-        )}
-        
-        {/* Show Admin link only for admin users */}
-        {currentUser && currentUser.role === 'admin' && (
-          <Link to="/admin">ADMIN</Link>
-        )}
-        
-        {/* Show Staff Dashboard only for staff/employee users */}
-        {currentUser && (currentUser.role === 'employee' || currentUser.role === 'admin') && (
-          <Link to="/manage-tickets">STAFF</Link>
-        )}
-        
-        {/* Show Login/Logout based on authentication state */}
+        {/* HOME only for non-admins */}
+        {!isAdmin && <Link to="/">HOME</Link>}
+
+        {/* Submit ticket for guests, customers and staff */}
+        {(isGuest || isCustomer || isStaff) && <Link to="/submit-ticket">SUBMIT TICKET</Link>}
+
+        {/* View tickets for customers only */}
+        {isCustomer && <Link to="/view-tickets">VIEW TICKETS</Link>}
+
+        {/* Staff can view their own tickets */}
+        {isStaff && <Link to="/my-tickets">MY TICKETS</Link>}
+
+        {/* Admin-only dashboard */}
+        {isAdmin && <Link to="/admin">ADMIN</Link>}
+
+        {/* Staff dashboard (employees only, not admins) */}
+        {isStaff && <Link to="/manage-tickets">MANAGE TICKETS</Link>}
+
+        {/* Auth section */}
         {currentUser ? (
           <div className="user-section">
-            <span className="welcome-text">Welcome, {currentUser.name}</span>
+            <span className="welcome-text">{currentUser.name}</span>
             <button onClick={logout} className="logout-btn">LOGOUT</button>
           </div>
         ) : (
