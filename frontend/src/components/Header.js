@@ -1,150 +1,95 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import logo from '../assets/Logo-Bianca-Clinic-Timeless-Beauty-Blue-1270x812.png';
-import { Menu, X } from 'lucide-react';
+import React from 'react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 
 function Header({ isAuthenticated = false }) {
   const navigate = useNavigate();
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-
-  const navigateToHome = () => {
-    navigate('/');
-    setMobileMenuOpen(false);
-  };
-
-  const navigateToSubmitTicket = () => {
-    navigate('/submit-ticket');
-    setMobileMenuOpen(false);
-  };
-
-  const navigateToLogin = () => {
-    navigate('/login');
-    setMobileMenuOpen(false);
+  const location = useLocation();
+  
+  // Check if a route is active
+  const isActive = (path) => {
+    return location.pathname === path;
   };
   
-  const navigateToViewTickets = () => {
-    navigate('/view-tickets');
-    setMobileMenuOpen(false);
+  // Get active link class
+  const getActiveLinkClass = (path) => {
+    return isActive(path) 
+      ? "text-blue-800 font-bold" 
+      : "text-blue-700 hover:text-blue-600";
   };
   
-  const handleLogout = () => {
-    // Add logout logic here
-    navigate('/');
-    setMobileMenuOpen(false);
-  };
-
-  const toggleMobileMenu = () => {
-    setMobileMenuOpen(!mobileMenuOpen);
-  };
-
+  // Authenticated user navigation
+  const AuthenticatedNav = () => (
+    <nav className="flex gap-4 md:gap-8">
+      <Link 
+        to="/" 
+        className={`${getActiveLinkClass('/')} font-medium`}
+      >
+        HOME
+      </Link>
+      <Link 
+        to="/submit-ticket" 
+        className={`${getActiveLinkClass('/submit-ticket')} font-medium`}
+      >
+        SUBMIT TICKET
+      </Link>
+      <Link 
+        to="/view-tickets" 
+        className={`${getActiveLinkClass('/view-tickets')} font-medium`}
+      >
+        VIEW TICKETS
+      </Link>
+      <Link 
+        to="/settings" 
+        className={`${getActiveLinkClass('/settings')} font-medium`}
+      >
+        SETTINGS
+      </Link>
+      <Link 
+        to="/logout" 
+        className={`${getActiveLinkClass('/logout')} font-medium`}
+      >
+        LOGOUT
+      </Link>
+    </nav>
+  );
+  
+  // Guest user navigation
+  const GuestNav = () => (
+    <nav className="flex gap-4 md:gap-8">
+      <Link 
+        to="/" 
+        className={`${getActiveLinkClass('/')} font-medium`}
+      >
+        HOME
+      </Link>
+      <Link 
+        to="/submit-ticket" 
+        className={`${getActiveLinkClass('/submit-ticket')} font-medium`}
+      >
+        SUBMIT TICKET
+      </Link>
+      <Link 
+        to="/login" 
+        className={`${getActiveLinkClass('/login')} font-medium`}
+      >
+        LOGIN
+      </Link>
+    </nav>
+  );
+  
   return (
     <header className="bg-white py-4 px-4 md:px-8 shadow-md">
-      <div className="max-w-6xl mx-auto flex justify-between items-center">
-        <div onClick={navigateToHome} className="cursor-pointer">
+      <div className="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
+        <div onClick={() => navigate('/')} className="cursor-pointer">
           <img 
-            src={logo} 
+            src="/api/placeholder/200/80" 
             alt="Bianca Aesthetic Clinic" 
-            className="h-10 md:h-16 w-auto" 
-            style={{ maxWidth: '180px', objectFit: 'contain' }}
+            className="h-12" 
           />
         </div>
         
-        {/* Mobile menu button */}
-        <div className="md:hidden">
-          <button 
-            onClick={toggleMobileMenu}
-            className="text-blue-800 focus:outline-none"
-          >
-            {mobileMenuOpen ? (
-              <X size={24} />
-            ) : (
-              <Menu size={24} />
-            )}
-          </button>
-        </div>
-
-        {/* Desktop Navigation */}
-        <nav className="hidden md:flex gap-8">
-          <button 
-            onClick={navigateToHome}
-            className="text-blue-800 hover:text-blue-600 font-medium"
-          >
-            HOME
-          </button>
-          <button 
-            onClick={navigateToSubmitTicket}
-            className="text-blue-800 hover:text-blue-600 font-medium"
-          >
-            SUBMIT TICKET
-          </button>
-          
-          {isAuthenticated ? (
-            <>
-              <button 
-                onClick={navigateToViewTickets}
-                className="text-blue-800 hover:text-blue-600 font-medium"
-              >
-                VIEW TICKETS
-              </button>
-              <button 
-                onClick={handleLogout}
-                className="text-blue-800 hover:text-blue-600 font-medium"
-              >
-                LOGOUT
-              </button>
-            </>
-          ) : (
-            <button 
-              onClick={navigateToLogin}
-              className="text-blue-800 hover:text-blue-600 font-medium"
-            >
-              LOGIN
-            </button>
-          )}
-        </nav>
+        {isAuthenticated ? <AuthenticatedNav /> : <GuestNav />}
       </div>
-
-      {/* Mobile Navigation */}
-      {mobileMenuOpen && (
-        <nav className="md:hidden mt-4 flex flex-col gap-4 py-3">
-          <button 
-            onClick={navigateToHome}
-            className="text-blue-800 hover:text-blue-600 font-medium py-2 border-b border-gray-100"
-          >
-            HOME
-          </button>
-          <button 
-            onClick={navigateToSubmitTicket}
-            className="text-blue-800 hover:text-blue-600 font-medium py-2 border-b border-gray-100"
-          >
-            SUBMIT TICKET
-          </button>
-          
-          {isAuthenticated ? (
-            <>
-              <button 
-                onClick={navigateToViewTickets}
-                className="text-blue-800 hover:text-blue-600 font-medium py-2 border-b border-gray-100"
-              >
-                VIEW TICKETS
-              </button>
-              <button 
-                onClick={handleLogout}
-                className="text-blue-800 hover:text-blue-600 font-medium py-2"
-              >
-                LOGOUT
-              </button>
-            </>
-          ) : (
-            <button 
-              onClick={navigateToLogin}
-              className="text-blue-800 hover:text-blue-600 font-medium py-2"
-            >
-              LOGIN
-            </button>
-          )}
-        </nav>
-      )}
     </header>
   );
 }

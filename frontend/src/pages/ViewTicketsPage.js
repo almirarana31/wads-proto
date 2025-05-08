@@ -6,6 +6,7 @@ function ViewTicketsPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [filterStatus, setFilterStatus] = useState('All status');
   
+  // Mock ticket data - in a real app, this would come from API
   const tickets = [
     {
       id: 'TKT-001',
@@ -36,24 +37,50 @@ function ViewTicketsPage() {
     }
   ];
 
+  // Handle search input change
   const handleSearchChange = (e) => {
     setSearchQuery(e.target.value);
   };
 
+  // Handle filter dropdown change
   const handleFilterChange = (e) => {
     setFilterStatus(e.target.value);
   };
 
+  // Navigate to submit ticket page
   const handleSubmitNewTicket = () => {
     navigate('/submit-ticket');
   };
 
+  // View ticket details
   const handleViewDetails = (ticketId) => {
     console.log(`View details for ticket ${ticketId}`);
-    // In a real app, this would navigate to a ticket details page
+    // In a real app, navigate to ticket details page
     // navigate(`/tickets/${ticketId}`);
   };
 
+  // Filter tickets based on search query and status filter
+  const filteredTickets = tickets.filter(ticket => {
+    // Apply status filter if not "All status"
+    if (filterStatus !== 'All status' && ticket.status !== filterStatus) {
+      return false;
+    }
+    
+    // Apply search query if any
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      return (
+        ticket.id.toLowerCase().includes(query) ||
+        ticket.title.toLowerCase().includes(query) ||
+        ticket.description.toLowerCase().includes(query) ||
+        ticket.category.toLowerCase().includes(query)
+      );
+    }
+    
+    return true;
+  });
+
+  // Get appropriate styling for different status labels
   const getStatusStyle = (status) => {
     switch (status) {
       case 'Pending':
@@ -67,6 +94,7 @@ function ViewTicketsPage() {
     }
   };
 
+  // Get border color for ticket cards based on status
   const getBorderStyle = (status) => {
     switch (status) {
       case 'Pending':
@@ -82,27 +110,31 @@ function ViewTicketsPage() {
 
   return (
     <div className="min-h-screen bg-blue-100">
-      <div className="max-w-6xl mx-auto p-4 sm:p-6">
-        <div className="bg-white rounded-md shadow-md p-4 sm:p-6 md:p-8">
-          <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-800 mb-1">Your Tickets</h1>
-          <p className="text-gray-600 text-base sm:text-lg md:text-xl mb-4 sm:mb-6 md:mb-8">Welcome <span className="underline">User</span>, here are your submitted tickets</p>
+      <div className="max-w-6xl mx-auto p-6">
+        <div className="bg-white rounded-md shadow-md p-8">
+          {/* Page Header */}
+          <h1 className="text-4xl font-bold text-gray-800 mb-1">Your Tickets</h1>
+          <p className="text-gray-600 text-xl mb-8">
+            Welcome <span className="underline">User</span>, here are your submitted tickets
+          </p>
           
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-            <div className="flex flex-col sm:flex-row gap-4 w-full">
+          {/* Search and Filter */}
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+            <div className="flex flex-col md:flex-row gap-4 w-full md:w-auto">
               <input
                 type="text"
                 placeholder="Search ticket by ID, title, description..."
                 value={searchQuery}
                 onChange={handleSearchChange}
-                className="w-full sm:w-1/2 p-2 border border-gray-300 rounded"
+                className="w-full md:w-80 p-2 border border-gray-300 rounded"
               />
               
-              <div className="flex items-center mt-2 sm:mt-0">
-                <span className="mr-2 whitespace-nowrap">Filter by status:</span>
+              <div className="flex items-center">
+                <span className="mr-2 text-gray-700">Filter by status:</span>
                 <select
                   value={filterStatus}
                   onChange={handleFilterChange}
-                  className="p-2 border border-gray-300 rounded w-full sm:w-auto"
+                  className="p-2 border border-gray-300 rounded"
                 >
                   <option>All status</option>
                   <option>Pending</option>
@@ -114,51 +146,58 @@ function ViewTicketsPage() {
             
             <button
               onClick={handleSubmitNewTicket}
-              className="bg-blue-700 hover:bg-blue-800 text-white py-2 px-4 rounded w-full sm:w-auto mt-2 sm:mt-0"
+              className="bg-blue-700 hover:bg-blue-800 text-white py-2 px-4 rounded whitespace-nowrap"
             >
               Submit a Ticket
             </button>
           </div>
           
-          <div className="grid gap-6">
-            {tickets.map((ticket) => (
-              <div 
-                key={ticket.id} 
-                className={`bg-gray-100 p-4 sm:p-6 rounded-md ${getBorderStyle(ticket.status)}`}
-              >
-                <div className="flex flex-col sm:flex-row justify-between mb-3 gap-2">
-                  <h2 className="text-lg sm:text-xl font-bold text-blue-800">{ticket.title}</h2>
-                  <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusStyle(ticket.status)} inline-block w-fit`}>
-                    {ticket.status}
-                  </span>
-                </div>
-                
-                <p className="mb-4">{ticket.description}</p>
-                
-                <div className="text-gray-600 text-sm">
-                  <p>Ticket ID: {ticket.id}</p>
-                  <p>Category: {ticket.category}</p>
-                  <p>Created at: {new Date(ticket.created).toLocaleString()}</p>
-                </div>
-                
-                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mt-4 gap-2">
-                  <button
-                    onClick={() => handleViewDetails(ticket.id)}
-                    className="bg-white hover:bg-gray-50 text-blue-700 border border-gray-300 py-2 px-4 rounded w-full sm:w-auto"
-                  >
-                    View Details
-                  </button>
+          {/* Ticket List */}
+          <div className="space-y-6">
+            {filteredTickets.length === 0 ? (
+              <div className="text-center py-10 text-gray-500">
+                No tickets found matching your criteria.
+              </div>
+            ) : (
+              filteredTickets.map((ticket) => (
+                <div 
+                  key={ticket.id} 
+                  className={`bg-gray-100 p-6 rounded-md ${getBorderStyle(ticket.status)}`}
+                >
+                  <div className="flex flex-col md:flex-row justify-between mb-3 gap-2">
+                    <h2 className="text-xl font-bold text-blue-800">{ticket.title}</h2>
+                    <span className={`px-3 py-1 rounded-full text-sm font-medium w-fit ${getStatusStyle(ticket.status)}`}>
+                      {ticket.status}
+                    </span>
+                  </div>
                   
-                  <div className="text-sm text-gray-500 mt-2 sm:mt-0">
-                    {ticket.unreadResponses > 0 ? (
-                      <span>{ticket.unreadResponses} unread responses</span>
-                    ) : (
-                      <span>No unread responses</span>
-                    )}
+                  <p className="mb-4 text-gray-700">{ticket.description}</p>
+                  
+                  <div className="text-gray-600 text-sm">
+                    <p>Ticket ID: {ticket.id}</p>
+                    <p>Category: {ticket.category}</p>
+                    <p>Created at: {new Date(ticket.created).toLocaleString()}</p>
+                  </div>
+                  
+                  <div className="flex flex-col md:flex-row justify-between items-start md:items-center mt-4 gap-3">
+                    <button
+                      onClick={() => handleViewDetails(ticket.id)}
+                      className="bg-white hover:bg-gray-50 text-blue-700 border border-gray-300 py-2 px-4 rounded"
+                    >
+                      View Details
+                    </button>
+                    
+                    <div className="text-sm text-gray-500">
+                      {ticket.unreadResponses > 0 ? (
+                        <span>{ticket.unreadResponses} unread {ticket.unreadResponses === 1 ? 'response' : 'responses'}</span>
+                      ) : (
+                        <span>No unread responses</span>
+                      )}
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              ))
+            )}
           </div>
         </div>
       </div>

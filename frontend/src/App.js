@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import Header from './components/Header';
 import HomePage from './pages/HomePage';
@@ -8,11 +9,20 @@ import SignUpPage from './pages/SignUpPage';
 import ViewTicketsPage from './pages/ViewTicketsPage';
 import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import Footer from './components/Footer';
-import './App.css';
 
 function App() {
-  // In a real app, you would check authentication status from your backend/local storage
-  const isAuthenticated = false; // Set to true to test authenticated routes
+  // For demo purposes - in a real app, this would come from auth context/state
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  
+  // Mock login function
+  const handleLogin = () => {
+    setIsAuthenticated(true);
+  };
+  
+  // Mock logout function
+  const handleLogout = () => {
+    setIsAuthenticated(false);
+  };
 
   // Protected Route component
   const ProtectedRoute = ({ children }) => {
@@ -26,13 +36,16 @@ function App() {
 
   return (
     <Router>
-      <div className="app">
+      <div className="min-h-screen bg-blue-100">
         <Header isAuthenticated={isAuthenticated} />
-        <div className="main-content">
+        <main>
           <Routes>
             <Route path="/" element={<HomePage />} />
             <Route path="/submit-ticket" element={<SubmitTicketPage />} />
-            <Route path="/login" element={<LoginPage />} />
+            <Route 
+              path="/login" 
+              element={<LoginPage onLogin={handleLogin} />} 
+            />
             <Route path="/signup" element={<SignUpPage />} />
             <Route path="/forgot-password" element={<ForgotPasswordPage />} />
             <Route 
@@ -43,13 +56,33 @@ function App() {
                 </ProtectedRoute>
               } 
             />
-            {/* Add more protected routes as needed */}
+            <Route
+              path="/logout"
+              element={
+                <ProtectedRoute>
+                  {/* Logout component that calls handleLogout and redirects */}
+                  <Logout onLogout={handleLogout} />
+                </ProtectedRoute>
+              }
+            />
           </Routes>
-        </div>
+        </main>
         <Footer />
       </div>
     </Router>
   );
+}
+
+// Simple Logout component that calls onLogout and redirects
+function Logout({ onLogout }) {
+  const navigate = useNavigate();
+  
+  React.useEffect(() => {
+    onLogout();
+    navigate('/');
+  }, [onLogout, navigate]);
+  
+  return <div>Logging out...</div>;
 }
 
 export default App;

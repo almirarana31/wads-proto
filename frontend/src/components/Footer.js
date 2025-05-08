@@ -31,8 +31,8 @@ function Footer() {
             <div>
               <h4 className="text-md font-semibold text-gray-800 mb-3">Contact</h4>
               <ul className="space-y-2">
-                <li className="text-gray-600">support@bianca-clinic.com</li>
-                <li className="text-gray-600">+1 (555) 123-4567</li>
+                <li className="text-gray-600">klinikbianca@gmail.com</li>
+                <li className="text-gray-600">+62 81383526324</li>
               </ul>
             </div>
           </div>
@@ -40,7 +40,7 @@ function Footer() {
         
         <div className="mt-8 pt-6 border-t border-gray-200">
           <p className="text-sm text-center text-gray-500">
-            © {new Date().getFullYear()} Bianca Aesthetic Clinic. All rights reserved.
+            © {new Date().getFullYear()}Powered by Klinik Kecantikan Bianca. All rights reserved.
           </p>
         </div>
       </div>

@@ -13,7 +13,7 @@ function HomePage() {
   };
 
   return (
-    <div className="bg-blue-100 py-4 md:py-6 px-4 flex-grow flex items-center justify-center min-h-[60vh]">
+    <div className="text-center bg-blue-100 py-4 md:py-6 px-4 flex-grow flex items-center justify-center min-h-[60vh]">
       <div className="bg-white p-6 md:p-10 rounded shadow-md max-w-4xl mx-auto">
         <h1 className="text-2xl md:text-4xl font-bold text-gray-800 mb-4">
           Welcome to Bianca Aesthetic Helpdesk
@@ -28,7 +28,7 @@ function HomePage() {
           guests will receive replies via email or phone.
         </p>
         
-        <div className="flex flex-col sm:flex-row flex-wrap gap-4">
+        <div className="flex flex-col sm:flex-row flex-wrap gap-4 justify-center">
           <button 
             onClick={handleNavigateToTicketPage}
             className="bg-blue-700 hover:bg-blue-800 text-white py-3 px-6 rounded-md text-lg font-medium transition-colors w-full sm:w-auto"
