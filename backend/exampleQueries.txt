@@ -1,0 +1,55 @@
+// creates/inserts into table
+const newUser = await User.create({
+         username: "user1",
+         password: "user1Password",
+         email: "user1@gmail.com",
+         role_code: "USR",
+         created_at: new Date(Date.now()),
+         updated_at: new Date(Date.now()),
+         last_login: new Date(Date.now()),
+     });
+
+// findOne by primary key
+const user1 = await User.findByPk(1);
+
+// select user1 where user1.username = 
+const user1 = await User.findOne({
+    where: {
+        username: 'user1'
+    }
+})
+
+// select * from user1 where user1.username = user1
+const user1 = await User.findAll({
+    where: {
+        username: 'user1'
+    }
+})
+
+// update user information
+const user1 = await User.findOne(
+        {
+            where: {
+                id: 1
+            }
+        }
+    )
+
+    console.log(user1);
+
+await User.update({
+    username: "user1editted",
+}, {
+    where: {
+        id: user1.id
+    }
+})  
+
+// delete User
+await User.destroy({
+    where: {
+        id: 2
+    }
+})
+
+const user1edit = await User.findByPk(1);
