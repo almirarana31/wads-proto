@@ -27,6 +27,7 @@ const AdminDashboard = () => {
   const [filteredTickets, setFilteredTickets] = useState([]);
 
   // ✅ Move this useEffect ABOVE the conditional return
+  // on every render, update the current information 
   useEffect(() => {
     setStats({
       total: tickets.length,

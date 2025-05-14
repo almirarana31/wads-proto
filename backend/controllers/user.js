@@ -122,7 +122,7 @@ export const signUp = async (req, res) => {
         }
         // create otp token with user info
         const otpToken = createOTPToken(newUser);
-        const actLink = `${process.env.BASE_URL}/api/user/activate/${otpToken}`;
+        const actLink = `${process.env.BASE_URL}/api/user/${newUser}/activate/${otpToken}`;
         await sendOTP(email, "OTP Sign Up Verification", actLink);
 
         res.status(200).json({
@@ -138,6 +138,7 @@ export const signUp = async (req, res) => {
 export const activate = async (req, res) => {
     // get token from e
     const token = req.params.token;
+    const user = req.params.user
 
 }
 
