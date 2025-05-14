@@ -5,6 +5,6 @@ const router = express.Router();
 
 router.post('/sign-up', signUp);
 
-// router.post('/activate/')
+router.get('//')
 
 export default router;
