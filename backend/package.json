@@ -12,6 +12,7 @@
   "dependencies": {
     "bcrypt": "^6.0.0",
     "cookie-parser": "^1.4.7",
-    "nodemailer": "^7.0.3"
+    "nodemailer": "^7.0.3",
+    "sessionstorage": "^0.1.0"
   }
 }

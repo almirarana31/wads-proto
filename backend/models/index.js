@@ -4,6 +4,8 @@ import Role from './enum/role.js';
 import Category from './enum/category.js';
 import Priority from './enum/priority.js';
 import Status from './enum/status.js';
+import Staff from './staff.js';
+
 
 export {
     User, 
@@ -11,5 +13,6 @@ export {
     Ticket,
     Category,
     Priority,
-    Status
+    Status,
+    Staff
 };

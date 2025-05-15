@@ -1,22 +1,14 @@
 import sequelize from '../config/sequelize.js';
 import { Model, DataTypes } from 'sequelize';
-class User extends Model {
+class Staff extends Model {
 
 }
 
 // tell sequelize to initialize the table
-User.init(
+Staff.init(
     {
-        username: {
-            type: DataTypes.STRING(18),
-            allowNull: false
-        },
-        password: {
-            type: DataTypes.STRING(100),
-            allowNull: false
-        },
         email: {
-            type: DataTypes.STRING(50),
+            type: DataTypes.STRING,
             allowNull: false
         },
         role_code: {
@@ -26,16 +18,14 @@ User.init(
                 model: "Roles",
                 key: "role_code"
             }
-        },
-        last_login: {
-            type: DataTypes.DATE
         }
     },
     {
         sequelize,
-        modelName: "User",
-        tableName: "Users"
+        modelName: "Staff",
+        tableName: "Staffs",
+        timestamps: false
     }
 );
 
-export default User;
+export default Staff;
