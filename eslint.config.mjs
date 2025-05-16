@@ -12,7 +12,8 @@ export default [
       },
     },
     rules: {
-      'no-unused-vars': 'off'
+      'no-unused-vars': 'off',
+      'no-undef': 'error'
     }
   },
   pluginReact.configs.flat.recommended,
