@@ -11,6 +11,10 @@ export default [
         ...globals.node,
       },
     },
+    env: {
+      "browser": true,
+      "node": true
+    },
     rules: {
       'no-unused-vars': 'off',
       'no-undef': 'error'
