@@ -9,11 +9,8 @@ export default [
     languageOptions: {
       globals: {
         ...globals.node,
+        ...globals.browser
       },
-    },
-    env: {
-      "browser": true,
-      "node": true
     },
     rules: {
       'no-unused-vars': 'off',
