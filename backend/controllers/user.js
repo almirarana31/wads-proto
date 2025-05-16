@@ -1,9 +1,7 @@
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
-import sequelize from '../config/sequelize.js';
 import { Staff, User } from '../models/index.js';
 import sendOTP from './otp.js';
-import cookieParser from 'cookie-parser';
 import sessionStorage from 'sessionstorage';
 
 // start with the login/sign up

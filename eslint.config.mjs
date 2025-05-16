@@ -1,0 +1,19 @@
+import js from '@eslint/js';
+import globals from 'globals';
+import pluginReact from 'eslint-plugin-react';
+
+export default [
+  {
+    files: ['**/*.{js,mjs,cjs,jsx}'],
+    ...js.configs.recommended,
+    languageOptions: {
+      globals: {
+        ...globals.node,
+      },
+    },
+    rules: {
+      'no-unused-vars': 'off'
+    }
+  },
+  pluginReact.configs.flat.recommended,
+];
