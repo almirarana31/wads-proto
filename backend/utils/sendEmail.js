@@ -28,6 +28,7 @@ const sendEmail = async (mailOptions) => {
     } catch (err) {
         throw err;
     };
+    bobby
 }
 
 export default sendEmail;
