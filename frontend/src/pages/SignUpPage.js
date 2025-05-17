@@ -6,7 +6,6 @@ function SignUpPage() {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
-    phone: '',
     password: '',
     confirmPassword: ''
   });
@@ -19,7 +18,6 @@ function SignUpPage() {
       [name]: value
     });
   };
-
   const handleSubmit = (e) => {
     e.preventDefault();
     setError('');
@@ -33,8 +31,9 @@ function SignUpPage() {
     console.log('Sign up form submitted:', formData);
     // In a real app, you would register the user with your backend here
     
-    // Redirect to login page after successful registration
-    navigate('/login');
+    // Redirect to success page after successful registration
+    // Pass the email to display on the success page
+    navigate('/success-signup', { state: { email: formData.email } });
   };
 
   return (
@@ -71,19 +70,6 @@ function SignUpPage() {
                 id="email"
                 name="email"
                 value={formData.email}
-                onChange={handleInputChange}
-                className="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-300"
-                required
-              />
-            </div>
-            
-            <div>
-              <label htmlFor="phone" className="block text-blue-700 mb-2">Phone Number:</label>
-              <input
-                type="tel"
-                id="phone"
-                name="phone"
-                value={formData.phone}
                 onChange={handleInputChange}
                 className="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-300"
                 required

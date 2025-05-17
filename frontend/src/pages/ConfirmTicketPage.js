@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { check } from 'assets/accept.png'
+import checkIcon from '../assets/accept.png';
 
 function ConfirmTicketPage() {
   const location = useLocation();
@@ -32,10 +32,9 @@ function ConfirmTicketPage() {
           <h1 className="text-3xl font-bold text-gray-800 text-center mb-6">
             Ticket Submitted Successfully!
           </h1>
-          
-          {/* Green checkmark icon */}
+            {/* Green checkmark icon */}
           <div className="flex justify-center mb-6">
-            <img src={check} alt="Success" className="w-16 h-16" />
+            <img src={checkIcon} alt="Success" className="w-16 h-16" />
           </div>
           
           {/* Ticket details section */}

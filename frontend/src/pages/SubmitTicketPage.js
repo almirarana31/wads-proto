@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 import { ChevronDown } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 function SubmitTicketPage() {
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     email: '',
     title: '',
@@ -13,11 +15,22 @@ function SubmitTicketPage() {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
   };
-
   const handleSubmit = () => {
     // This would be where backend integration happens
     console.log('Form submitted:', formData);
-    alert('Ticket submitted successfully!');
+    
+    // Generate a mock ticket ID - in a real app this would come from backend
+    const ticketId = 'TKT-' + Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+    
+    // Create ticket object to pass to the confirmation page
+    const ticket = {
+      ticketId: ticketId,
+      title: formData.title,
+      createdAt: new Date().toISOString(),
+      email: formData.email,
+      phone: '08123456789' // In a real app, you'd collect this from the form
+    };
+    
     // Reset form
     setFormData({
       email: '',
@@ -25,6 +38,9 @@ function SubmitTicketPage() {
       category: 'General',
       description: '',
     });
+    
+    // Navigate to the confirmation page with ticket data
+    navigate('/confirm-ticket', { state: { ticket } });
   };
 
   return (
