@@ -1,6 +1,5 @@
 import React from 'react';
 
-// Utility functions for status and border styles
 const getStatusStyle = (status) => {
   switch (status) {
     case 'Pending':
@@ -49,13 +48,6 @@ function TicketCard({ ticket, onViewDetails }) {
         >
           View Details
         </button>
-        <div className="text-sm text-gray-500">
-          {ticket.unreadResponses > 0 ? (
-            <span>{ticket.unreadResponses} unread {ticket.unreadResponses === 1 ? 'response' : 'responses'}</span>
-          ) : (
-            <span>No unread responses</span>
-          )}
-        </div>
       </div>
     </div>
   );
