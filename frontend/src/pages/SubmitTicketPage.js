@@ -46,8 +46,8 @@ function SubmitTicketPage() {
   return (
     <div className="bg-blue-100 py-6 md:py-12 px-4 flex-grow">
       <div className="bg-white p-6 md:p-8 rounded shadow-md max-w-2xl mx-auto">
-        <h1 className="text-2xl md:text-3xl font-bold text-gray-800 mb-1">Submit a Ticket</h1>
-        <p className="text-gray-600 mb-6">Submit your question or issue below</p>
+        <h1 className="text-center text-2xl md:text-3xl font-bold text-gray-800 mb-1">Submit a Ticket</h1>
+        <p className="text-center text-gray-600 mb-6">Submit your question or issue below</p>
         
         <div className="space-y-6">
             <div>
