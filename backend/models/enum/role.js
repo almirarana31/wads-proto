@@ -20,7 +20,8 @@ Role.init(
     {
         sequelize,
         modelName: "Role",
-        tableName: "Roles"
+        tableName: "Roles",
+        timestamps: false
     }
 );
 

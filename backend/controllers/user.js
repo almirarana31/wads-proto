@@ -124,6 +124,8 @@ export const signUp = async (req, res) => {
         const actLink = `${process.env.BASE_URL}/api/user/activate/${otpToken}`;
         await sendOTP(email, "OTP Sign Up Verification", actLink);
 
+        console.log("hello world");
+
         res.status(200).json({
             message: `Successfully sent otp. Please check your email at ${email}`,
             username: username,
