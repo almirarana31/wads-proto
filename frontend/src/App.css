@@ -1,0 +1,88 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html, body, #root {
+  height: 100%;
+  margin: 0;
+}
+
+.app {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh; /* Use viewport height to ensure full page height */
+}
+
+.main-content {
+  flex: 1; /* This makes the content area take up all available space */
+  display: flex;
+  flex-direction: column; /* Ensure proper stacking of content */
+}
+
+/* Footer will always be at the bottom because main-content takes all available space */
+footer {
+  margin-top: auto; /* This pushes the footer down when there's extra space */
+}
+
+.bianca-logo {
+  height: 48px;
+}
+
+/* Status colors for tickets */
+.status-pending {
+  background-color: #FEF3C7;
+  color: #92400E;
+}
+
+.status-inprogress {
+  background-color: #E0D2FC;
+  color: #6D28D9;
+}
+
+.status-resolved {
+  background-color: #86EFAC;
+  color: #166534;
+}
+
+/* Custom button styles */
+.btn-primary {
+  background-color: #1D4ED8;
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 0.375rem;
+  font-weight: 500;
+  transition: background-color 0.2s;
+}
+
+.btn-primary:hover {
+  background-color: #1E40AF;
+}
+
+.btn-secondary {
+  background-color: white;
+  color: #1D4ED8;
+  border: 1px solid #D1D5DB;
+  padding: 0.5rem 1rem;
+  border-radius: 0.375rem;
+  font-weight: 500;
+  transition: background-color 0.2s;
+}
+
+.btn-secondary:hover {
+  background-color: #F3F4F6;
+}
+
+/* Form styles */
+.form-control {
+  width: 100%;
+  padding: 0.5rem;
+  border: 1px solid #D1D5DB;
+  border-radius: 0.375rem;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.form-control:focus {
+  outline: none;
+  border-color: #93C5FD;
+  box-shadow: 0 0 0 3px rgba(147, 197, 253, 0.5);
+}
