@@ -10,6 +10,8 @@ import ViewTicketsPage from './pages/ViewTicketsPage';
 import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import ResetPasswordVerifyPage from './pages/ResetPasswordVerifyPage';
 import ResetPasswordPage from './pages/ResetPasswordPage';
+import ConfirmTicketPage from './pages/ConfirmTicketPage';
+import SuccessSignup from './pages/SuccessSignup';
 import Footer from './components/Footer';
 
 function App() {
@@ -47,10 +49,11 @@ function App() {
             <Route 
               path="/login" 
               element={<LoginPage onLogin={handleLogin} />} 
-            />            <Route path="/signup" element={<SignUpPage />} />
-            <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+            />            <Route path="/signup" element={<SignUpPage />} />            <Route path="/forgot-password" element={<ForgotPasswordPage />} />
             <Route path="/reset-password-verify" element={<ResetPasswordVerifyPage />} />
             <Route path="/reset-password" element={<ResetPasswordPage />} />
+            <Route path="/confirm-ticket" element={<ConfirmTicketPage />} />
+            <Route path="/success-signup" element={<SuccessSignup />} />
             <Route 
               path="/view-tickets" 
               element={
