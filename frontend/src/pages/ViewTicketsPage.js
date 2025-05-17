@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import TicketCard from '../components/TicketCard';
 
 function ViewTicketsPage() {
   const navigate = useNavigate();
@@ -34,6 +35,15 @@ function ViewTicketsPage() {
       category: 'Billing',
       created: '2025-04-16T19:11:36.632Z',
       unreadResponses: 0
+    },
+    {
+      id: 'TKT-004',
+      title: 'Refund Request',
+      description: 'I would like to request a refund for my last appointment.',
+      status: 'Pending',
+      category: 'Service',
+      created: '2025-05-17T16:38:25.632Z',
+      unreadResponses: 2
     }
   ];
 
@@ -79,34 +89,6 @@ function ViewTicketsPage() {
     
     return true;
   });
-
-  // Get appropriate styling for different status labels
-  const getStatusStyle = (status) => {
-    switch (status) {
-      case 'Pending':
-        return 'bg-yellow-200 text-yellow-800';
-      case 'In Progress':
-        return 'bg-purple-200 text-purple-800';
-      case 'Resolved':
-        return 'bg-green-400 text-green-800';
-      default:
-        return 'bg-gray-200 text-gray-800';
-    }
-  };
-
-  // Get border color for ticket cards based on status
-  const getBorderStyle = (status) => {
-    switch (status) {
-      case 'Pending':
-        return 'border-l-4 border-yellow-400';
-      case 'In Progress':
-        return 'border-l-4 border-purple-500';
-      case 'Resolved':
-        return 'border-l-4 border-green-500';
-      default:
-        return '';
-    }
-  };
 
   return (
     <div className="min-h-screen bg-blue-100">
@@ -160,42 +142,11 @@ function ViewTicketsPage() {
               </div>
             ) : (
               filteredTickets.map((ticket) => (
-                <div 
-                  key={ticket.id} 
-                  className={`bg-gray-100 p-6 rounded-md ${getBorderStyle(ticket.status)}`}
-                >
-                  <div className="flex flex-col md:flex-row justify-between mb-3 gap-2">
-                    <h2 className="text-xl font-bold text-blue-800">{ticket.title}</h2>
-                    <span className={`px-3 py-1 rounded-full text-sm font-medium w-fit ${getStatusStyle(ticket.status)}`}>
-                      {ticket.status}
-                    </span>
-                  </div>
-                  
-                  <p className="mb-4 text-gray-700">{ticket.description}</p>
-                  
-                  <div className="text-gray-600 text-sm">
-                    <p>Ticket ID: {ticket.id}</p>
-                    <p>Category: {ticket.category}</p>
-                    <p>Created at: {new Date(ticket.created).toLocaleString()}</p>
-                  </div>
-                  
-                  <div className="flex flex-col md:flex-row justify-between items-start md:items-center mt-4 gap-3">
-                    <button
-                      onClick={() => handleViewDetails(ticket.id)}
-                      className="bg-white hover:bg-gray-50 text-blue-700 border border-gray-300 py-2 px-4 rounded"
-                    >
-                      View Details
-                    </button>
-                    
-                    <div className="text-sm text-gray-500">
-                      {ticket.unreadResponses > 0 ? (
-                        <span>{ticket.unreadResponses} unread {ticket.unreadResponses === 1 ? 'response' : 'responses'}</span>
-                      ) : (
-                        <span>No unread responses</span>
-                      )}
-                    </div>
-                  </div>
-                </div>
+                <TicketCard
+                  key={ticket.id}
+                  ticket={ticket}
+                  onViewDetails={handleViewDetails}
+                />
               ))
             )}
           </div>
