@@ -172,7 +172,7 @@ export const logIn = async (req, res) => {
         if (login) {
             // storing the access token in session storage
             const accessToken = createAccessToken({email: email});
-            sessionStorage.setItem("token", accessToken);
+            localStorage.setItem("token", accessToken);
             // update login time
             await User.update({
                 last_login: new Date(Date.now())
