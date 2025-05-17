@@ -4,30 +4,14 @@ import { ChevronDown } from 'lucide-react';
 function SubmitTicketPage() {
   const [formData, setFormData] = useState({
     email: '',
-    phone: '',
     title: '',
     category: 'General',
-    description: '',
-    contactMethod: {
-      email: false,
-      phone: false
-    }
+    description: ''
   });
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
-  };
-
-  const handleCheckboxChange = (e) => {
-    const { name, checked } = e.target;
-    setFormData({
-      ...formData,
-      contactMethod: {
-        ...formData.contactMethod,
-        [name]: checked
-      }
-    });
   };
 
   const handleSubmit = () => {
@@ -37,14 +21,9 @@ function SubmitTicketPage() {
     // Reset form
     setFormData({
       email: '',
-      phone: '',
       title: '',
       category: 'General',
       description: '',
-      contactMethod: {
-        email: false,
-        phone: false
-      }
     });
   };
 
@@ -55,7 +34,6 @@ function SubmitTicketPage() {
         <p className="text-gray-600 mb-6">Submit your question or issue below</p>
         
         <div className="space-y-6">
-          <div className="grid sm:grid-cols-2 gap-4 md:gap-6">
             <div>
               <label htmlFor="email" className="block text-blue-700 mb-2">Email Address:</label>
               <input
@@ -67,19 +45,6 @@ function SubmitTicketPage() {
                 className="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-300"
               />
             </div>
-            
-            <div>
-              <label htmlFor="phone" className="block text-blue-700 mb-2">Phone Number:</label>
-              <input
-                type="tel"
-                id="phone"
-                name="phone"
-                value={formData.phone}
-                onChange={handleInputChange}
-                className="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-300"
-              />
-            </div>
-          </div>
           
           <div>
             <label htmlFor="title" className="block text-blue-700 mb-2">Ticket Title:</label>
@@ -124,33 +89,6 @@ function SubmitTicketPage() {
               rows="6"
               className="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-300"
             ></textarea>
-          </div>
-          <div>
-            <label className="block text-blue-700 mb-2">Preferred Contact Method:</label>
-            <div className="flex flex-col sm:flex-row gap-4">
-              <div className="flex items-center">
-                <input
-                  type="checkbox"
-                  id="email-contact"
-                  name="email"
-                  checked={formData.contactMethod.email}
-                  onChange={handleCheckboxChange}
-                  className="mr-2 h-4 w-4"
-                />
-                <label htmlFor="email-contact">Email</label>
-              </div>
-              <div className="flex items-center">
-                <input
-                  type="checkbox"
-                  id="phone-contact"
-                  name="phone"
-                  checked={formData.contactMethod.phone}
-                  onChange={handleCheckboxChange}
-                  className="mr-2 h-4 w-4"
-                />
-                <label htmlFor="phone-contact">Phone</label>
-              </div>
-            </div>
           </div>
           
           <div className="flex justify-center pt-4">
