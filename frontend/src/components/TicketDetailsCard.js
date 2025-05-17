@@ -1,6 +1,5 @@
 import React from 'react';
 
-// Utility functions for status and border styles
 const getStatusStyle = (status) => {
   switch (status) {
     case 'Pending':
