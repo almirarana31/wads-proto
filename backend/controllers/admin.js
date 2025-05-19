@@ -4,7 +4,7 @@ import { Staff, User, Ticket, Status, Category, Priority } from '../models/index
 import dotenv from 'dotenv';
 import sessionStorage from 'sessionstorage';
 import sequelize from '../config/sequelize.js';
-import { Op } from 'sequelize';
+import { Op, Sequelize } from 'sequelize';
 
 // get category
 const getCategory = async (body) => {
@@ -156,5 +156,41 @@ export const getTickets = async (req, res) => {
         return res.status(200).json(result);
     } catch (error) {
         return res.status(500).json({message: error.message});
+    }
+};
+
+// staff performance a.k.a.
+export const getStaffPerformance = async (req, res) => {
+    try {
+        const results = await Ticket.findAll({
+            include: [{
+                model: Status,
+                attributes: ['name'],
+                where: {name: {[Op.ne]: "In Progress"}}
+            }],
+            raw: true,
+            attributes: [[sequelize.fn('COUNT', 'Status.name'), 'count']],
+            group: ['Status.name']
+        })
+
+        let assigned = 0;
+        let resolved = 0;
+        for (let i = 0; i < results.length; i++) {
+            if (results[i]['Status.name'] != "Resolved") {
+                assigned = results[i].count
+            } else {
+                resolved = results[i].count
+            }
+        }
+
+        const division = {
+                assigned: assigned,
+                resolved: resolved,
+                resolution_rate: (resolved/assigned) * 100
+        }
+
+        return res.status(200).json(division);
+    } catch (error) {
+        return res.status(500).json({message: error.message})
     }
 };
