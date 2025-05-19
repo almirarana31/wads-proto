@@ -10,11 +10,11 @@ const api = axios.create({
 
 // Add a request interceptor for handling tokens
 api.interceptors.request.use(
-    (config) => {
-        // Try to get token from sessionStorage first, then localStorage
+    (config) => {        // Try to get token from sessionStorage first, then localStorage
         const token = sessionStorage.getItem('token') || localStorage.getItem('token');
         if (token) {
             config.headers.Authorization = `Bearer ${token}`;
+            console.log('Request headers:', config.headers); // Debug log
         }
         return config;
     },
