@@ -7,10 +7,6 @@ Category.init({
     name: {
         type: DataTypes.STRING,
         allowNull: false
-    },
-    description: {
-        type: DataTypes.STRING,
-        allowNull: false
     }
 }, {
     sequelize,
