@@ -64,9 +64,7 @@ function ViewTicketsPage() {
 
   // View ticket details
   const handleViewDetails = (ticketId) => {
-    console.log(`View details for ticket ${ticketId}`);
-    // In a real app, navigate to ticket details page
-    // navigate(`/tickets/${ticketId}`);
+    navigate(`/ticket/${ticketId}`);
   };
 
   // Filter tickets based on search query and status filter
@@ -135,9 +133,9 @@ function ViewTicketsPage() {
           </div>
           
           {/* Ticket List */}
-          <div className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {filteredTickets.length === 0 ? (
-              <div className="text-center py-10 text-gray-500">
+              <div className="text-center py-10 text-gray-500 col-span-full">
                 No tickets found matching your criteria.
               </div>
             ) : (

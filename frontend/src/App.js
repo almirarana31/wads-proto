@@ -13,6 +13,7 @@ import ResetPasswordPage from './pages/ResetPasswordPage';
 import ConfirmTicketPage from './pages/ConfirmTicketPage';
 import SuccessSignup from './pages/SuccessSignup';
 import Footer from './components/Footer';
+import TicketDetailsPage from './pages/TicketDetailsPage';
 
 function App() {
   // For demo purposes - in a real app, this would come from auth context/state
@@ -61,6 +62,14 @@ function App() {
                   <ViewTicketsPage />
                 </ProtectedRoute>
               } 
+            />
+            <Route
+              path="/ticket/:ticketId"
+              element={
+                <ProtectedRoute>
+                  <TicketDetailsPage />
+                </ProtectedRoute>
+              }
             />
             <Route
               path="/logout"

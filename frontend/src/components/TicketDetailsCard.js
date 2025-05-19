@@ -41,14 +41,6 @@ function TicketCard({ ticket, onViewDetails }) {
         <p>Category: {ticket.category}</p>
         <p>Created at: {new Date(ticket.created).toLocaleString()}</p>
       </div>
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mt-4 gap-3">
-        <button
-          onClick={() => onViewDetails(ticket.id)}
-          className="bg-white hover:bg-gray-50 text-blue-700 border border-gray-300 py-2 px-4 rounded"
-        >
-          View Details
-        </button>
-      </div>
     </div>
   );
 }
