@@ -62,18 +62,26 @@ async function checkRole(user_email) {
 }
 
 async function getCreds(user_email, password) {
-    
-    const user = await User.findOne({
-        where: {
-            email: user_email
+    try {
+        const user = await User.findOne({
+            where: {
+                email: user_email
+            }
+        });
+        
+        // Check if user exists
+        if (!user) {
+            return { success: false, error: "User not found" };
         }
-    })
-    const isMatch = await bcrypt.compare(password, user.password);
-    console.log(user_email, isMatch);
 
-    if (isMatch) return true
+        const isMatch = await bcrypt.compare(password, user.password);
+        console.log(user_email, isMatch);
 
-    return false
+        return { success: isMatch, user };
+    } catch (error) {
+        console.error('GetCreds error:', error);
+        return { success: false, error: error.message };
+    }
 };
 
 function createAccessToken(payload) { // is a refresh token that expires quicker
@@ -165,28 +173,53 @@ export const activate = async (req, res) => {
 }
 
 export const logIn = async (req, res) => {
-    const {email, password} = req.body
+    const {email, password, rememberMe} = req.body;
     try {
-        const login = await getCreds(email, password);
-
-        if (login) {
-            // storing the access token in session storage
-            const accessToken = createAccessToken({email: email});
-            localStorage.setItem("token", accessToken);
-            // update login time
-            await User.update({
-                last_login: new Date(Date.now())
-            },
-                {   
-                    where: {
-                        email: email
-                    }
-                }
-            );
-            return res.status(200).json({message:"Successful login"});
+        if (!email || !password) {
+            return res.status(400).json({message: "Email and password are required"});
         }
-        return res.status(400).json({message: "Incorrect credentials"});
+
+        console.log('Login attempt:', { email }); // Debug log
+
+        const result = await getCreds(email, password);
+        console.log('GetCreds result:', result); // Debug log
+
+        if (!result.success) {
+            return res.status(400).json({
+                message: result.error || "Incorrect credentials"
+            });
+        }        // Create access token with user info - longer expiration for rememberMe
+        const tokenExpiration = rememberMe ? '7d' : '1h'; // 7 days for remember me, 1 hour for regular session
+        const accessToken = jwt.sign(
+            {
+                email: result.user.email,
+                role_code: result.user.role_code
+            }, 
+            process.env.ACCESS_TOKEN_SECRET,
+            { expiresIn: tokenExpiration }
+        );
+        
+        // Update login time and remember me status
+        await User.update(
+            { last_login: new Date(Date.now()) },
+            { where: { email: email } }
+        );
+
+        const responseData = {
+            message: "Successful login",
+            token: accessToken,
+            user: {
+                email: result.user.email,
+                role_code: result.user.role_code,
+                username: result.user.username
+            }
+        };
+
+        console.log('Login response:', responseData); // Debug log
+        return res.status(200).json(responseData);
+
     } catch (error) {
-        return res.status(500).json({message: error.message});
+        console.error('Login error:', error);
+        return res.status(500).json({message: "An error occurred during login"});
     }
 }

@@ -1,15 +1,17 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { authService } from '../api/authService';
 
 function SignUpPage() {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
-    name: '',
+    username: '',
     email: '',
     password: '',
     confirmPassword: ''
   });
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -18,7 +20,8 @@ function SignUpPage() {
       [name]: value
     });
   };
-  const handleSubmit = (e) => {
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
     
@@ -27,13 +30,21 @@ function SignUpPage() {
       setError('Passwords do not match');
       return;
     }
-    
-    console.log('Sign up form submitted:', formData);
-    // In a real app, you would register the user with your backend here
-    
-    // Redirect to success page after successful registration
-    // Pass the email to display on the success page
-    navigate('/success-signup', { state: { email: formData.email } });
+
+    setLoading(true);
+    try {
+      // Remove confirmPassword before sending to API
+      const { confirmPassword, ...signUpData } = formData;
+      const response = await authService.signup(signUpData);
+      
+      // Redirect to success page after successful registration
+      navigate('/success-signup', { state: { email: formData.email } });
+    } catch (error) {
+      console.error('Sign up error:', error);
+      setError(error.response?.data?.message || 'An error occurred during registration');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -51,15 +62,16 @@ function SignUpPage() {
           
           <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-5">
             <div>
-              <label htmlFor="name" className="block text-blue-700 mb-2">Name:</label>
+              <label htmlFor="username" className="block text-blue-700 mb-2">Username:</label>
               <input
                 type="text"
-                id="name"
-                name="name"
-                value={formData.name}
+                id="username"
+                name="username"
+                value={formData.username}
                 onChange={handleInputChange}
                 className="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-300"
                 required
+                disabled={loading}
               />
             </div>
             
@@ -73,6 +85,7 @@ function SignUpPage() {
                 onChange={handleInputChange}
                 className="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-300"
                 required
+                disabled={loading}
               />
             </div>
             
@@ -86,6 +99,7 @@ function SignUpPage() {
                 onChange={handleInputChange}
                 className="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-300"
                 required
+                disabled={loading}
               />
             </div>
             
@@ -99,15 +113,17 @@ function SignUpPage() {
                 onChange={handleInputChange}
                 className="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-300"
                 required
+                disabled={loading}
               />
             </div>
             
             <div className="flex justify-center">
               <button
                 type="submit"
-                className="bg-blue-700 hover:bg-blue-800 text-white py-2 sm:py-3 px-6 sm:px-8 rounded-md text-base sm:text-lg font-medium w-full sm:w-auto"
+                className="bg-blue-700 hover:bg-blue-800 text-white py-2 sm:py-3 px-6 sm:px-8 rounded-md text-base sm:text-lg font-medium w-full sm:w-auto disabled:opacity-50"
+                disabled={loading}
               >
-                Create Account
+                {loading ? 'Creating Account...' : 'Create Account'}
               </button>
             </div>
             <div className="text-center text-gray-600">

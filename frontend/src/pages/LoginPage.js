@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { authService } from '../api/authService';
 
 function LoginPage({ onLogin }) {
   const navigate = useNavigate();
@@ -9,6 +10,7 @@ function LoginPage({ onLogin }) {
     rememberMe: false
   });
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -18,25 +20,65 @@ function LoginPage({ onLogin }) {
     });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+    setLoading(true);
     
     // Basic validation
     if (!formData.email || !formData.password) {
       setError('Please enter both email and password');
+      setLoading(false);
       return;
+    }    try {      const response = await authService.login({
+        email: formData.email,
+        password: formData.password,
+        rememberMe: formData.rememberMe
+      });
+      
+      console.log('Server response:', response); // Debug log
+        if (response && response.token) {
+        // Clear any existing tokens first
+        sessionStorage.removeItem('token');
+        localStorage.removeItem('token');
+        
+        // Store token in sessionStorage first
+        sessionStorage.setItem('token', response.token);
+        
+        // If "Remember me" is checked, also store in localStorage as backup
+        if (formData.rememberMe) {
+          localStorage.setItem('token', response.token);
+        }
+        
+        // Store user info and session expiration
+        sessionStorage.setItem('user', JSON.stringify(response.user));
+        // Set session expiration for 1 hour from now if not using remember me
+        if (!formData.rememberMe) {
+          const expiration = new Date().getTime() + 60 * 60 * 1000; // 1 hour
+          sessionStorage.setItem('sessionExpires', expiration.toString());
+        }
+        
+        // Call the onLogin function passed from App.js with user info
+        onLogin(response.user);
+        
+        // Redirect to view tickets page
+        navigate('/view-tickets');
+      } else {
+        console.error('Invalid response structure:', response); // Debug log
+        setError('Server response missing token. Please try again.');
+      }
+    } catch (error) {
+      console.error('Login error:', error);
+      if (error.response?.data?.message) {
+        setError(error.response.data.message);
+      } else if (error.message) {
+        setError(error.message);
+      } else {
+        setError('An error occurred during login');
+      }
+    } finally {
+      setLoading(false);
     }
-
-    // In a real app, you'd call an API to authenticate
-    // For demo purposes, we'll just simulate successful login
-    console.log('Login attempt:', formData);
-    
-    // Call the onLogin function passed from App.js
-    onLogin();
-    
-    // Redirect to view tickets page
-    navigate('/view-tickets');
   };
 
   return (
@@ -62,6 +104,7 @@ function LoginPage({ onLogin }) {
                 value={formData.email}
                 onChange={handleInputChange}
                 className="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-300"
+                disabled={loading}
               />
             </div>
             
@@ -74,6 +117,7 @@ function LoginPage({ onLogin }) {
                 value={formData.password}
                 onChange={handleInputChange}
                 className="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-300"
+                disabled={loading}
               />
             </div>
             
@@ -85,6 +129,7 @@ function LoginPage({ onLogin }) {
                   checked={formData.rememberMe}
                   onChange={handleInputChange}
                   className="mr-2"
+                  disabled={loading}
                 />
                 <span>Remember me</span>
               </label>
@@ -93,9 +138,10 @@ function LoginPage({ onLogin }) {
             <div className="flex justify-center mb-4">
               <button
                 type="submit"
-                className="bg-blue-700 hover:bg-blue-800 text-white py-3 px-8 rounded-md text-lg font-medium"
+                className="bg-blue-700 hover:bg-blue-800 text-white py-3 px-8 rounded-md text-lg font-medium disabled:opacity-50"
+                disabled={loading}
               >
-                Login
+                {loading ? 'Logging in...' : 'Login'}
               </button>
             </div>
             

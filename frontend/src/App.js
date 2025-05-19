@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import Header from './components/Header';
 import HomePage from './pages/HomePage';
@@ -14,18 +13,23 @@ import ConfirmTicketPage from './pages/ConfirmTicketPage';
 import SuccessSignup from './pages/SuccessSignup';
 import Footer from './components/Footer';
 import TicketDetailsPage from './pages/TicketDetailsPage';
+import Logout from './components/Logout';
 
 function App() {
   // For demo purposes - in a real app, this would come from auth context/state
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  
-  // Mock login function
+    // Login function
   const handleLogin = () => {
-    setIsAuthenticated(true);
+    // Check if we have a valid token
+    const token = sessionStorage.getItem('token') || localStorage.getItem('token');
+    if (token) {
+      setIsAuthenticated(true);
+    }
   };
   
-  // Mock logout function
+  // Logout function
   const handleLogout = () => {
+    // Reset authentication state
     setIsAuthenticated(false);
   };
 
@@ -84,20 +88,7 @@ function App() {
         </main>
         <Footer />
       </div>
-    </Router>
-  );
-}
-
-// Simple Logout component that calls onLogout and redirects
-function Logout({ onLogout }) {
-  const navigate = useNavigate();
-  
-  React.useEffect(() => {
-    onLogout();
-    navigate('/');
-  }, [onLogout, navigate]);
-  
-  return <div>Logging out...</div>;
+    </Router>  );
 }
 
 export default App;

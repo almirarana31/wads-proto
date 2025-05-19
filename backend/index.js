@@ -1,5 +1,6 @@
 import dotenv from 'dotenv';
 import express from 'express';
+import cors from 'cors';
 import sequelize from './config/sequelize.js';
 import userRoutes from './routes/user_routes.js';
 import defaultQueries from './routes/defaultQueries.js';
@@ -12,6 +13,12 @@ await sequelize.sync();
 
 const app = express();
 app.use(express.json());
+
+// Configure CORS
+app.use(cors({
+    origin: 'http://localhost:3000', // Your frontend URL
+    credentials: true
+}));
 
 app.use('/api/user', userRoutes);
 
