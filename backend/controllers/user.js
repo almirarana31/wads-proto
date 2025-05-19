@@ -165,14 +165,16 @@ export const activate = async (req, res) => {
 }
 
 export const logIn = async (req, res) => {
-    const {email, password} = req.body
+    const {email, password, rememberMe} = req.body
     try {
         const login = await getCreds(email, password);
 
         if (login) {
             // storing the access token in session storage
             const accessToken = createAccessToken({email: email});
-            localStorage.setItem("token", accessToken);
+            if (rememberMe) {
+                sessionStorage.setItem("token", accessToken);
+            }
             // update login time
             await User.update({
                 last_login: new Date(Date.now())
@@ -184,9 +186,9 @@ export const logIn = async (req, res) => {
                 }
             );
             return res.status(200).json({message:"Successful login"});
-        }
+        };
         return res.status(400).json({message: "Incorrect credentials"});
     } catch (error) {
         return res.status(500).json({message: error.message});
-    }
-}
+    };
+};
