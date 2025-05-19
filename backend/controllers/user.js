@@ -171,10 +171,18 @@ export const logIn = async (req, res) => {
 
         if (login) {
             // storing the access token in session storage
-            const accessToken = createAccessToken({email: email});
-            if (rememberMe) {
-                sessionStorage.setItem("token", accessToken);
-            }
+            const user = await User.findOne({
+                where: {
+                    email: email
+                },
+                attributes: ['email', 'id', 'role_code'],
+                raw: true
+            });
+
+            const accessToken = createAccessToken(user);
+            sessionStorage.setItem("token", accessToken);
+            
+
             // update login time
             await User.update({
                 last_login: new Date(Date.now())
@@ -185,10 +193,20 @@ export const logIn = async (req, res) => {
                     }
                 }
             );
-            return res.status(200).json({message:"Successful login"});
+            return res.status(200).json({message:"Successful login", token: accessToken});
         };
         return res.status(400).json({message: "Incorrect credentials"});
     } catch (error) {
         return res.status(500).json({message: error.message});
     };
 };
+
+export const signOut = async (req, res) => {
+    try {
+        return res.status(200).json({message:"Successfully signed out",
+            clearLocalStorage: true
+        });
+    } catch (error) {
+        return res.status(500).json({error: error.message});
+    }
+}

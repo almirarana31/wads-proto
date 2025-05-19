@@ -1,7 +1,9 @@
 import express from 'express';
-import { signUp, activate, logIn} from '../controllers/user.js';
+import { signUp, activate, logIn, signOut} from '../controllers/user.js';
 
 const router = express.Router();
+
+router.get('/sign-out', signOut);
 
 router.post('/sign-up', signUp);
 
