@@ -15,17 +15,17 @@ export default async (req, res) => {
     };
 
     // // Roles
-    // const roles = ["USR", "STF", "ADM"]
-    // const role_desc = ["Can submit tickets to report issues or request support but cannot resolve or assign them.", "Handles ticket resolutions and can also submit new tickets if needed.",
-    //     "Manages the ticket system by assigning tickets to staff and resolving tickets when necessary"
-    // ];
+    const roles = ["USR", "STF", "ADM"]
+    const role_desc = ["Can submit tickets to report issues or request support but cannot resolve or assign them.", "Handles ticket resolutions and can also submit new tickets if needed.",
+        "Manages the ticket system by assigning tickets to staff and resolving tickets when necessary"
+    ];
 
-    // for (let i = 0; i < role_desc.length(); i++) {
-    //     await Role.create({
-    //         name: roles[i],
-    //         role_desc: role_desc[i]
-    //     })
-    // };
+    for (let i = 0; i < role_desc.length; i++) {
+        await Role.create({
+            role_code: roles[i],
+            role_desc: role_desc[i]
+        })
+    };
 
     // Statuses
     const statuses = ["Pending", "In Progress", "Resolved", "Cancelled"]

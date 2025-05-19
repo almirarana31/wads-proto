@@ -16,7 +16,7 @@ app.use(express.json());
 app.use('/api/user', userRoutes);
 
 // remove once ran ONCE
-// app.use('/api', defaultQueries);
+app.use('/api', defaultQueries);
 
 app.get('/', (req, res) => {
     res.send("Hello from the backend!")
