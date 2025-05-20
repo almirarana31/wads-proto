@@ -1,0 +1,196 @@
+import bcrypt from 'bcrypt';
+import jwt from 'jsonwebtoken';
+import { Staff, User, Ticket, Status, Category, Priority } from '../models/index.js';
+import dotenv from 'dotenv';
+import sessionStorage from 'sessionstorage';
+import sequelize from '../config/sequelize.js';
+import { Op, Sequelize } from 'sequelize';
+
+// get category
+const getCategory = async (body) => {
+    let result = body;
+
+    // getting category id to name mapping
+    const categories = await Category.findAll({
+        attributes: [
+            'name'
+        ]
+    });
+
+    for (let i = 0; i < body.length; i++) {
+        // get category id
+        const temp = body[i].category;
+        // set status as status name where index = id (- 1); status is always +1 of index
+        result[i].category = categories[temp - 1].name;
+    };
+
+    return result;
+};
+
+// get status
+const getStatus = async (body) => {
+    let result = body;
+
+    // getting status id to name mapping
+    const statuses = await Status.findAll({
+        attributes: [
+            'name'
+        ],
+        raw: true
+    });
+
+    for (let i = 0; i < body.length; i++) {
+            // get status id
+            const temp = body[i].status; 
+            // set status as status name where index = id (- 1); status is always +1 of index
+            result[i].status = statuses[temp - 1].name;
+        }
+    return result;
+};
+
+export const getAdminUsername = async (req, res) => {
+    const adminId = req.params.id;
+    try {
+        const token = req.headers.authorization?.split(" ")[1];
+        const {id} = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
+        if (adminId != id) return res.status(403).json({message: "Forbidden Access"});
+
+        const adminUsername = await User.findOne({
+            attributes: ['username'],
+            where: {
+                id : adminId
+            },
+            raw: true
+        });
+
+        return res.status(200).json(adminUsername);
+    } catch (error) {
+        return res.status(500).json({message: error.message});
+    };
+};
+
+export const getStatusSummary = async (req, res) => {
+    try {
+        // get count status from the ticket table
+        let result = await Ticket.findAll({
+        attributes: [
+            'status',
+            [sequelize.fn('COUNT', sequelize.col('status')), 'count']
+        ],
+        group: ['status'],
+        raw: true
+        });
+
+        result = await getStatus(result);
+        return res.status(200).json(result);
+    } catch (error) {
+        return res.status(500).json({message: error.message});
+    }
+};
+
+export const getCategorySummary = async (req, res) => {
+        try {
+        // get count status from the ticket table
+        let result = await Ticket.findAll({
+        attributes: [
+            'category',
+            [sequelize.fn('COUNT', sequelize.col('category')), 'count']
+        ],
+        group: ['category'],
+        raw: true
+        });
+
+        result = await getCategory(result);
+        return res.status(200).json(result);
+    } catch (error) {
+        return res.status(500).json({message: error.message});
+    }
+}
+
+// get ticket join
+export const getTickets = async (req, res) => {
+    const priority = req.query.priority;
+    const category = req.query.category; 
+    const status = req.query.status;
+    const search = req.query.search;
+
+    try {
+        const result = await Ticket.findAll({
+        include: [{
+            model: Category,
+            where: category && category.toLowerCase() !== 'all' ? {name: category} : null,
+            attributes: ['name']
+        }, {
+            model: Status,
+            where: status && status.toLowerCase() !== 'all' ? {name: status} : null,
+            attributes: ['name'],
+        }, {
+            model: Priority,
+            where: priority && priority.toLowerCase() != 'all' ? {name: priority} : null,
+            attributes: ['name'] 
+        }, {
+            model: User,
+            as: 'User',
+            attributes: [['username', 'username'], 'email']
+        }, {
+            model: User,
+            as: 'Staff',
+            attributes: [['username', 'staffname']]
+        }],
+        attributes: ['id', 'staffID', 'subject', 'createdAt'],
+        raw: true,
+        ...(search && 
+                {where: isNaN(search) ? 
+                    {[Op.or]: 
+                        [{subject: {[Op.substring]: search}},
+                         {'$User.username$': {[Op.substring]: search}},
+                         {'$User.email$': {[Op.substring]: search}}
+                        ]
+                    } :
+                {[Op.or]: [{subject: {[Op.substring]: search}},
+                         {'$User.username$': {[Op.substring]: search}},
+                         {'$User.email$': {[Op.substring]: search}},
+                         {id: parseInt(search)}
+                        ]} })
+    });
+        return res.status(200).json(result);
+    } catch (error) {
+        return res.status(500).json({message: error.message});
+    }
+};
+
+// staff performance a.k.a.
+export const getStaffPerformance = async (req, res) => {
+    try {
+        const results = await Ticket.findAll({
+            include: [{
+                model: Status,
+                attributes: ['name'],
+                where: {name: {[Op.ne]: "In Progress"}}
+            }],
+            raw: true,
+            attributes: [[sequelize.fn('COUNT', 'Status.name'), 'count']],
+            group: ['Status.name']
+        })
+
+        let assigned = 0;
+        let resolved = 0;
+        for (let i = 0; i < results.length; i++) {
+            if (results[i]['Status.name'] != "Resolved") {
+                assigned = results[i].count
+            } else {
+                resolved = results[i].count
+            }
+        }
+
+        const division = {
+                assigned: assigned,
+                resolved: resolved,
+                resolution_rate: (resolved/assigned) * 100
+        }
+
+        return res.status(200).json(division);
+    } catch (error) {
+        return res.status(500).json({message: error.message})
+    }
+};

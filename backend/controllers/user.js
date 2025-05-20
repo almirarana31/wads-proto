@@ -62,26 +62,18 @@ async function checkRole(user_email) {
 }
 
 async function getCreds(user_email, password) {
-    try {
-        const user = await User.findOne({
-            where: {
-                email: user_email
-            }
-        });
-        
-        // Check if user exists
-        if (!user) {
-            return { success: false, error: "User not found" };
+    
+    const user = await User.findOne({
+        where: {
+            email: user_email
         }
+    })
+    const isMatch = await bcrypt.compare(password, user.password);
+    console.log(user_email, isMatch);
 
-        const isMatch = await bcrypt.compare(password, user.password);
-        console.log(user_email, isMatch);
+    if (isMatch) return true
 
-        return { success: isMatch, user };
-    } catch (error) {
-        console.error('GetCreds error:', error);
-        return { success: false, error: error.message };
-    }
+    return false
 };
 
 function createAccessToken(payload) { // is a refresh token that expires quicker
@@ -173,53 +165,48 @@ export const activate = async (req, res) => {
 }
 
 export const logIn = async (req, res) => {
-    const {email, password, rememberMe} = req.body;
+    const {email, password, rememberMe} = req.body
     try {
-        if (!email || !password) {
-            return res.status(400).json({message: "Email and password are required"});
-        }
+        const login = await getCreds(email, password);
 
-        console.log('Login attempt:', { email }); // Debug log
-
-        const result = await getCreds(email, password);
-        console.log('GetCreds result:', result); // Debug log
-
-        if (!result.success) {
-            return res.status(400).json({
-                message: result.error || "Incorrect credentials"
+        if (login) {
+            // storing the access token in session storage
+            const user = await User.findOne({
+                where: {
+                    email: email
+                },
+                attributes: ['email', 'id', 'role_code'],
+                raw: true
             });
-        }        // Create access token with user info - longer expiration for rememberMe
-        const tokenExpiration = rememberMe ? '7d' : '1h'; // 7 days for remember me, 1 hour for regular session
-        const accessToken = jwt.sign(
-            {
-                email: result.user.email,
-                role_code: result.user.role_code
-            }, 
-            process.env.ACCESS_TOKEN_SECRET,
-            { expiresIn: tokenExpiration }
-        );
-        
-        // Update login time and remember me status
-        await User.update(
-            { last_login: new Date(Date.now()) },
-            { where: { email: email } }
-        );
 
-        const responseData = {
-            message: "Successful login",
-            token: accessToken,
-            user: {
-                email: result.user.email,
-                role_code: result.user.role_code,
-                username: result.user.username
-            }
+            const accessToken = createAccessToken(user);
+            sessionStorage.setItem("token", accessToken);
+            
+
+            // update login time
+            await User.update({
+                last_login: new Date(Date.now())
+            },
+                {   
+                    where: {
+                        email: email
+                    }
+                }
+            );
+            return res.status(200).json({message:"Successful login", token: accessToken});
         };
-
-        console.log('Login response:', responseData); // Debug log
-        return res.status(200).json(responseData);
-
+        return res.status(400).json({message: "Incorrect credentials"});
     } catch (error) {
-        console.error('Login error:', error);
-        return res.status(500).json({message: "An error occurred during login"});
+        return res.status(500).json({message: error.message});
+    };
+};
+
+export const signOut = async (req, res) => {
+    try {
+        return res.status(200).json({message:"Successfully signed out",
+            clearLocalStorage: true
+        });
+    } catch (error) {
+        return res.status(500).json({error: error.message});
     }
 }
