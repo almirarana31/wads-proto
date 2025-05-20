@@ -38,7 +38,13 @@ function Header({ isAuthenticated = false }) {
       >
         VIEW TICKETS
       </Link>
-      <Link 
+      <Link
+        to="/admin-dashboard" 
+        className={`${getActiveLinkClass('/admin-dashboard')} font-medium`}
+        >
+        ADMIN
+        </Link>
+      <Link
         to="/logout" 
         className={`${getActiveLinkClass('/logout')} font-medium`}
       >

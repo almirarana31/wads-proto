@@ -12,6 +12,7 @@ import ResetPasswordPage from './pages/ResetPasswordPage';
 import Footer from './components/Footer';
 import TicketDetailsPage from './pages/TicketDetailsPage';
 import Logout from './components/Logout';
+import AdminDashboard from './pages/AdminDashPage';
 
 function App() {
   // For demo purposes - in a real app, this would come from auth context/state
@@ -77,6 +78,14 @@ function App() {
                 <ProtectedRoute>
                   {/* Logout component that calls handleLogout and redirects */}
                   <Logout onLogout={handleLogout} />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin-dashboard"
+              element={
+                <ProtectedRoute>
+                  <AdminDashboard />
                 </ProtectedRoute>
               }
             />
