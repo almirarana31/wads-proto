@@ -3,6 +3,7 @@ import jwt from 'jsonwebtoken';
 import { Staff, User } from '../models/index.js';
 import sendOTP from './otp.js';
 import sessionStorage from 'sessionstorage';
+import { Ticket } from '../models/index.js';
 
 // start with the login/sign up
 
@@ -208,5 +209,25 @@ export const signOut = async (req, res) => {
         });
     } catch (error) {
         return res.status(500).json({error: error.message});
+    }
+}
+
+export const viewMyTickets = async (req, res) => {
+    try {
+        const userId = req.user.id;
+
+        const myTickets = await Ticket.findAll({
+            where: {
+                userID: userId
+            }
+        });
+
+        return res.status(200).json({
+            message: "Fetched user tickets",
+            tickets: myTickets
+        });
+    } catch (error) {
+        console.error("Failed/Error fetching tickets: ", error);
+        return res.status(500).json({ message: "Server error while fetching tickets" });
     }
 }
