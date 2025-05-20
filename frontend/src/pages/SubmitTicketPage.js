@@ -1,67 +1,100 @@
 import React, { useState } from 'react';
 import { ChevronDown } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import checkIcon from '../assets/accept.png';
 
 function SubmitTicketPage() {
-  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     email: '',
     title: '',
     category: 'General',
     description: ''
   });
+  const [ticket, setTicket] = useState(null);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
   };
+
   const handleSubmit = () => {
-    // This would be where backend integration happens
     console.log('Form submitted:', formData);
-    
-    // Generate a mock ticket ID - in a real app this would come from backend
+
     const ticketId = 'TKT-' + Math.floor(Math.random() * 1000).toString().padStart(3, '0');
-    
-    // Create ticket object to pass to the confirmation page
-    const ticket = {
+
+    const newTicket = {
       ticketId: ticketId,
       title: formData.title,
       createdAt: new Date().toISOString(),
-      email: formData.email,
-      phone: '08123456789' // In a real app, you'd collect this from the form
+      email: formData.email
     };
-    
-    // Reset form
+
+    setTicket(newTicket);
+
     setFormData({
       email: '',
       title: '',
       category: 'General',
-      description: '',
+      description: ''
     });
-    
-    // Navigate to the confirmation page with ticket data
-    navigate('/confirm-ticket', { state: { ticket } });
   };
+
+  if (ticket) {
+    return (
+      <div className="min-h-screen bg-blue-100 py-6 sm:py-12 px-4">
+        <div className="max-w-md mx-auto">
+          <div className="bg-white rounded-md shadow-md p-6 sm:p-8">
+            <h1 className="text-3xl font-bold text-gray-800 text-center mb-6">
+              Ticket Submitted Successfully!
+            </h1>
+            <div className="flex justify-center mb-6">
+              <img src={checkIcon} alt="Success" className="w-16 h-16" />
+            </div>
+            <div className="bg-gray-100 p-4 rounded-md mb-6">
+              <p className="mb-1">Ticket ID: <span className="text-blue-600 font-medium">{ticket.ticketId}</span></p>
+              <p className="mb-1">Title: <span className="text-blue-600 font-medium">{ticket.title}</span></p>
+              <p className="mb-4">Created at: <span className="font-medium">{new Date(ticket.createdAt).toLocaleString()}</span></p>
+              <hr className="my-4 border-gray-300" />
+              <p className="mb-1">We'll contact you via</p>
+              <p className="mb-1">Email: <span className="text-blue-600 font-medium">{ticket.email}</span></p>
+            </div>
+            <p className="text-gray-600 text-center mb-6">
+              Our support team will review your ticket and respond as soon as possible.
+              You will receive updates through your provided contact method.
+            </p>
+            <p className="text-gray-600 text-center mb-8">
+              You can view the status of this ticket and all your other tickets in <a href="/your-tickets" className="text-blue-600 hover:underline">Your Tickets</a>.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-3 justify-center">
+              <button onClick={() => setTicket(null)} className="text-center border border-blue-600 text-blue-600 hover:bg-blue-50 py-2 px-4 rounded-md transition-colors">
+                Submit another Ticket
+              </button>
+              <a href="/view-tickets" className="text-center bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-md transition-colors">
+                View your Tickets
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-blue-100 py-6 md:py-12 px-4 flex-grow">
       <div className="bg-white p-6 md:p-8 rounded shadow-md max-w-2xl mx-auto">
         <h1 className="text-center text-2xl md:text-3xl font-bold text-gray-800 mb-1">Submit a Ticket</h1>
         <p className="text-center text-gray-600 mb-6">Submit your question or issue below</p>
-        
         <div className="space-y-6">
-            <div>
-              <label htmlFor="email" className="block text-blue-700 mb-2">Email Address:</label>
-              <input
-                type="email"
-                id="email"
-                name="email"
-                value={formData.email}
-                onChange={handleInputChange}
-                className="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-300"
-              />
-            </div>
-          
+          <div>
+            <label htmlFor="email" className="block text-blue-700 mb-2">Email Address:</label>
+            <input
+              type="email"
+              id="email"
+              name="email"
+              value={formData.email}
+              onChange={handleInputChange}
+              className="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-300"
+            />
+          </div>
           <div>
             <label htmlFor="title" className="block text-blue-700 mb-2">Ticket Title:</label>
             <input
@@ -73,7 +106,6 @@ function SubmitTicketPage() {
               className="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-300"
             />
           </div>
-          
           <div>
             <label htmlFor="category" className="block text-blue-700 mb-2">Category:</label>
             <div className="relative">
@@ -94,7 +126,6 @@ function SubmitTicketPage() {
               </div>
             </div>
           </div>
-          
           <div>
             <label htmlFor="description" className="block text-blue-700 mb-2">Description:</label>
             <textarea
@@ -106,7 +137,6 @@ function SubmitTicketPage() {
               className="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-300"
             ></textarea>
           </div>
-          
           <div className="flex justify-center pt-4">
             <button
               type="button"
