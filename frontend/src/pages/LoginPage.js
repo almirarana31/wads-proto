@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { authService } from '../api/authService';
+// import { authService } from '../api/authService';
 
 function LoginPage({ onLogin }) {
   const navigate = useNavigate();
@@ -30,52 +30,58 @@ function LoginPage({ onLogin }) {
       setError('Please enter both email and password');
       setLoading(false);
       return;
-    }    try {      const response = await authService.login({
-        email: formData.email,
-        password: formData.password,
-        rememberMe: formData.rememberMe
-      });
+    }
+    try {      
+      // const response = await authService.login({
+      //   email: formData.email,
+      //   password: formData.password,
+      //   rememberMe: formData.rememberMe
+      // });
       
-      console.log('Server response:', response); // Debug log
-        if (response && response.token) {
-        // Clear any existing tokens first
-        sessionStorage.removeItem('token');
-        localStorage.removeItem('token');
+      // console.log('Server response:', response); // Debug log
+      //   if (response && response.token) {
+      //   // Clear any existing tokens first
+      //   sessionStorage.removeItem('token');
+      //   localStorage.removeItem('token');
         
-        // Store token in sessionStorage first
-        sessionStorage.setItem('token', response.token);
+      //   // Store token in sessionStorage first
+      //   sessionStorage.setItem('token', response.token);
         
-        // If "Remember me" is checked, also store in localStorage as backup
-        if (formData.rememberMe) {
-          localStorage.setItem('token', response.token);
-        }
+      //   // If "Remember me" is checked, also store in localStorage as backup
+      //   if (formData.rememberMe) {
+      //     localStorage.setItem('token', response.token);
+      //   }
         
-        // Store user info and session expiration
-        sessionStorage.setItem('user', JSON.stringify(response.user));
-        // Set session expiration for 1 hour from now if not using remember me
-        if (!formData.rememberMe) {
-          const expiration = new Date().getTime() + 60 * 60 * 1000; // 1 hour
-          sessionStorage.setItem('sessionExpires', expiration.toString());
-        }
+      //   // Store user info and session expiration
+      //   sessionStorage.setItem('user', JSON.stringify(response.user));
+      //   // Set session expiration for 1 hour from now if not using remember me
+      //   if (!formData.rememberMe) {
+      //     const expiration = new Date().getTime() + 60 * 60 * 1000; // 1 hour
+      //     sessionStorage.setItem('sessionExpires', expiration.toString());
+      //   }
         
-        // Call the onLogin function passed from App.js with user info
-        onLogin(response.user);
+      //   // Call the onLogin function passed from App.js with user info
+      //   onLogin(response.user);
         
-        // Redirect to view tickets page
-        navigate('/view-tickets');
+      //   // Redirect to view tickets page
+      //   navigate('/view-tickets');
+      // } else {
+      //   console.error('Invalid response structure:', response); // Debug log
+      //   setError('Server response missing token. Please try again.');
+      // }
+
+      // Mock successful login for UI development
+      console.log('Mock login attempt with:', formData.email);
+      if (formData.email && formData.password) {
+        const mockUser = { email: formData.email, name: 'Test User', role_code: 'USR' }; // Example user
+        if (onLogin) onLogin(mockUser);
+        navigate('/view-tickets'); // Or to a dashboard, or wherever appropriate
       } else {
-        console.error('Invalid response structure:', response); // Debug log
-        setError('Server response missing token. Please try again.');
+        setError('Mock login failed: Email and password required.');
       }
+
     } catch (error) {
-      console.error('Login error:', error);
-      if (error.response?.data?.message) {
-        setError(error.response.data.message);
-      } else if (error.message) {
-        setError(error.message);
-      } else {
-        setError('An error occurred during login');
-      }
+      console.error('Login error (API call commented out):', error);
     } finally {
       setLoading(false);
     }

@@ -17,12 +17,19 @@ import AdminDashboard from './pages/AdminDashPage';
 function App() {
   // For demo purposes - in a real app, this would come from auth context/state
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-    // Login function
-  const handleLogin = () => {
-    // Check if we have a valid token
-    const token = sessionStorage.getItem('token') || localStorage.getItem('token');
-    if (token) {
+  // Login function
+  const handleLogin = (user) => { // Modified to accept user
+    // If a user object is provided (even a mock one), consider login successful
+    if (user) {
       setIsAuthenticated(true);
+      // For mock purposes, you might want to set a mock token if other parts rely on it
+      // sessionStorage.setItem('mockToken', 'true'); 
+    } else {
+      // Fallback to token check if no user object is passed directly
+      const token = sessionStorage.getItem('token') || localStorage.getItem('token');
+      if (token) {
+        setIsAuthenticated(true);
+      }
     }
   };
   
@@ -30,6 +37,9 @@ function App() {
   const handleLogout = () => {
     // Reset authentication state
     setIsAuthenticated(false);
+    // Clear any mock token if you set one
+    // sessionStorage.removeItem('mockToken');
+    // localStorage.removeItem('token'); // Also clear real token if it was set
   };
 
   // Protected Route component

@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 
-function ForgotPasswordPage() {  const [email, setEmail] = useState('');
+function ForgotPasswordPage() {  
+  const [email, setEmail] = useState('');
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [message, setMessage] = useState('');
 
   const handleEmailChange = (e) => {
     setEmail(e.target.value);
@@ -12,26 +14,12 @@ function ForgotPasswordPage() {  const [email, setEmail] = useState('');
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');
-    setLoading(true);
-    
-    try {
-      // In a real app, you would call your backend API
-      const response = await fetch('/api/users/request-password-reset', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email })
-      });
-      
-      // Even if the email doesn't exist, we still show success for security
+    // Mock functionality for UI development
+    if (email) {
+      setMessage('If an account with that email exists, a password reset link has been sent (mock).');
       setSubmitted(true);
-    } catch (error) {
-      console.error('Error requesting password reset:', error);
-      setError('An error occurred. Please try again later.');
-    } finally {
-      setLoading(false);
+    } else {
+      setError('Please enter your email address.');
     }
   };
 
@@ -72,6 +60,11 @@ function ForgotPasswordPage() {  const [email, setEmail] = useState('');
             {error && (
             <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
               {error}
+            </div>
+          )}
+            {message && (
+            <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4">
+              {message}
             </div>
           )}
 

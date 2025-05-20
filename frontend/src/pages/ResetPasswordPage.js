@@ -57,45 +57,14 @@ function ResetPasswordPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError('');
-
-    // Basic validation
-    if (password !== confirmPassword) {
-      setError('Passwords do not match');
-      return;
-    }
-
-    if (password.length < 8) {
-      setError('Password must be at least 8 characters long');
-      return;
-    }
-
-    try {
-      // In a real app, you would call your backend API
-      const response = await fetch('/api/users/reset-password', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          token,
-          password
-        })
-      });
-
-      if (response.status === 200) {
-        setSuccess(true);
-        // Redirect to login after 3 seconds
-        setTimeout(() => {
-          navigate('/login');
-        }, 3000);
-      } else {
-        const data = await response.json();
-        setError(data.message || 'Failed to reset password. Please try again.');
-      }
-    } catch (error) {
-      console.error('Error resetting password:', error);
-      setError('An error occurred while resetting your password. Please try again.');
+    // Mock functionality for UI development
+    if (password && password === confirmPassword) {
+      setSuccess(true);
+      setTimeout(() => navigate('/login'), 3000);
+    } else if (password !== confirmPassword) {
+      setError('Passwords do not match.');
+    } else {
+      setError('Please enter and confirm your new password.');
     }
   };
 
