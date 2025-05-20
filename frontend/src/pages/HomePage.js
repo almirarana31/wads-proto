@@ -13,7 +13,7 @@ function HomePage() {
   };
 
   return (
-    <div className="text-center bg-blue-100 py-4 md:py-6 px-4 flex-grow flex items-center justify-center min-h-[60vh]">
+    <div className="text-center bg-blue-100 py-4 md:py-6 px-4 flex-grow flex items-center justify-center min-h-[80vh]">
       <div className="bg-white p-6 md:p-10 rounded shadow-md max-w-4xl mx-auto">
         <h1 className="text-2xl md:text-4xl font-bold text-gray-800 mb-4">
           Welcome to Bianca Aesthetic Helpdesk

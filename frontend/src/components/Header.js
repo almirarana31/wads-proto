@@ -39,12 +39,6 @@ function Header({ isAuthenticated = false }) {
         VIEW TICKETS
       </Link>
       <Link 
-        to="/settings" 
-        className={`${getActiveLinkClass('/settings')} font-medium`}
-      >
-        SETTINGS
-      </Link>
-      <Link 
         to="/logout" 
         className={`${getActiveLinkClass('/logout')} font-medium`}
       >

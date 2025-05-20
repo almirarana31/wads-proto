@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { authService } from '../api/authService';
+import checkIcon from '../assets/accept.png';
 
 function SignUpPage() {
   const navigate = useNavigate();
@@ -12,6 +13,8 @@ function SignUpPage() {
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState(false);
+  const [successEmail, setSuccessEmail] = useState('');
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -37,8 +40,9 @@ function SignUpPage() {
       const { confirmPassword, ...signUpData } = formData;
       const response = await authService.signup(signUpData);
       
-      // Redirect to success page after successful registration
-      navigate('/success-signup', { state: { email: formData.email } });
+      // Show success message after successful registration
+      setSuccess(true);
+      setSuccessEmail(formData.email);
     } catch (error) {
       console.error('Sign up error:', error);
       setError(error.response?.data?.message || 'An error occurred during registration');
@@ -46,6 +50,32 @@ function SignUpPage() {
       setLoading(false);
     }
   };
+
+  if (success) {
+    return (
+      <div className="min-h-screen bg-blue-100 py-6 sm:py-12 px-4 flex items-center justify-center">
+        <div className="max-w-md w-full mx-auto">
+          <div className="bg-white rounded-md shadow-md p-8 text-center">
+            <h1 className="text-3xl font-bold text-gray-800 mb-8">
+              Account Successfully Made!
+            </h1>
+            <div className="flex justify-center mb-6">
+              <img src={checkIcon} alt="Success" className="w-16 h-16" />
+            </div>
+            <p className="text-lg text-gray-600 mb-8">
+              Verification link sent to <span className="text-blue-600">{successEmail || 'user@example.com'}</span>
+            </p>
+            <Link 
+              to="/login" 
+              className="inline-block bg-blue-700 hover:bg-blue-800 text-white py-3 px-8 rounded-md text-lg font-medium transition-colors"
+            >
+              Login
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-blue-100 py-6 md:py-12 px-4 flex-grow">

@@ -40,7 +40,7 @@ function Footer() {
         
         <div className="mt-8 pt-6 border-t border-gray-200">
           <p className="text-sm text-center text-gray-500">
-            © {new Date().getFullYear()}Powered by Klinik Kecantikan Bianca. All rights reserved.
+            © {new Date().getFullYear()} Powered by Klinik Kecantikan Bianca. All rights reserved.
           </p>
         </div>
       </div>
