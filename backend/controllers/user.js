@@ -170,35 +170,40 @@ export const logIn = async (req, res) => {
         const login = await getCreds(email, password);
 
         if (login) {
-            // storing the access token in session storage
+            // Find user info
             const user = await User.findOne({
                 where: {
                     email: email
                 },
-                attributes: ['email', 'id', 'role_code'],
+                attributes: ['email', 'id', 'role_code', 'username'],
                 raw: true
             });
 
+            // Create access token
             const accessToken = createAccessToken(user);
-            sessionStorage.setItem("token", accessToken);
-            
 
-            // update login time
+            // Update login time
             await User.update({
                 last_login: new Date(Date.now())
-            },
-                {   
-                    where: {
-                        email: email
-                    }
+            }, {   
+                where: {
+                    email: email
                 }
-            );
-            return res.status(200).json({message:"Successful login", token: accessToken});
-        };
+            });
+
+            // Send response with token and user info
+            return res.status(200).json({
+                message: "Successful login",
+                token: accessToken,
+                user: user
+            });
+        }
+        
         return res.status(400).json({message: "Incorrect credentials"});
     } catch (error) {
+        console.error('Login error:', error);
         return res.status(500).json({message: error.message});
-    };
+    }
 };
 
 export const signOut = async (req, res) => {
