@@ -19,7 +19,7 @@ api.interceptors.request.use(
         return config;
     },
     (error) => {
-        return Promise.reject(error);
+        return Promise.reject(error); // lead to log in page again 
     }
 );
 
