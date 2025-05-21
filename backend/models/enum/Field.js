@@ -1,27 +1,23 @@
 import sequelize from '../config/sequelize.js';
 import { Model, DataTypes} from 'sequelize';
-class Priority extends Model {
+class Field extends Model {
 
 }
 
 // tell sequelize to initialize the table
-Priority.init(
+Field.init(
     {
        name: {
         type: DataTypes.STRING,
-        allowNull: false
-       },
-       description: {
-        name: DataTypes.STRING,
         allowNull: false
        }
     },
     {
         sequelize,
-        modelName: "Priority",
-        tableName: "priority",
+        modelName: "Field",
+        tableName: "field",
         timestamps: false
     }
 );
 
-export default Priority;
+export default Field;

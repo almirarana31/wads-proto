@@ -1,6 +1,5 @@
 import sequelize from '../config/sequelize.js';
 import { Model, DataTypes} from 'sequelize';
-import { Status } from '../index.js';
 class Status extends Model {
 
 }
@@ -20,7 +19,8 @@ Status.init(
     {
         sequelize,
         modelName: "Status",
-        tableName: "status"
+        tableName: "status",
+        timestamps: false
     }
 );
 

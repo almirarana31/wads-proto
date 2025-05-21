@@ -19,7 +19,8 @@ Category.init(
     {
         sequelize,
         modelName: "Category",
-        tableName: "category"
+        tableName: "category",
+        timestamps: false
     }
 );
 

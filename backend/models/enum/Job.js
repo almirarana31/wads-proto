@@ -1,27 +1,23 @@
 import sequelize from '../config/sequelize.js';
 import { Model, DataTypes} from 'sequelize';
-class Priority extends Model {
+class Job extends Model {
 
 }
 
 // tell sequelize to initialize the table
-Priority.init(
+Job.init(
     {
        name: {
         type: DataTypes.STRING,
-        allowNull: false
-       },
-       description: {
-        name: DataTypes.STRING,
         allowNull: false
        }
     },
     {
         sequelize,
-        modelName: "Priority",
-        tableName: "priority",
+        modelName: "Job",
+        tableName: "job",
         timestamps: false
     }
 );
 
-export default Priority;
+export default Job;

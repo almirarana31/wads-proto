@@ -1,11 +1,11 @@
 import sequelize from '../config/sequelize.js';
 import { Model, DataTypes} from 'sequelize';
-class Priority extends Model {
+class Role extends Model {
 
 }
 
 // tell sequelize to initialize the table
-Priority.init(
+Role.init(
     {
        name: {
         type: DataTypes.STRING,
@@ -18,10 +18,10 @@ Priority.init(
     },
     {
         sequelize,
-        modelName: "Priority",
-        tableName: "priority",
+        modelName: "Role",
+        tableName: "role",
         timestamps: false
     }
 );
 
-export default Priority;
+export default Role;
