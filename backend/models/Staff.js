@@ -19,8 +19,8 @@ Staff.init(
         type: DataTypes.INTEGER,
         allowNull: false,
         references: {
-            model: staffDetail,
-            key: id
+            model: 'staffDetail',
+            key: 'id'
         }
        },
        email: {

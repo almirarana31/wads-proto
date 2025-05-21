@@ -16,16 +16,24 @@ StaffDetail.init(
         allowNull: false,
         references: {
             model: 'role',
-            key: id
+            key: 'id'
         }
        },
        field_id: {
         type: DataTypes.INTEGER,
-        allowNull: false
+        allowNull: false,
+        references: {
+            model: 'field',
+            key: 'id'
+        }
        },
        role_id: {
         type: DataTypes.INTEGER,
-        allowNull: false
+        allowNull: false,
+        references: {
+            model: 'role',
+            key: 'id'
+        }
        }
     },
     {
