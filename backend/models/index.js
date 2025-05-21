@@ -6,8 +6,6 @@ import Priority from './enum/priority.js';
 import Status from './enum/status.js';
 import Staff from './staff.js';
 
-
-
 // Ticket model: userID and staffID both refer to User table
 Ticket.belongsTo(Category, {foreignKey: 'category'});
 Ticket.belongsTo(Status, {foreignKey: 'status'});

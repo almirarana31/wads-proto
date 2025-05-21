@@ -76,6 +76,10 @@ async function getCreds(user_email, password) {
     return false
 };
 
+function createRememberMeToken(payload) {
+    return jwt.sign(payload, process.env.ACCESS_TOKEN_SECRET, {expiresIn: '7d'});
+};
+
 function createAccessToken(payload) { // is a refresh token that expires quicker
     return jwt.sign(payload, process.env.ACCESS_TOKEN_SECRET, {expiresIn: '1h'})
 };
@@ -178,9 +182,17 @@ export const logIn = async (req, res) => {
                 attributes: ['email', 'id', 'role_code'],
                 raw: true
             });
-
+            
+            // for session storage
             const accessToken = createAccessToken(user);
-            sessionStorage.setItem("token", accessToken);
+            let rememberMeToken =  " ";
+
+           // if remember me, create a rememberMe token
+            if (rememberMe) {
+                rememberMeToken = createRememberMeToken(user);
+            } else {
+                rememberMeToken = null;
+            }
             
 
             // update login time
@@ -193,7 +205,10 @@ export const logIn = async (req, res) => {
                     }
                 }
             );
-            return res.status(200).json({message:"Successful login", token: accessToken});
+            
+            return res.status(200).json({message:"Successful login", 
+                sessionToken: accessToken, localToken: rememberMeToken
+        });
         };
         return res.status(400).json({message: "Incorrect credentials"});
     } catch (error) {

@@ -18,6 +18,14 @@ Staff.init(
                 model: "Roles",
                 key: "role_code"
             }
+        },
+        field: {
+            type: DataTypes.STRING,
+            allowNull: false
+        },
+        job: {
+            type: DataTypes.STRING,
+            allowNull: false
         }
     },
     {

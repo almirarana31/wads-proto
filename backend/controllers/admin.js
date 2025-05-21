@@ -135,7 +135,7 @@ export const getTickets = async (req, res) => {
         }, {
             model: User,
             as: 'Staff',
-            attributes: [['username', 'staffname']]
+            attributes: [['username', 'staffname'], ['id', 'staffID']]
         }],
         attributes: ['id', 'staffID', 'subject', 'createdAt'],
         raw: true,
@@ -162,12 +162,49 @@ export const getTickets = async (req, res) => {
 // staff performance a.k.a.
 export const getStaffPerformance = async (req, res) => {
     try {
+
+        // get all staff email 
+        const allStaffEmail = await Staff.findAll({
+            raw: true,
+            attributes: ['email']
+        });
+
+        for (let i = 0; i <  allStaffEmail.length; i++) {
+            all
+        }
+
+        // get all userID (staffID) where email matches
+        const allStaffID = await User.findAll({
+            raw: true,
+            attributes: ['id', 'email'],
+            includes: [{
+                model: Staff,
+                attributes: ['email']
+            }],
+            where: {
+                email: sequelize.col('Staff.email')
+            }
+        })
+
+        // find all tickets where staffID === userID in user table 
+        // now have username x ticket
         const results = await Ticket.findAll({
             include: [{
                 model: Status,
                 attributes: ['name'],
                 where: {name: {[Op.ne]: "In Progress"}}
+            },{
+                model: Staff,
+                attributes: ['email']
+            },
+            {
+                model: User,
+                attributes: ['username', 'id']
             }],
+            attributes: ['id'],
+            where: {
+                '%User.id%': sequelize.col('staffID') 
+            },
             raw: true,
             attributes: [[sequelize.fn('COUNT', 'Status.name'), 'count']],
             group: ['Status.name']
@@ -177,9 +214,9 @@ export const getStaffPerformance = async (req, res) => {
         let resolved = 0;
         for (let i = 0; i < results.length; i++) {
             if (results[i]['Status.name'] != "Resolved") {
-                assigned = results[i].count
+                assigned += results[i].count
             } else {
-                resolved = results[i].count
+                resolved += results[i].count
             }
         }
 
