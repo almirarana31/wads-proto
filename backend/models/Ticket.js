@@ -11,18 +11,18 @@ Ticket.init(
         type: DataTypes.INTEGER,
         allowNull: false,
         references: {
-            model: 'User',
+            model: 'user',
             key: 'id'
         }
        },
        staff_id: {
         type: DataTypes.INTEGER,
-        allowNull: false,
+        allowNull: true,
         references: {
             model: 'staff',
             key: 'id'
         }
-       },
+       }, 
        category_id: {
         type: DataTypes.INTEGER,
         allowNull: false,

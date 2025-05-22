@@ -1,5 +1,6 @@
 import sequelize from '../config/sequelize.js';
 import { Model, DataTypes} from 'sequelize';
+import StaffDetail from './Staff.js';
 class User extends Model {
 
 }
@@ -7,37 +8,37 @@ class User extends Model {
 // tell sequelize to initialize the table
 User.init(
     {
-       customer_id: {
-        type: DataTypes.INTEGER,
-        references: {
-            model: 'customer',
-            key: 'id'
-        }
-       },
        staff_id: {
         type: DataTypes.INTEGER,
+        allowNull: true,
         references: {
             model: 'staff',
             key: 'id'
         }
+       },
+       username: {
+        type: DataTypes.STRING,
+        allowNull: false
+       },
+       password: {
+        type: DataTypes.STRING,
+        allowNull: false
+       },
+       email: {
+        type: DataTypes.STRING,
+        allowNull: false
+       },
+       last_login: {
+        type: DataTypes.DATE,
+        allowNull: true
        }
     },
     {
         sequelize,
         modelName: "User",
-        tableName: "User",
+        tableName: "user",
         timestamps: false
     }
 );
-
-User.beforeSave((user, options) => {
-if (user.staff_id && user.customer_id) {
-    throw new Error('User cannot belong to both Staff and Customer');
-}
-if (!user.staff_id && !user.customer_id) {
-    throw new Error('User must belong to either Staff or Customer');
-}
-});
-
 
 export default User;

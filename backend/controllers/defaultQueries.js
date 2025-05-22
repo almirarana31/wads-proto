@@ -1,4 +1,4 @@
-import { Category, Role, Status, Priority, Job, StaffDetail} from "../models/index.js";
+import { Category, Role, Status, Priority, Job, Staff} from "../models/index.js";
 
 export default async (req, res) => {
     // insert default values
@@ -65,7 +65,7 @@ export default async (req, res) => {
     };
 
    // Staff Detail
-   await StaffDetail.create({
+   await Staff.create({
         email: "arielprandi34315@gmail.com",
         role_id: 2,
         field_id: 3,

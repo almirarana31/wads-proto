@@ -7,25 +7,34 @@ class Staff extends Model {
 // tell sequelize to initialize the table
 Staff.init(
     {
-       username: {
+       email: {
         type: DataTypes.STRING,
         allowNull: false
        },
-       password: {
-        type: DataTypes.STRING,
-        allowNull: false
-       },
-       detail_id: {
+       role_id: {
         type: DataTypes.INTEGER,
         allowNull: false,
         references: {
-            model: 'staffDetail',
+            model: 'role',
             key: 'id'
         }
        },
-        last_login: {
-            type: DataTypes.DATE
+       field_id: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        references: {
+            model: 'category',
+            key: 'id'
         }
+       },
+       job_id: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        references: {
+            model: 'job',
+            key: 'id'
+        }
+       }
     },
     {
         sequelize,

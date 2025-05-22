@@ -1,6 +1,6 @@
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
-import { Staff, User, Customer, StaffDetail } from '../models/index.js';
+import { Staff, User} from '../models/index.js';
 import sendOTP from './otp.js';
 import sequelize from '../config/sequelize.js';
 import { Op } from 'sequelize';
@@ -27,25 +27,16 @@ function validateEmail(email) {
 
 // check if email in database, default behaviour: false
 async function emailExists(input_email) {
-
-    const cust_email = await Customer.findOne({
+    // get from user table
+    const user = await User.findOne({
         where: {
             email: input_email
         }
-    })
+    });
 
-    const staff_email = await Staff.findOne({
-        include: [{
-            model: StaffDetail,
-            required: true
-        }],
-        where: {
-            '$StaffDetail.email$': input_email
-        }
-    })
+    // if it exists return true
+    if (user) return true 
 
-    // if it exists return false
-    if (cust_email || staff_email) return true;
     return false;
 }
 
@@ -56,17 +47,21 @@ function validatePassword(password) {
 }
 
 // check role in database
-async function checkDetail(user_email) {
-    const staffDetail = await StaffDetail.findOne({
+async function checkRole(user_email) {
+
+    const user = await Staff.findOne({
         where: {
             email: user_email
-        }
+        },
+        raw: true
     });
 
-    if (staffDetail) {
-        const detail_id = staffDetail.id;
-        return detail_id
-    }
+    console.log(`Has a staff_id?: ${user.id}`)
+
+    if (user) {
+        const staff_id = user.id
+        return staff_id
+    };
 
     return false;
 }
@@ -74,35 +69,13 @@ async function checkDetail(user_email) {
 async function getCreds(user_email, password) {
 
     const user = await User.findOne({
-        include: [{
-            model: Customer,
-            where: {
-                email: user_email
-            },
-            required: true
-        }, {
-            model: Staff,
-            include: {
-                model: StaffDetail,
-                required: true
-            },
-            where: {
-                '$StaffDetail.email$': user_email
-            },
-            required: true
-        }],
-        raw: true
+        where: {
+            email: user_email
+        }
     })
 
     if (user) {
-        if (user['Customer.email']) {
-            const isMatch = await bcrypt.compare(password, user['Customer.password'])
-            return user.id
-        }
-        else if (user['Staff.StaffDetail.email']) {
-            const isMatch = await bcrypt.compare(password, user['Staff.password'])
-            return user.id
-        } 
+        return user.id
     }
 
     return false
@@ -147,13 +120,13 @@ export const signUp = async (req, res) => {
         if (!validatePassword(password)) return res.status(400).json({message: "Password should be 6 to 20 characters long with a numeric, 1 lowercase and 1 uppercase letters"});
 
         // send email here, not yet stored the refresh token
-        const detail_id = await checkDetail(email);
+        const staff_id = await checkRole(email);
         const hashedPassword = await hashPassword(password);
         const newUser = {
             username: username,
             password: hashedPassword,
             email: email,
-            ...(detail_id && {detail_id: detail_id})
+            staff_id: staff_id
         };
         // create otp token with user info
         const otpToken = createOTPToken(newUser);
@@ -181,32 +154,19 @@ export const activate = async (req, res) => {
 
     try {
         const decode = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
-        const {username, password, email, detail_id} = decode;
+        const {username, password, email, staff_id} = decode;
 
         if(await emailExists(email)) {
             return res.status(400).json({message: "email already exists"})
         }
         // add to database
-        if(detail_id) {
-            const staff = await Staff.create({
-                username: username,
-                password: password,
-                detail_id: detail_id
-            })
 
-            await User.create({
-                staff_id: staff.id
-            });
-        } else {
-            const customer = await Customer.create({
-                username: username,
-                password: password,
-                email: email
-            });
-            await User.create({
-                customer_id: customer.id
-            });
-        }
+        const user = await User.create({
+            username: username,
+            password: password,
+            email: email,
+            staff_id: staff_id
+        })
         
         return res.status(200).json({message: 'Successfully signed up!',
             username: username,
@@ -228,8 +188,17 @@ export const logIn = async (req, res) => {
                 where: {
                     id: login
                 },
+                attributes: ['id', 'staff_id', 'email'],
                 raw: true
             });
+
+            console.log(`Pre-Staff_id: ${user.staff_id}`)
+
+            if (!user.staff_id) {
+                user.staff_id = 0
+            }
+
+            console.log(`Post-Staff_id: ${user.staff_id}`)
             
             // for session storage
             const accessToken = createAccessToken(user);
