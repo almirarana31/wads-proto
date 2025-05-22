@@ -1,4 +1,4 @@
-import sequelize from '../config/sequelize.js';
+import sequelize from '../../config/sequelize.js';
 import { Model, DataTypes} from 'sequelize';
 class Category extends Model {
 
@@ -12,7 +12,7 @@ Category.init(
         allowNull: false
        },
        description: {
-        name: DataTypes.STRING,
+        type: DataTypes.STRING,
         allowNull: false
        }
     },

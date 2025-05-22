@@ -23,13 +23,9 @@ Staff.init(
             key: 'id'
         }
        },
-       email: {
-        type: DataTypes.STRING,
-        allowNull: false
-       },
-       last_login: {
-        DataTypes: DataTypes.DATE
-       }
+        last_login: {
+            type: DataTypes.DATE
+        }
     },
     {
         sequelize,

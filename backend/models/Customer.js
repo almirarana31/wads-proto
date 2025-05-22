@@ -20,7 +20,8 @@ Customer.init(
         allowNull: false
        },
        last_login: {
-        DataTypes: DataTypes.DATE
+        type: DataTypes.DATE,
+        allowNull: true
        }
     },
     {

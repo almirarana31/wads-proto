@@ -23,7 +23,7 @@ StaffDetail.init(
         type: DataTypes.INTEGER,
         allowNull: false,
         references: {
-            model: 'field',
+            model: 'category',
             key: 'id'
         }
        },

@@ -17,7 +17,7 @@ User.init(
        staff_id: {
         type: DataTypes.INTEGER,
         references: {
-            model: 'customer',
+            model: 'staff',
             key: 'id'
         }
        }
@@ -29,5 +29,15 @@ User.init(
         timestamps: false
     }
 );
+
+User.beforeSave((user, options) => {
+if (user.staff_id && user.customer_id) {
+    throw new Error('User cannot belong to both Staff and Customer');
+}
+if (!user.staff_id && !user.customer_id) {
+    throw new Error('User must belong to either Staff or Customer');
+}
+});
+
 
 export default User;

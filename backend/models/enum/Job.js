@@ -1,4 +1,4 @@
-import sequelize from '../config/sequelize.js';
+import sequelize from '../../config/sequelize.js';
 import { Model, DataTypes} from 'sequelize';
 class Job extends Model {
 
