@@ -56,8 +56,6 @@ async function checkRole(user_email) {
         raw: true
     });
 
-    console.log(`Has a staff_id?: ${user.id}`)
-
     if (user) {
         const staff_id = user.id
         return staff_id
@@ -126,7 +124,7 @@ export const signUp = async (req, res) => {
             username: username,
             password: hashedPassword,
             email: email,
-            staff_id: staff_id
+            staff_id: staff_id ? staff_id : false
         };
         // create otp token with user info
         const otpToken = createOTPToken(newUser);
@@ -165,8 +163,8 @@ export const activate = async (req, res) => {
             username: username,
             password: password,
             email: email,
-            staff_id: staff_id
-        })
+            staff_id: staff_id ? staff_id : null
+        });
         
         return res.status(200).json({message: 'Successfully signed up!',
             username: username,

@@ -88,6 +88,7 @@ export const getStatusSummary = async (req, res) => {
     }
 };
 
+// i don't remember why i needed this????
 export const getCategorySummary = async (req, res) => {
         try {
         // get count status from the ticket table
