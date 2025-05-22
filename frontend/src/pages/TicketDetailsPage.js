@@ -1,10 +1,12 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import TicketDetailsCard from '../components/TicketDetailsCard';
+import ConversationCard from '../components/ConversationCard';
 
 function TicketDetailsPage() {
   const { ticketId } = useParams();
   const navigate = useNavigate();
+  const [sortOrder, setSortOrder] = useState('newest');
 
   // Mock ticket data - same as ViewTicketsPage, real app would fetch from API
   const tickets = [
@@ -46,7 +48,7 @@ function TicketDetailsPage() {
     }
   ];
 
-  // Find the ticket that matches the ID from the URL
+  // Find the ticket that matches the ID from the URL || This will be replaced with an API call later
   const ticket = tickets.find(t => t.id === ticketId) || {
     id: 'Not Found',
     title: 'Ticket Not Found',
@@ -57,8 +59,48 @@ function TicketDetailsPage() {
     unreadResponses: 0
   };
 
+  // Mock data for conversations - would fetch from API when implemented with backend
+  const conversations = [
+    {
+      id: 1,
+      number: 1,
+      startedDate: '2025-05-18T10:30:00Z',
+      endedDate: '2025-05-18T11:15:00Z'
+    },
+    {
+      id: 2,
+      number: 2,
+      startedDate: '2025-05-19T14:45:00Z',
+      endedDate: '2025-05-19T15:30:00Z'
+    },
+    {
+      id: 3,
+      number: 3,
+      startedDate: '2025-05-20T09:00:00Z',
+      endedDate: null
+    },
+    {
+      id: 4,
+      number: 4,
+      startedDate: '2025-05-21T16:20:00Z',
+      endedDate: '2025-05-21T17:05:00Z'
+    }
+  ];
+
+  // Sorts conversations based on ordder
+  const sortedConversations = [...conversations].sort((a, b) => {
+    const dateA = new Date(a.startedDate);
+    const dateB = new Date(b.startedDate);
+    return sortOrder === 'newest' ? dateB - dateA : dateA - dateB;
+  });
+
   const handleBack = () => {
     navigate(-1);
+  };
+
+  const handleConversationClick = (id) => {
+    console.log(`Viewing conversation ${id}`);
+    // This sshould route to the conversation page later.
   };
 
   return (
@@ -72,7 +114,7 @@ function TicketDetailsPage() {
             >
               ← Back
             </button>
-            <div className="text-center pt-8">  {/* Added padding top */}
+            <div className="text-center pt-8">
               <h1 className="text-4xl font-bold text-gray-800 mb-1">Ticket Details</h1>
             </div>
           </div>
@@ -98,6 +140,36 @@ function TicketDetailsPage() {
               </button>
             </div>
             <div className="border-b border-gray-200 my-6"></div>
+          </div>
+
+          {/* Conversations container */}
+          <div className="max-w-4xl mx-auto">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-2xl font-semibold text-blue-800">Conversation History</h2>
+              <div className="flex items-center">
+                <label htmlFor="sort-order" className="mr-2 text-sm text-gray-600">Sort by:</label>
+                <select
+                  id="sort-order"
+                  value={sortOrder}
+                  onChange={(e) => setSortOrder(e.target.value)}
+                  className="border border-gray-300 rounded-md px-3 py-1 text-sm"
+                >
+                  <option value="newest">Newest first</option>
+                  <option value="oldest">Oldest first</option>
+                </select>
+              </div>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {sortedConversations.map((conversation) => (
+                <ConversationCard
+                  key={conversation.id}
+                  number={conversation.number}
+                  startedDate={conversation.startedDate}
+                  endedDate={conversation.endedDate}
+                  onClick={() => handleConversationClick(conversation.id)}
+                />
+              ))}
+            </div>
           </div>
         </div>
       </div>
