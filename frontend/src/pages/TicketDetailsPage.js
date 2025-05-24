@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import TicketDetailsCard from '../components/TicketDetailsCard';
 import ConversationCard from '../components/ConversationCard';
+import ContentContainer from '../components/ContentContainer';
 
 function TicketDetailsPage() {
   const { ticketId } = useParams();
@@ -99,81 +100,77 @@ function TicketDetailsPage() {
   };
 
   const handleConversationClick = (id) => {
-    console.log(`Viewing conversation ${id}`);
-    // This sshould route to the conversation page later.
+    navigate(`/chatroom/${id}`);
+    // Routes to chatroom page with conversation ID || In real app, replaced with API call
   };
 
   return (
-    <div className="min-h-screen bg-blue-100">
-      <div className="max-w-6xl mx-auto p-6">
-        <div className="bg-white rounded-md shadow-md p-8">
-          <div className="relative mb-5">
-            <button
-              onClick={handleBack}
-              className="absolute -top-2 -left-2 w-20 h-10 bg-blue-800 hover:bg-blue-900 text-white rounded-xl flex items-center justify-center shadow-md text-sm whitespace-nowrap"
-            >
-              ← Back
-            </button>
-            <div className="text-center pt-8">
-              <h1 className="text-4xl font-bold text-gray-800 mb-1">Ticket Details</h1>
-            </div>
-          </div>
-
-          {/* Ticket Details Card */}
-          <div className="max-w-4xl mx-auto">
-            <TicketDetailsCard
-              ticket={ticket}
-              onViewDetails={() => {}}
-            />
-            <div className="flex justify-end gap-4 mt-6">
-              <button
-                className="w-32 h-12 bg-blue-800 hover:bg-blue-900 text-white rounded-xl flex items-center justify-center shadow-md text-sm whitespace-nowrap"
-                onClick={() => {/* Edit handler, add later */}}
-              >
-                Edit Ticket
-              </button>
-              <button
-                className="w-48 h-12 bg-blue-800 hover:bg-blue-900 text-white rounded-xl flex items-center justify-center shadow-md text-sm whitespace-nowrap"
-                onClick={() => {/* Cancel handler, add later */}}
-              >
-                Request Cancellation
-              </button>
-            </div>
-            <div className="border-b border-gray-200 my-6"></div>
-          </div>
-
-          {/* Conversations container */}
-          <div className="max-w-4xl mx-auto">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-2xl font-semibold text-blue-800">Conversation History</h2>
-              <div className="flex items-center">
-                <label htmlFor="sort-order" className="mr-2 text-sm text-gray-600">Sort by:</label>
-                <select
-                  id="sort-order"
-                  value={sortOrder}
-                  onChange={(e) => setSortOrder(e.target.value)}
-                  className="border border-gray-300 rounded-md px-3 py-1 text-sm"
-                >
-                  <option value="newest">Newest first</option>
-                  <option value="oldest">Oldest first</option>
-                </select>
-              </div>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {sortedConversations.map((conversation) => (
-                <ConversationCard
-                  key={conversation.id}
-                  number={conversation.number}
-                  startedDate={conversation.startedDate}
-                  endedDate={conversation.endedDate}
-                  onClick={() => handleConversationClick(conversation.id)}
-                />
-              ))}
-            </div>
-          </div>
+    <ContentContainer>
+      <div className="relative mb-5">
+        <button
+          onClick={handleBack}
+          className="absolute -top-2 -left-2 w-20 h-10 bg-blue-800 hover:bg-blue-900 text-white rounded-xl flex items-center justify-center shadow-md text-sm whitespace-nowrap"
+        >
+          ← Back
+        </button>
+        <div className="text-center pt-8">
+          <h1 className="text-4xl font-bold text-gray-800 mb-1">Ticket Details</h1>
         </div>
       </div>
-    </div>
+
+      {/* Ticket Details Card */}
+      <div className="max-w-4xl mx-auto">
+        <TicketDetailsCard
+          ticket={ticket}
+          onViewDetails={() => {}}
+        />
+        <div className="flex justify-end gap-4 mt-6">
+          <button
+            className="w-32 h-12 bg-blue-800 hover:bg-blue-900 text-white rounded-xl flex items-center justify-center shadow-md text-sm whitespace-nowrap"
+            onClick={() => {/* Edit handler, add later */}}
+          >
+            Edit Ticket
+          </button>
+          <button
+            className="w-48 h-12 bg-blue-800 hover:bg-blue-900 text-white rounded-xl flex items-center justify-center shadow-md text-sm whitespace-nowrap"
+            onClick={() => {/* Cancel handler, add later */}}
+          >
+            Request Cancellation
+          </button>
+        </div>
+        <div className="border-b border-gray-200 my-6"></div>
+      </div>
+
+      {/* Conversations container */}
+      <div className="max-w-4xl mx-auto">
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-2xl font-semibold text-blue-800">Conversation History</h2>
+          <div className="flex items-center">
+            <label htmlFor="sort-order" className="mr-2 text-sm text-gray-600">Sort by:</label>
+            <select
+              id="sort-order"
+              value={sortOrder}
+              onChange={(e) => setSortOrder(e.target.value)}
+              className="border border-gray-300 rounded-md px-3 py-1 text-sm"
+            >
+              <option value="newest">Newest first</option>
+              <option value="oldest">Oldest first</option>
+            </select>
+          </div>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {sortedConversations.map((conversation) => (
+            <ConversationCard
+              key={conversation.id}
+              number={conversation.number}
+              startedDate={conversation.startedDate}
+              endedDate={conversation.endedDate}
+              onClick={() => handleConversationClick(conversation.id)}
+            />
+          ))}
+        </div>
+      </div>
+    </ContentContainer>
   );
 }
 
