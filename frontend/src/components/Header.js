@@ -1,5 +1,6 @@
 import React from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
+import logo from '../assets/Logo-Bianca-Clinic-Timeless-Beauty-Blue-1270x812.png';
 
 function Header({ isAuthenticated = false }) {
   const navigate = useNavigate();
@@ -82,9 +83,9 @@ function Header({ isAuthenticated = false }) {
       <div className="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
         <div onClick={() => navigate('/')} className="cursor-pointer">
           <img 
-            src="/api/placeholder/200/80" 
-            alt="Bianca Aesthetic Clinic" 
-            className="h-12" 
+            src={logo}
+            alt="Bianca Aesthetic Clinic"
+            className="h-12"
           />
         </div>
         
