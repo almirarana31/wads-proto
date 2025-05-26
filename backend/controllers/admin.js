@@ -126,19 +126,14 @@ export const getTickets = async (req, res) => {
         attributes: [['id', 'ticket_id'], 'subject', 'createdAt'],
         raw: true,
         // if search exists, spread the where clause into this query
-        ...(search && // can probably optimize the writing of this section of code, but will try to see if this version works first
-                {where: isNaN(search) ? 
-                    {[Op.or]: // if search is not a number, stick to username and email only
+        ...(search && 
+                    {[Op.or]: 
                         [{subject: {[Op.substring]: search}},
                          {'$User.username$': {[Op.substring]: search}},
-                         {'$User.email$': {[Op.substring]: search}}
-                        ]
-                    } :
-                {[Op.or]: [{subject: {[Op.substring]: search}}, // if search is a number, include the search to id
-                         {'$User.username$': {[Op.substring]: search}},
                          {'$User.email$': {[Op.substring]: search}},
-                         {id: parseInt(search)}
-                        ]} })
+                         ...(!isNaN(search) && [{id: parseInt(search)}]) // if search is a number, extend search to id
+                        ]
+                    })
     });
         return res.status(200).json(result);
     } catch (error) {
@@ -150,59 +145,36 @@ export const getTickets = async (req, res) => {
 export const getStaffPerformance = async (req, res) => {
     try {
         // get all userID (staffID) where email matches
-        const allStaffID = await User.findAll({
-            raw: true,
-            attributes: ['id', 'email'],
-            includes: [{
-                model: Staff,
-                attributes: ['email']
-            }],
-            where: {
-                email: sequelize.col('Staff.email')
-            }
-        });
+        // const allStaffId = await Staff.findAll({
+        //     raw: true,
+        //     attributes: ['id'],
+        //     includes: [{
+        //         model: Ticket,
+        //         attributes: ['status_id'],
+        //         includes: [{
+        //             model: Status,
+        //             attributes: ['id', 'name']
+        //         }]
+        //     }]
+        // })
 
-        // find all tickets where staffID === userID in user table 
-        // now have username x ticket
-        const results = await Ticket.findAll({
-            include: [{
-                model: Status,
-                attributes: ['name'],
-                where: {name: {[Op.ne]: "In Progress"}}
-            },{
-                model: Staff,
-                attributes: ['email']
-            },
-            {
-                model: User,
-                attributes: ['username', 'id']
-            }],
-            attributes: ['id'],
-            where: {
-                '%User.id%': sequelize.col('staffID') 
-            },
-            raw: true,
-            attributes: [[sequelize.fn('COUNT', 'Status.name'), 'count']],
-            group: ['Status.name']
-        })
-
-        let assigned = 0;
-        let resolved = 0;
-        for (let i = 0; i < results.length; i++) {
-            if (results[i]['Status.name'] != "Resolved") {
-                assigned += results[i].count
-            } else {
-                resolved += results[i].count
-            }
-        }
-
-        const division = {
-                assigned: assigned,
-                resolved: resolved,
-                resolution_rate: (resolved/assigned) * 100
-        }
-
-        return res.status(200).json(division);
+        const [results] = await sequelize.query(
+            `
+            SELECT u.username AS staff_name,
+            COUNT (t.id) AS assigned,
+            SUM (CASE WHEN t.status_id = 3 THEN 1 ELSE 0 END) AS resolved,
+            ROUND(
+            CASE 
+                WHEN COUNT (t.id) = 0 THEN 0
+                ELSE SUM (CASE WHEN t.status_id = 3 THEN 1 ELSE 0 END) * 100.0/COUNT (t.id)
+            END, 2) AS resolution_rate
+            FROM "user" u 
+            INNER JOIN "staff" s ON u.staff_id = s.id
+            LEFT JOIN "ticket" t ON s.id = t.staff_id
+            GROUP BY u.username
+            `
+        );
+        return res.status(200).json(results);
     } catch (error) {
         return res.status(500).json({message: error.message})
     }
