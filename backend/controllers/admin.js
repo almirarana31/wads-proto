@@ -144,20 +144,6 @@ export const getTickets = async (req, res) => {
 // staff performance a.k.a.
 export const getStaffPerformance = async (req, res) => {
     try {
-        // get all userID (staffID) where email matches
-        // const allStaffId = await Staff.findAll({
-        //     raw: true,
-        //     attributes: ['id'],
-        //     includes: [{
-        //         model: Ticket,
-        //         attributes: ['status_id'],
-        //         includes: [{
-        //             model: Status,
-        //             attributes: ['id', 'name']
-        //         }]
-        //     }]
-        // })
-
         const [results] = await sequelize.query(
             `
             SELECT u.username AS staff_name,
