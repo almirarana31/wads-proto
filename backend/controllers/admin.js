@@ -5,6 +5,7 @@ import dotenv from 'dotenv';
 import sessionStorage from 'sessionstorage';
 import sequelize from '../config/sequelize.js';
 import { Op, Sequelize } from 'sequelize';
+import { raw } from 'express';
 
 // dash board begins here
 export const getAdminUsername = async (req, res) => {
@@ -33,6 +34,46 @@ export const getStatusSummary = async (req, res) => {
         return res.status(200).json(result);
     } catch (error) {
         return res.status(500).json({message: error.message});
+    }
+};
+
+// get category
+export const getCategory = async (req, res) => {
+    try {
+        const categories = await Category.findAll({
+            raw: true,
+            attributes: ['id', 'name']
+        })
+        return res.status(200).json(categories)
+    } catch (error) {
+        return res.status(500).json({message:error.message})
+    }
+}
+
+// get priority
+export const getPriority = async (req, res) => {
+    try {
+        const priorities = await Priority.findAll({
+            raw: true,
+            attributes: ['id', 'name']
+        })
+        return res.status(200).json(priorities)
+    } catch (error) {
+        return res.status(500).json({message:error.message})
+    }
+};
+
+// get status
+export const getStatus = async (req, res) => {
+    try {
+        const statuses = await Status.findAll({
+            raw: true,
+            attributes: ['id', 'name']
+        })
+
+        return res.status(200).json(statuses)
+    } catch(error) {
+        return res.status(500).json({message:error.message})
     }
 };
 
@@ -112,6 +153,31 @@ export const getStaffPerformance = async (req, res) => {
 
 // ticket actions start here
 
+// update ticket fields
+export const updateField = async (req, res) => {
+    // get updated fields (only one will have a value at a time)
+    const {category_id, priority_id, status_id} = req.body
+    
+    // get the selected ticket by route params
+    const ticket_id = req.params.id
+    try {
+        // update 
+        const ticket = await Ticket.update({
+            ...(category_id && {category_id: category_id}),
+            ...(priority_id && {priority_id: priority_id}),
+            ...(status_id && {status_id: status_id})
+        }, {
+            where: {
+                id: ticket_id
+            },
+            raw: true
+        });
+        return res.status(200).json(ticket);
+    } catch (error) {
+        return res.status(500).json({message: error.message});
+    }
+};
+
 // get staff (used for assigning)
 export const searchStaff = async (req, res) => {
     const id = req.params.ticket_id
@@ -154,7 +220,7 @@ export const searchStaff = async (req, res) => {
 // assign status to a priority to a ticket
 export const assignStatus = async (req, res) => {
     // get ticket id from route parameter
-
+    const ticket_id = req.params.ticket_id
     try {
 
     } catch (error) {
