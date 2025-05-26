@@ -1,19 +1,26 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 
-function ForgotPasswordPage() {
+function ForgotPasswordPage() {  
   const [email, setEmail] = useState('');
   const [submitted, setSubmitted] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [message, setMessage] = useState('');
 
   const handleEmailChange = (e) => {
     setEmail(e.target.value);
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log('Reset password for:', email);
-    // In a real app, you would send a password reset request to your backend
-    setSubmitted(true);
+    // Mock functionality for UI development
+    if (email) {
+      setMessage('If an account with that email exists, a password reset link has been sent (mock).');
+      setSubmitted(true);
+    } else {
+      setError('Please enter your email address.');
+    }
   };
 
   if (submitted) {
@@ -50,7 +57,17 @@ function ForgotPasswordPage() {
           <p className="text-gray-600 text-center mb-6 sm:mb-8">
             Enter your email address below and we'll send you a link to reset your password
           </p>
-          
+            {error && (
+            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+              {error}
+            </div>
+          )}
+            {message && (
+            <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4">
+              {message}
+            </div>
+          )}
+
           <form onSubmit={handleSubmit}>
             <div className="mb-6">
               <label htmlFor="email" className="block text-blue-700 mb-2">Email Address:</label>
@@ -67,9 +84,10 @@ function ForgotPasswordPage() {
             <div className="flex justify-center mb-4">
               <button
                 type="submit"
-                className="bg-blue-700 hover:bg-blue-800 text-white py-3 px-8 rounded-md text-lg font-medium w-full sm:w-auto transition-colors"
+                disabled={loading}
+                className={`bg-blue-700 hover:bg-blue-800 text-white py-3 px-8 rounded-md text-lg font-medium w-full sm:w-auto transition-colors ${loading ? 'opacity-70 cursor-not-allowed' : ''}`}
               >
-                Reset Password
+                {loading ? 'Sending...' : 'Reset Password'}
               </button>
             </div>
             
