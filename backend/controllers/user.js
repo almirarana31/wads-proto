@@ -72,11 +72,18 @@ async function getCreds(user_email, password) {
         }
     })
 
-    if (user) {
-        return user.id
+    if (!user) {
+        return false
     }
 
-    return false
+    // check password validity
+    const validPass = await bcrypt.compare(password, user.password);
+
+    if (!validPass) {
+        return false
+    }
+
+    return user.id
 };
 
 function createRememberMeToken(payload) {

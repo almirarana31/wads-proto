@@ -6,48 +6,7 @@ import sessionStorage from 'sessionstorage';
 import sequelize from '../config/sequelize.js';
 import { Op, Sequelize } from 'sequelize';
 
-// get category
-const getCategory = async (body) => {
-    let result = body;
-
-    // getting category id to name mapping
-    const categories = await Category.findAll({
-        attributes: [
-            'name'
-        ]
-    });
-
-    for (let i = 0; i < body.length; i++) {
-        // get category id
-        const temp = body[i].category;
-        // set status as status name where index = id (- 1); status is always +1 of index
-        result[i].category = categories[temp - 1].name;
-    };
-
-    return result;
-};
-
-// get status
-const getStatus = async (body) => {
-    let result = body;
-
-    // getting status id to name mapping
-    const statuses = await Status.findAll({
-        attributes: [
-            'name'
-        ],
-        raw: true
-    });
-
-    for (let i = 0; i < body.length; i++) {
-            // get status id
-            const temp = body[i].status; 
-            // set status as status name where index = id (- 1); status is always +1 of index
-            result[i].status = statuses[temp - 1].name;
-        }
-    return result;
-};
-
+// dash board begins here
 export const getAdminUsername = async (req, res) => {
     const {username} = req.user;
     try {
@@ -76,26 +35,6 @@ export const getStatusSummary = async (req, res) => {
         return res.status(500).json({message: error.message});
     }
 };
-
-// i don't remember why i needed this????
-export const getCategorySummary = async (req, res) => {
-        try {
-        // get count status from the ticket table
-        let result = await Ticket.findAll({
-        attributes: [
-            'category',
-            [sequelize.fn('COUNT', sequelize.col('category')), 'count']
-        ],
-        group: ['category'],
-        raw: true
-        });
-
-        result = await getCategory(result);
-        return res.status(200).json(result);
-    } catch (error) {
-        return res.status(500).json({message: error.message});
-    }
-}
 
 // get ticket join
 export const getTickets = async (req, res) => {
@@ -165,3 +104,5 @@ export const getStaffPerformance = async (req, res) => {
         return res.status(500).json({message: error.message})
     }
 };
+
+// dashboard ends here
