@@ -14,6 +14,8 @@ Staff.belongsTo(Job, {foreignKey: 'job_id'})
 
 // User
 User.belongsTo(Staff, {foreignKey: 'staff_id'})
+Staff.hasOne(User, {foreignKey: 'staff_id'});
+
 // Ticket 
 Ticket.belongsTo(User, {foreignKey: 'user_id', as: 'User'})
 Ticket.belongsTo(Staff, {foreignKey: 'staff_id', as: 'Staff'})

@@ -65,14 +65,17 @@ export const getTickets = async (req, res) => {
         attributes: [['id', 'ticket_id'], 'subject', 'createdAt'],
         raw: true,
         // if search exists, spread the where clause into this query
-        ...(search && 
+        where: {
+            ...(search && 
                     {[Op.or]: 
                         [{subject: {[Op.substring]: search}},
                          {'$User.username$': {[Op.substring]: search}},
                          {'$User.email$': {[Op.substring]: search}},
-                         ...(!isNaN(search) && [{id: parseInt(search)}]) // if search is a number, extend search to id
+                         ...(!isNaN(search) ? [{id: parseInt(search)}] : []) // if search is a number, extend search to id
                         ]
-                    })
+                    })  
+        }
+        
     });
         return res.status(200).json(result);
     } catch (error) {
@@ -80,7 +83,7 @@ export const getTickets = async (req, res) => {
     }
 };
 
-// staff performance a.k.a.
+// staff performance
 export const getStaffPerformance = async (req, res) => {
     try {
         const [results] = await sequelize.query(
@@ -106,3 +109,52 @@ export const getStaffPerformance = async (req, res) => {
 };
 
 // dashboard ends here
+
+// get staff (used for assigning)
+export const searchStaff = async (req, res) => {
+    const id = req.params.ticket_id
+    const search = req.query.search
+    try {
+        // get ticket
+        const ticket = await Ticket.findByPk(id, {raw: true});
+        
+        // get ticket category
+        const category_id = ticket.category_id;
+
+        // get all staff whose field matches the category id from the given ticket
+        const staff = await Staff.findAll({
+            where: {
+                field_id: category_id
+            },
+            include: [{
+                model: User,
+                attributes: ['username'],
+                where:{ 
+                    ...(search && 
+                            {[Op.or]:
+                        [
+                            {username: {[Op.substring]: search}},
+                            ...(!isNaN(search) ? [{staff_id:  parseInt(search)}] : [])
+                        ]
+                    }
+                    )
+                } 
+            }],
+            raw: true
+        });
+
+        return res.status(200).json(staff)
+    } catch (error) {
+        return res.status(500).json({message: error.message})
+    }
+}
+
+// assign staff to a ticket
+export const assignStaff = async (req, res) => {
+    // 
+    try {
+        
+    } catch (error) {
+        
+    };
+}
