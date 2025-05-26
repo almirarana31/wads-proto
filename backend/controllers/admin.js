@@ -110,6 +110,8 @@ export const getStaffPerformance = async (req, res) => {
 
 // dashboard ends here
 
+// ticket actions start here
+
 // get staff (used for assigning)
 export const searchStaff = async (req, res) => {
     const id = req.params.ticket_id
@@ -149,12 +151,37 @@ export const searchStaff = async (req, res) => {
     }
 }
 
+// assign status to a priority to a ticket
+export const assignStatus = async (req, res) => {
+    // get ticket id from route parameter
+
+    try {
+
+    } catch (error) {
+
+    }
+}
+
 // assign staff to a ticket
 export const assignStaff = async (req, res) => {
-    // 
+    // get ticket id from route parameter
+    const ticket_id = req.params.ticket_id
+    // get selected staff info from the request body
+    const {id} = req.body;
     try {
-        
+        // update the staff assigned to the ticket and the status
+        const ticket = await Ticket.update({
+            staff_id: id,
+            status_id: 2 // update to be in progress
+        }, {
+            where: {
+                id: ticket_id
+            },
+            raw: true
+        }
+    );
+        return res.status(200).json(ticket)
     } catch (error) {
-        
+        return res.status(500).json({message: error.message})
     };
 }

@@ -1,5 +1,5 @@
 import express from 'express';
-import { getStatusSummary, getTickets, getAdminUsername, getStaffPerformance, searchStaff } from '../controllers/admin.js';
+import { getStatusSummary, getTickets, getAdminUsername, getStaffPerformance, searchStaff, assignStaff } from '../controllers/admin.js';
 import { authN, adminAuthZ } from '../middleware/auth.js';
 
 const router = express.Router();
@@ -19,6 +19,8 @@ router.get('/get-tickets', getTickets);
 router.get('/get-staff-performance', getStaffPerformance);
 
 router.get('/get-staff/:ticket_id', searchStaff);
-//
+
+// ticket routes
+router.patch('/assign-staff/:ticket_id', assignStaff)
 
 export default router;
