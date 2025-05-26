@@ -186,7 +186,7 @@ export const logIn = async (req, res) => {
                 where: {
                     id: login
                 },
-                attributes: ['id', 'staff_id', 'email'],
+                attributes: ['id', 'staff_id', 'email', 'username'],
                 raw: true
             });
 

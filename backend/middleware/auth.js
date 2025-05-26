@@ -1,4 +1,5 @@
 import jwt from 'jsonwebtoken';
+import {Staff} from '../models/index.js';
 
 export const authN = (req, res, next) => {
     try {
@@ -17,17 +18,35 @@ export const authN = (req, res, next) => {
     }
 };
 
-export const adminAuthZ = (req, res, next) => {
+export const adminAuthZ = async (req, res, next) => {
     try {
         // get the token from the header if exists => bearer {token}
         const token = req.headers.authorization?.split(" ")[1];
 
+        // check for access token existence
+        if(!token) {
+            return res.status(401).json({message: "Access token missing"});
+        }
+    
         // verify token
-        jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, user) => {
-            if (user.role_code != "ADM") return res.status(403).message
+        const user = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
+        const {staff_id} = user;
 
-            next();
-        });
+        // if not a staff, reject
+        if (staff_id == 0) {
+            return res.status(403).json({message: "Access Denied"});
+        }
+
+        // get staff info 
+        const staff = await Staff.findByPk(staff_id, {raw: true})
+
+        if (staff.role_id != 2) {
+            return res.status(403).json({message: "Access Denied"});
+        }
+        
+        req.user = user; // user contains, uid, sid, email, uname
+        req.admin = staff; // admin contains all admin fields
+        next();
     } catch (error) {
         return res.status(500).json({message: error.message});
     }

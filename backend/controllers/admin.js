@@ -49,21 +49,10 @@ const getStatus = async (body) => {
 };
 
 export const getAdminUsername = async (req, res) => {
-    const adminId = req.params.id;
+    const {username} = req.user;
     try {
-        const token = req.headers.authorization?.split(" ")[1];
-        const {id} = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
-        if (adminId != id) return res.status(403).json({message: "Forbidden Access"});
-
-        const adminUsername = await User.findOne({
-            attributes: ['username'],
-            where: {
-                id : adminId
-            },
-            raw: true
-        });
-
-        return res.status(200).json(adminUsername);
+        // admin info attached to request body through the authZ
+        return res.status(200).json(username);
     } catch (error) {
         return res.status(500).json({message: error.message});
     };
@@ -72,16 +61,16 @@ export const getAdminUsername = async (req, res) => {
 export const getStatusSummary = async (req, res) => {
     try {
         // get count status from the ticket table
-        let result = await Ticket.findAll({
-        attributes: [
-            'status',
-            [sequelize.fn('COUNT', sequelize.col('status')), 'count']
-        ],
-        group: ['status'],
-        raw: true
+        const result = await Ticket.findAll({
+            include: [{
+                model: Status,
+                attributes: []
+            }],
+            group: ['Status.name'],
+            attributes: ['Status.name', [sequelize.fn('COUNT', sequelize.col('Status.name')), 'count']],
+            raw: true
         });
 
-        result = await getStatus(result);
         return res.status(200).json(result);
     } catch (error) {
         return res.status(500).json({message: error.message});
@@ -119,36 +108,33 @@ export const getTickets = async (req, res) => {
         const result = await Ticket.findAll({
         include: [{
             model: Category,
-            where: category && category.toLowerCase() !== 'all' ? {name: category} : null,
+            where: category && category.toLowerCase() !== 'all' ? {name: category} : null, // if category exists in query and isn't all, sort by category
             attributes: ['name']
         }, {
             model: Status,
-            where: status && status.toLowerCase() !== 'all' ? {name: status} : null,
+            where: status && status.toLowerCase() !== 'all' ? {name: status} : null,    // same as category
             attributes: ['name'],
         }, {
             model: Priority,
-            where: priority && priority.toLowerCase() != 'all' ? {name: priority} : null,
+            where: priority && priority.toLowerCase() != 'all' ? {name: priority} : null, // same as category
             attributes: ['name'] 
         }, {
             model: User,
             as: 'User',
-            attributes: [['username', 'username'], 'email']
-        }, {
-            model: User,
-            as: 'Staff',
-            attributes: [['username', 'staffname'], ['id', 'staffID']]
+            attributes: ['username', 'email']
         }],
-        attributes: ['id', 'staffID', 'subject', 'createdAt'],
+        attributes: [['id', 'ticket_id'], 'subject', 'createdAt'],
         raw: true,
-        ...(search && 
+        // if search exists, spread the where clause into this query
+        ...(search && // can probably optimize the writing of this section of code, but will try to see if this version works first
                 {where: isNaN(search) ? 
-                    {[Op.or]: 
+                    {[Op.or]: // if search is not a number, stick to username and email only
                         [{subject: {[Op.substring]: search}},
                          {'$User.username$': {[Op.substring]: search}},
                          {'$User.email$': {[Op.substring]: search}}
                         ]
                     } :
-                {[Op.or]: [{subject: {[Op.substring]: search}},
+                {[Op.or]: [{subject: {[Op.substring]: search}}, // if search is a number, include the search to id
                          {'$User.username$': {[Op.substring]: search}},
                          {'$User.email$': {[Op.substring]: search}},
                          {id: parseInt(search)}

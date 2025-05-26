@@ -12,7 +12,7 @@ router.use(authN, adminAuthZ);
 
 router.get('/get-status-summary', getStatusSummary);
 
-router.get('/get-username/:id', getAdminUsername);
+router.get('/get-username', getAdminUsername);
 
 router.get('/get-tickets', getTickets);
 
