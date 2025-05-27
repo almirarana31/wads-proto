@@ -1,5 +1,5 @@
 import express from 'express';
-import { signUp, activate, logIn, signOut, forgetPassword, confirmPassReset} from '../controllers/user.js';
+import { signUp, activate, logIn, signOut, forgetPassword, confirmPassReset, getUserTickets } from '../controllers/user.js';
 import { userAuthZ } from '../middleware/auth.js'; // to be used for user-resource fetching 
 
 const router = express.Router();
@@ -18,6 +18,6 @@ router.post('/forget-password', forgetPassword);
 router.get('/confirm-password-reset/:token', confirmPassReset);
 
 // user dashboard -- use userAuthZ middleware
-
+router.get('/tickets', userAuthZ, getUserTickets);
 
 export default router;

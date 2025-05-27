@@ -1,6 +1,6 @@
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
-import { Staff, User} from '../models/index.js';
+import { Staff, User, Ticket} from '../models/index.js';
 import sendOTP from './otp.js';
 import { logAudit } from './audit.js';
 
@@ -341,4 +341,19 @@ export const submitTicket = async (req, res) => {
     }
 };
 
-// 
+// gets user ticket details
+export const getUserTickets = async (req, res) => {
+    try {
+        const userId = req.user.id; // req.user is set by userAuthZ middleware
+
+        const tickets = await Ticket.findAll({
+            where: { user_id: userId },
+            attributes: ['id', 'subject', 'description', 'category_id', 'createdAt'],
+            order: [['createdAt', 'DESC']]
+        });
+
+        res.status(200).json({ tickets });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
