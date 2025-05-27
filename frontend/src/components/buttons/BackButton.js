@@ -6,10 +6,9 @@ const BackButton = ({ onClick, className = '' }) => {
     <button
       onClick={onClick}
       className={`
-        w-20 h-10 bg-blue-800 hover:bg-blue-900 
-        text-white rounded-xl flex items-center 
-        justify-center shadow-md text-sm 
-        whitespace-nowrap transition-colors
+        px-4 py-2 bg-blue-600 text-white rounded-md
+        hover:bg-blue-700 transition-colors
+        disabled:opacity-50 disabled:cursor-not-allowed
         ${className}
       `}
     >

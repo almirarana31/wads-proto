@@ -1,11 +1,7 @@
 import React from 'react';
 
-/**
- * Standardized stat/metric display component
- * For displaying large numbers and statistics with proper visual hierarchy
- */
 function StatText({ value, label, className = '', valueColor = 'gray-darker', labelColor = 'gray', size = 'large', ...props }) {
-  // Size variants for different stat displays
+  // size variants
   const sizeVariants = {
     small: {
       value: 'text-2xl font-bold',
@@ -21,7 +17,7 @@ function StatText({ value, label, className = '', valueColor = 'gray-darker', la
     }
   };
 
-  // Color variants for values
+  // color variants for values
   const valueColorClasses = {
     'gray': 'text-gray-600',
     'gray-dark': 'text-gray-700',
@@ -35,7 +31,7 @@ function StatText({ value, label, className = '', valueColor = 'gray-darker', la
     'white': 'text-white'
   };
 
-  // Color variants for labels
+  // color variants for labels
   const labelColorClasses = {
     'gray': 'text-gray-600',
     'gray-dark': 'text-gray-700',

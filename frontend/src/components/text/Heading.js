@@ -1,13 +1,8 @@
 import React from 'react';
-
-/**
- * Standardized heading component for consistent typography hierarchy
- * Supports H1, H2, H3, H4, H5, H6 with predefined styling
- */
 function Heading({ level = 1, children, className = '', color = 'gray', center = false, ...props }) {
   const baseClasses = 'font-bold';
   
-  // Size classes based on heading level
+  // size classes based on heading level
   const sizeClasses = {
     1: 'text-3xl md:text-4xl',
     2: 'text-2xl',
@@ -17,7 +12,7 @@ function Heading({ level = 1, children, className = '', color = 'gray', center =
     6: 'text-sm'
   };
 
-  // Color variants
+  // color variants
   const colorClasses = {
     gray: 'text-gray-800',
     blue: 'text-blue-800',

@@ -1,13 +1,9 @@
 import React from 'react';
 
-/**
- * Standardized subheading component for section headings
- * Uses semi-bold weight with blue accent color by default
- */
 function Subheading({ children, className = '', color = 'blue', size = 'xl', center = false, ...props }) {
   const baseClasses = 'font-semibold';
   
-  // Size variants
+  // size variants
   const sizeClasses = {
     'sm': 'text-sm',
     'base': 'text-base',
@@ -16,7 +12,7 @@ function Subheading({ children, className = '', color = 'blue', size = 'xl', cen
     '2xl': 'text-2xl'
   };
 
-  // Color variants
+  // color variants
   const colorClasses = {
     blue: 'text-blue-800',
     gray: 'text-gray-700',

@@ -1,11 +1,7 @@
 import React from 'react';
 
-/**
- * Standardized label component for forms
- * Provides consistent styling for form labels
- */
 function Label({ children, className = '', color = 'blue', size = 'base', weight = 'normal', required = false, htmlFor, ...props }) {
-  // Weight variants
+  // weight variants
   const weightClasses = {
     normal: 'font-normal',
     medium: 'font-medium',
@@ -13,7 +9,7 @@ function Label({ children, className = '', color = 'blue', size = 'base', weight
     bold: 'font-bold'
   };
 
-  // Size variants
+  // size variants
   const sizeClasses = {
     'xs': 'text-xs',
     'sm': 'text-sm',
@@ -21,7 +17,7 @@ function Label({ children, className = '', color = 'blue', size = 'base', weight
     'lg': 'text-lg'
   };
 
-  // Color variants
+  // color variants
   const colorClasses = {
     blue: 'text-blue-700',
     gray: 'text-gray-700',

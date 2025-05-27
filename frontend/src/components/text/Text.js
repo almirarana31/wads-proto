@@ -1,11 +1,7 @@
 import React from 'react';
 
-/**
- * Standardized paragraph/body text component
- * Provides consistent text styling for body content
- */
 function Text({ children, className = '', color = 'gray', size = 'base', weight = 'normal', center = false, ...props }) {
-  // Weight variants
+  // weight variants
   const weightClasses = {
     light: 'font-light',
     normal: 'font-normal',
@@ -14,7 +10,7 @@ function Text({ children, className = '', color = 'gray', size = 'base', weight 
     bold: 'font-bold'
   };
 
-  // Size variants
+  // size variants
   const sizeClasses = {
     'xs': 'text-xs',
     'sm': 'text-sm',
@@ -26,7 +22,7 @@ function Text({ children, className = '', color = 'gray', size = 'base', weight 
     '4xl': 'text-4xl'
   };
 
-  // Color variants
+  // color variants
   const colorClasses = {
     gray: 'text-gray-600',
     'gray-dark': 'text-gray-700',

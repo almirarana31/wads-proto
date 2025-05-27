@@ -1,9 +1,4 @@
 import React from 'react';
-
-/**
- * Standardized page title component
- * Large, prominent heading for page titles with optional subtitle
- */
 function PageTitle({ title, subtitle, className = '', titleColor = 'gray', subtitleColor = 'gray', center = true, ...props }) {
   const titleClasses = `text-3xl md:text-4xl font-bold ${titleColor === 'gray' ? 'text-gray-800' : `text-${titleColor}-800`} ${center ? 'text-center' : ''} mb-1`;
   const subtitleClasses = `${subtitle ? 'text-base md:text-lg' : ''} ${subtitleColor === 'gray' ? 'text-gray-600' : `text-${subtitleColor}-600`} ${center ? 'text-center' : ''} mb-6 md:mb-8`;

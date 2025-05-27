@@ -1,11 +1,6 @@
 import React from 'react';
-
-/**
- * Standardized small text component for meta information, timestamps, etc.
- * Uses smaller font sizes and lighter colors
- */
 function SmallText({ children, className = '', color = 'gray-medium', size = 'sm', weight = 'normal', center = false, ...props }) {
-  // Weight variants
+  // weight variants
   const weightClasses = {
     light: 'font-light',
     normal: 'font-normal',
@@ -13,14 +8,14 @@ function SmallText({ children, className = '', color = 'gray-medium', size = 'sm
     semibold: 'font-semibold'
   };
 
-  // Size variants (typically smaller)
+  // size variants
   const sizeClasses = {
     'xs': 'text-xs',
     'sm': 'text-sm',
     'base': 'text-base'
   };
 
-  // Color variants for small/meta text
+  // color variants for small/meta text
   const colorClasses = {
     'gray-light': 'text-gray-400',
     'gray-medium': 'text-gray-500',

@@ -7,18 +7,18 @@ function Header({ isAuthenticated = false, userRole }) {
   const location = useLocation();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   
-  // Check if a route is active
+  //check if a route is active
   const isActive = (path) => {
     return location.pathname === path;
   };
   
-  // Get active link class
+  // get active link class
   const getActiveLinkClass = (path) => {
     return isActive(path) 
       ? "text-blue-800 font-bold" 
       : "text-blue-700 hover:text-blue-600";
   };
-    // Authenticated user navigation
+    // authenticated user navigation
   const AuthenticatedNav = () => (
     <nav className={`${isMenuOpen ? 'flex' : 'hidden'} md:flex flex-col md:flex-row gap-4 md:gap-8 w-full md:w-auto items-center`}>
       <Link 
@@ -82,7 +82,7 @@ function Header({ isAuthenticated = false, userRole }) {
     </nav>
   );
   
-  // Guest user navigation
+  // guest user navigation
   const GuestNav = () => (
     <nav className={`${isMenuOpen ? 'flex' : 'hidden'} md:flex flex-col md:flex-row gap-4 md:gap-8 w-full md:w-auto items-center`}>
       <Link 
@@ -109,7 +109,7 @@ function Header({ isAuthenticated = false, userRole }) {
     </nav>
   );
 
-  // Hamburger menu button
+  // hamburger menu button
   const HamburgerButton = () => (
     <button
       className="md:hidden p-2 focus:outline-none"

@@ -8,7 +8,7 @@ function AssignStaffModal({ isOpen, onClose, onAssign, staffList, ticketId }) {
   const [selectedStaff, setSelectedStaff] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
 
-  // Filter staff based on search query
+  // filter staff based on search query
   const filteredStaff = useMemo(() => {
     if (!searchQuery) return staffList;
     
@@ -38,19 +38,11 @@ function AssignStaffModal({ isOpen, onClose, onAssign, staffList, ticketId }) {
   };
 
   return (
-    <Modal
-      isOpen={isOpen}
-      onClose={handleClose}
-      title={`Assign Ticket ${ticketId}`}
-      actions={
-        <>
+    <Modal isOpen={isOpen} onClose={handleClose} title={`Assign Ticket ${ticketId}`} actions={ <>
           <SecondaryButton onClick={handleClose}>
             Cancel
           </SecondaryButton>
-          <PrimaryButton 
-            onClick={handleAssign}
-            disabled={!selectedStaff}
-          >
+          <PrimaryButton onClick={handleAssign} disabled={!selectedStaff}>
             Assign Ticket
           </PrimaryButton>
         </>

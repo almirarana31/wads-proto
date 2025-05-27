@@ -4,7 +4,8 @@ import { Text, SmallText } from './text';
 function ChatBubble({ message, sender = 'user', timestamp, showSender = true }) {
   const isUser = sender === 'user';
 
-  return (    <div className={`mb-2 flex flex-col ${isUser ? 'items-end' : 'items-start'}`}>
+  return (    
+  <div className={`mb-2 flex flex-col ${isUser ? 'items-end' : 'items-start'}`}>
       {showSender && (
         <SmallText 
           weight="semibold" 
