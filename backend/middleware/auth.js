@@ -110,18 +110,19 @@ export const userAuthZ = async (req, res, next) => {
 
     try {
         const token = req.headers.authorization?.split(" ")[1];
+        const user = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
 
         if (!token) {
             return res.status(403).json({message: "Forbidden Access"})
         }
 
-        const {id, email, username, is_guest} = token;
+        const {id, email, username, is_guest} = user;
 
         if(is_guest) {
             return res.status(403).json({message: "Forbidden Access"})
         }
 
-        req.user_id = id
+        req.user = user // id, email, username, is_guest
 
         return next();
         // unlikely to occur, will be net for outliers
