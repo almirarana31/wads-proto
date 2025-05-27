@@ -5,6 +5,7 @@ import userRoutes from './routes/user_routes.js';
 import defaultQueries from './routes/defaultQueries.js';
 import adminRoutes from './routes/admin_routes.js';
 import ticketRoutes from './routes/ticket_routes.js';
+import auditRoutes from './routes/audit_routes.js';
 import { User, Ticket, Role, Category, Priority, Status } from './models/index.js'
 // import { addFK } from './queries.js';
 
@@ -20,6 +21,8 @@ app.use('/api/user', userRoutes);
 app.use('/api/admin', adminRoutes);
 
 app.use('/api/ticket', ticketRoutes);
+
+app.use('/api/audit', auditRoutes);
 
 // remove once ran ONCE
 app.use('/api', defaultQueries);

@@ -2,6 +2,7 @@ import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import { Staff, User} from '../models/index.js';
 import sendOTP from './otp.js';
+import { logAudit } from './audit.js';
 
 // start with the login/sign up
 
@@ -168,10 +169,17 @@ export const activate = async (req, res) => {
             username: username,
             password: password,
             email: email,
-            staff_id: staff_id ? staff_id : null
+            staff_id: staff_id ? staff_id : null,
+            is_guest: false
         });
 
         // audit here 
+        await logAudit(
+            "Create", 
+            user.id, 
+            `${staff_id ? "Staff" : "User"} account created (email: ${email}, username: ${username}, id: ${user.id}${staff_id ? `, ${staff_id}` : ""})`
+        )
+        console.log(`${staff_id ? "Staff" : "User"} account created (email: ${email}, username: ${username}, id: ${user.id}${staff_id ? `, ${staff_id}` : ""})`);
         
         return res.status(200).json({message: 'Successfully signed up!',
             username: username,
@@ -321,8 +329,9 @@ export const validResetLink = async (req, res) => {
 // tickets
 export const submitTicket = async (req, res) => {
     const user_email = req.query.email
-    const user_id = req.user_id
-    const {title, category_id, description} = req.body;
+
+    
+    const {email, title, category_id, description} = req.body;
 
     try {
         

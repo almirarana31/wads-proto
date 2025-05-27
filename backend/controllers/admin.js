@@ -1,6 +1,7 @@
 import { Staff, User, Ticket, Status, Category, Priority } from '../models/index.js';
 import sequelize from '../config/sequelize.js';
 import { Op } from 'sequelize';
+import { logAudit } from './audit.js';
 
 // dash board begins here
 export const getAdminUsername = async (req, res) => {
@@ -165,6 +166,16 @@ export const updateField = async (req, res) => {
             },
             raw: true
         });
+
+        await logAudit(
+            "Update",
+            req.user.id,
+            `Ticket ID ${ticket_id} fields updated 
+            category_id: ${category_id ? category_id : "no change"} 
+            priority_id: ${priority_id ? priority_id: "no change"} 
+            status_id: ${status_id ? status_id: "no change"}`
+        );
+
         return res.status(200).json(ticket);
     } catch (error) {
         return res.status(500).json({message: error.message});
