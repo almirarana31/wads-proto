@@ -1,5 +1,6 @@
 import jwt from 'jsonwebtoken';
-import {Staff} from '../models/index.js';
+import {Staff, User} from '../models/index.js';
+import { logAudit } from '../controllers/audit.js';
 
 export const authN = (req, res, next) => {
     try {
@@ -105,6 +106,51 @@ export const staffAuthZ = async (req, res, next) => {
     }
 };
 
+export const guestAuthZ = async (req, res, next) => {
+    const {email} = req.body;
+    try{
+        const token = req.headers.authorization?.split(" ")[1];
+
+        if(token) {
+            const user = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
+            req.user = user
+            return next();
+        }
+        
+        // if token doesn't exist >> means guest user, create (1. check for existing email, 2. create)
+        const exists = await User.findOne({
+            where: {
+                email: email
+            },
+            raw: true
+        });
+        // guest has submitted before
+        if (exists && exists.is_guest) {
+            req.user = exists
+            return next()
+        } 
+        else if (exists && !exists.is_guest) {
+            return res.status(400).json({message: "Email is verified. Please log in"})
+        }
+        
+        const guestUser = await User.create({
+            email: email,
+            is_guest: true
+        }, {raw: true});
+
+        await logAudit(
+            "Create",
+            guestUser.id,
+            `Guest account created (email: ${email})`
+        )
+        console.log(" H LEOO WIORD 2 2 2 2 ")
+        req.user = guestUser;
+        return next();
+    } catch (error) {
+        return res.status(500).json({message: error.message})
+    }
+}
+
 // user authZ
 export const userAuthZ = async (req, res, next) => {
 
@@ -119,14 +165,12 @@ export const userAuthZ = async (req, res, next) => {
         const {id, email, username, is_guest} = user;
 
         if(is_guest) {
-            return res.status(403).json({message: "Forbidden Access"})
+            return next();
         }
 
         req.user = user // id, email, username, is_guest
 
         return next();
-        // unlikely to occur, will be net for outliers
-        
     } catch (error) {
         return res.status
     }

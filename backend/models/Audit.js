@@ -2,7 +2,7 @@ import sequelize from '../config/sequelize.js';
 import { Model, DataTypes} from 'sequelize';
 import User from './User.js';
 class Audit extends Model {
-
+    
 }
 
 Audit.init(

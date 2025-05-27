@@ -1,8 +1,10 @@
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
-import { Staff, User, Ticket} from '../models/index.js';
+import { Staff, User, Ticket, Category, Status} from '../models/index.js';
 import sendOTP from './otp.js';
 import { logAudit } from './audit.js';
+import sequelize from '../config/sequelize.js';
+import {Op} from 'sequelize';
 
 // start with the login/sign up
 
@@ -328,27 +330,64 @@ export const validResetLink = async (req, res) => {
 
 // tickets
 export const submitTicket = async (req, res) => {
-    const user_email = req.query.email
-
-    
-    const {email, title, category_id, description} = req.body;
-
+    const {id} = req.user;
+    const {title, category_id, description} = req.body;
     try {
-        
+        if (!title || !description || !category_id) {
+            return res.status(400).json({message: "Title and description fields need to be filled"});
+        };  
 
+        console.log("1 1 1 1")
+        const ticket = await Ticket.create({
+            user_id: id,
+            category_id: category_id,
+            status_id: 1,
+            subject: title,
+            description: description
+        }, {raw: true});
+        console.log("2 2 2 2")
+        await logAudit(
+            "Create",
+            id,
+            `Ticket ID ${ticket.id} created`
+        );
+
+        return res.status(200).json({message: "Ticket successfully created"})
     } catch (error) {
-
+        return res.status(500).json({message: error.message})
     }
 };
 
 // gets user ticket details
 export const getUserTickets = async (req, res) => {
-    try {
-        const userId = req.user.id; // req.user is set by userAuthZ middleware
+    const userId = req.user.id; // req.user is set by userAuthZ middleware
+    const status = req.query.status;
+    const search = req.query.search;
 
+    try {
         const tickets = await Ticket.findAll({
-            where: { user_id: userId },
-            attributes: ['id', 'subject', 'description', 'category_id', 'createdAt'],
+            include: [{
+                model: Category,
+                attributes: ['name'],
+                required: true
+            },{
+                model: Status,
+                attributes: ['name'],
+                required: true
+            }],
+            where: { 
+                user_id: userId,
+                ...(search ? 
+                    {[Op.or] : 
+                        [{subject: {[Op.substring]: search}},
+                        {description: {[Op.substring]: search}},
+                        ...(!isNaN(search) ? [{id: parseInt(search)}] : [])
+                    ]
+                    } 
+                        : {}),
+                ...(status ? {'$Status.name$': status} : {})
+            },
+            attributes: ['id', 'subject', 'description', 'createdAt'],
             order: [['createdAt', 'DESC']]
         });
 
