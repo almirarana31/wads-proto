@@ -239,6 +239,12 @@ export const assignStaff = async (req, res) => {
             raw: true
         }
     );
+        // audit here
+        await logAudit(
+            "Update",
+            req.user.id,
+
+        )
         return res.status(200).json(ticket)
     } catch (error) {
         return res.status(500).json({message: error.message})
