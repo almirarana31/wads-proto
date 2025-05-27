@@ -170,6 +170,8 @@ export const activate = async (req, res) => {
             email: email,
             staff_id: staff_id ? staff_id : null
         });
+
+        // audit here 
         
         return res.status(200).json({message: 'Successfully signed up!',
             username: username,
@@ -191,7 +193,7 @@ export const logIn = async (req, res) => {
                 where: {
                     id: login
                 },
-                attributes: ['id', 'staff_id', 'email', 'username'],
+                attributes: ['id', 'staff_id', 'email', 'username', 'is_guest'],
                 raw: true
             });
 
@@ -315,3 +317,19 @@ export const validResetLink = async (req, res) => {
         return res.status(400).json({message: "Invalid reset password link"});
     }
 };
+
+// tickets
+export const submitTicket = async (req, res) => {
+    const user_email = req.query.email
+    const user_id = req.user_id
+    const {title, category_id, description} = req.body;
+
+    try {
+        
+
+    } catch (error) {
+
+    }
+};
+
+// 

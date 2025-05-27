@@ -6,6 +6,7 @@ import Category from "./enum/Category.js";
 import Status from "./enum/Status.js";
 import Priority from "./enum/Priority.js";
 import Ticket from "./Ticket.js";
+import Audit from "./Audit.js";
 
 // Staff
 Staff.belongsTo(Role, {foreignKey: 'role_id'})
@@ -23,6 +24,9 @@ Ticket.belongsTo(Category, {foreignKey: 'category_id'})
 Ticket.belongsTo(Priority, {foreignKey: 'priority_id'})
 Ticket.belongsTo(Status, {foreignKey: 'status_id'})
 
+// Audit
+Audit.belongsTo(User, {foreignKey: 'user_id'});
+
 export {
     Staff,
     User,
@@ -31,5 +35,6 @@ export {
     Status,
     Priority,
     Role,
-    Job
+    Job,
+    Audit
 };

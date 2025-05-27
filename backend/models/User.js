@@ -18,11 +18,11 @@ User.init(
        },
        username: {
         type: DataTypes.STRING,
-        allowNull: false
+        allowNull: true
        },
        password: {
         type: DataTypes.STRING,
-        allowNull: false
+        allowNull: true
        },
        email: {
         type: DataTypes.STRING,
@@ -31,6 +31,10 @@ User.init(
        last_login: {
         type: DataTypes.DATE,
         allowNull: true
+       },
+       is_guest: {
+        type: DataTypes.BOOLEAN,
+        allowNull: false
        }
     },
     {

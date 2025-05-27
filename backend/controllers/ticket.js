@@ -23,10 +23,10 @@ export const getTicketDetail = async (req, res) => {
             }, {
                 model: Category,
                 attributes: ['name']
-            }, {
+            }, ...(staff_id ? {
                 model: Priority,
                 attributes: ['name']
-            }, ...(staff_id ? {
+            } : {}), ...(staff_id ? {
                 model: Staff,
                 include: [{
                     model: User,

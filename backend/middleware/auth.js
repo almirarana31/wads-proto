@@ -104,3 +104,29 @@ export const staffAuthZ = async (req, res, next) => {
         return res.status(500).json({message: error.message})
     }
 };
+
+// user authZ
+export const userAuthZ = async (req, res, next) => {
+
+    try {
+        const token = req.headers.authorization?.split(" ")[1];
+
+        if (!token) {
+            return res.status(403).json({message: "Forbidden Access"})
+        }
+
+        const {id, email, username, is_guest} = token;
+
+        if(is_guest) {
+            return res.status(403).json({message: "Forbidden Access"})
+        }
+
+        req.user_id = id
+
+        return next();
+        // unlikely to occur, will be net for outliers
+        
+    } catch (error) {
+        return res.status
+    }
+};
