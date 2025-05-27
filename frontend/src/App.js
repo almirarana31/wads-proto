@@ -13,6 +13,7 @@ import Footer from './components/Footer';
 import TicketDetailsPage from './pages/TicketDetailsPage';
 import Logout from './components/Logout';
 import AdminDashboard from './pages/AdminDashPage';
+import Chatroom from './pages/Chatroom'; // Import the Chatroom component
 
 function App() {
   // For demo purposes - in a real app, this would come from auth context/state
@@ -96,6 +97,14 @@ function App() {
               element={
                 <ProtectedRoute>
                   <AdminDashboard />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/chatroom/:conversationId"
+              element={
+                <ProtectedRoute>
+                  <Chatroom />
                 </ProtectedRoute>
               }
             />
