@@ -168,7 +168,8 @@ export const activate = async (req, res) => {
             username: username,
             password: password,
             email: email,
-            staff_id: staff_id ? staff_id : null
+            staff_id: staff_id ? staff_id : null,
+            is_guest: false
         });
 
         // audit here 
