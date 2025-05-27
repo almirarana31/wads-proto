@@ -352,7 +352,75 @@ export const submitTicket = async (req, res) => {
             `Ticket ID ${ticket.id} created`
         );
 
-        return res.status(200).json({message: "Ticket successfully created"})
+        return res.status(200).json({message: "Ticket successfully created",
+            ticket_id: ticket.id,
+            title: ticket.subject,
+            created_at: ticket.createdAt,
+            email: req.user.email
+        })
+    } catch (error) {
+        return res.status(500).json({message: error.message})
+    }
+};
+
+// edit ticket details if pending
+export const editTicket = async (req, res) => {
+    // needs to be a route parameter
+    const id = req.params.id
+    // still have user auth so get user id from there 
+    const user_id = req.user.id
+
+    const {title, category_id, description} = req.body
+    console.log("Here 5")
+    try {
+        const ticket = await Ticket.update({
+            ...(title ? {subject: title} : {}),
+            ...(category_id ? {category_id: category_id} : {}),
+            ...(description ? {description: description} : {})
+        }, {
+            where: {
+                id: id
+            },
+            raw: true
+        });
+
+        await logAudit(
+            "Update",
+            user_id,
+            `Ticket ID ${id} updated
+            ${title ? `title -> ${title}` : ""}
+            ${category_id ? `category_id -> ${category_id}` : ""}
+            ${description ? `description -> ${description}` : ""}`
+        )
+
+        return res.status(200).json({message: "Successfully updated ticket"});
+    } catch (error) {
+        return res.status(500).json({message: error.message})
+    }
+};
+
+export const cancelTicket = async (req, res) => {
+    const id = req.params.id
+    const user_id = req.user.id
+    try {
+        // update the ticket
+        const ticket = await Ticket.update({
+            status_id: 4
+        }, {
+            where: {
+                id: id
+            },
+            raw: true
+        });
+
+        // audit 
+        await logAudit(
+            "Update",
+            user_id,
+            `Update on Ticket ID ${id} status_id -> 4`
+        )
+
+        return res.status(200).json({message: "Successfully cancelled ticket"})
     } catch (error) {
         return res.status(500).json({message: error.message})
     }

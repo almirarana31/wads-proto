@@ -1,6 +1,6 @@
 import express from 'express';
-import { signUp, activate, logIn, signOut, forgetPassword, confirmPassReset, getUserTickets, submitTicket } from '../controllers/user.js';
-import { userAuthZ, guestAuthZ } from '../middleware/auth.js'; // to be used for user-resource fetching 
+import { signUp, activate, logIn, signOut, forgetPassword, confirmPassReset, getUserTickets, submitTicket, editTicket, cancelTicket } from '../controllers/user.js';
+import { userAuthZ, guestAuthZ, authN } from '../middleware/auth.js'; // to be used for user-resource fetching 
 
 const router = express.Router();
 
@@ -18,9 +18,13 @@ router.post('/forget-password', forgetPassword);
 router.get('/confirm-password-reset/:token', confirmPassReset);
 
 // ticket submission
-router.post('/tickets', guestAuthZ, submitTicket);
+router.post('/tickets', guestAuthZ, submitTicket); // no authentication required because of guest users
+
+router.put('/tickets/:id', authN, userAuthZ, editTicket) // uses authN
+
+router.patch('/tickets/:id', authN, userAuthZ, cancelTicket) // uses authN
 
 // user dashboard -- use userAuthZ middleware
-router.get('/tickets', userAuthZ, getUserTickets);
+router.get('/tickets', userAuthZ, getUserTickets); 
 
 export default router;

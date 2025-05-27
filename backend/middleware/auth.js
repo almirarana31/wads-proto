@@ -162,16 +162,15 @@ export const userAuthZ = async (req, res, next) => {
             return res.status(403).json({message: "Forbidden Access"})
         }
 
-        const {id, email, username, is_guest} = user;
+        const {is_guest} = user;
 
         if(is_guest) {
-            return next();
+            return res.status(403).json({message: "Guests cannot log in"});
         }
-
+        
         req.user = user // id, email, username, is_guest
-
         return next();
     } catch (error) {
-        return res.status
+        return res.status(500).json({message: error.message})
     }
 };
