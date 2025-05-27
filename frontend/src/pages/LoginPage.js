@@ -2,6 +2,24 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 // import { authService } from '../api/authService';
 
+const MOCK_USERS = {
+  'admin@bianca.com': {
+    password: 'admin123',
+    name: 'Admin User',
+    role_code: 'ADM'
+  },
+  'staff@bianca.com': {
+    password: 'staff123',
+    name: 'Staff Member',
+    role_code: 'STF'
+  },
+  'customer@bianca.com': {
+    password: 'customer123',
+    name: 'Customer User',
+    role_code: 'USR'
+  }
+};
+
 function LoginPage({ onLogin }) {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
@@ -31,57 +49,31 @@ function LoginPage({ onLogin }) {
       setLoading(false);
       return;
     }
-    try {      
-      // const response = await authService.login({
-      //   email: formData.email,
-      //   password: formData.password,
-      //   rememberMe: formData.rememberMe
-      // });
+    try {
+      // Mock login logic
+      const mockUser = MOCK_USERS[formData.email];
       
-      // console.log('Server response:', response); // Debug log
-      //   if (response && response.token) {
-      //   // Clear any existing tokens first
-      //   sessionStorage.removeItem('token');
-      //   localStorage.removeItem('token');
+      if (mockUser && mockUser.password === formData.password) {
+        const userInfo = {
+          email: formData.email,
+          name: mockUser.name,
+          role_code: mockUser.role_code
+        };
         
-      //   // Store token in sessionStorage first
-      //   sessionStorage.setItem('token', response.token);
+        if (onLogin) onLogin(userInfo);
         
-      //   // If "Remember me" is checked, also store in localStorage as backup
-      //   if (formData.rememberMe) {
-      //     localStorage.setItem('token', response.token);
-      //   }
-        
-      //   // Store user info and session expiration
-      //   sessionStorage.setItem('user', JSON.stringify(response.user));
-      //   // Set session expiration for 1 hour from now if not using remember me
-      //   if (!formData.rememberMe) {
-      //     const expiration = new Date().getTime() + 60 * 60 * 1000; // 1 hour
-      //     sessionStorage.setItem('sessionExpires', expiration.toString());
-      //   }
-        
-      //   // Call the onLogin function passed from App.js with user info
-      //   onLogin(response.user);
-        
-      //   // Redirect to view tickets page
-      //   navigate('/view-tickets');
-      // } else {
-      //   console.error('Invalid response structure:', response); // Debug log
-      //   setError('Server response missing token. Please try again.');
-      // }
-
-      // Mock successful login for UI development
-      console.log('Mock login attempt with:', formData.email);
-      if (formData.email && formData.password) {
-        const mockUser = { email: formData.email, name: 'Test User', role_code: 'USR' }; // Example user
-        if (onLogin) onLogin(mockUser);
-        navigate('/view-tickets'); // Or to a dashboard, or wherever appropriate
+        // Redirect based on role
+        if (mockUser.role_code === 'ADM') {
+          navigate('/admin-dashboard');
+        } else {
+          navigate('/view-tickets');
+        }
       } else {
-        setError('Mock login failed: Email and password required.');
+        setError('Invalid email or password');
       }
-
     } catch (error) {
-      console.error('Login error (API call commented out):', error);
+      console.error('Login error:', error);
+      setError('An error occurred during login');
     } finally {
       setLoading(false);
     }

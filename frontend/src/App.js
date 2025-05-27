@@ -14,15 +14,19 @@ import TicketDetailsPage from './pages/TicketDetailsPage';
 import Logout from './components/Logout';
 import AdminDashboard from './pages/AdminDashPage';
 import Chatroom from './pages/Chatroom'; // Import the Chatroom component
+import AuditLogPage from './pages/AuditLogPage';
 
 function App() {
   // For demo purposes - in a real app, this would come from auth context/state
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [userRole, setUserRole] = useState(null); // Add this to track user role
+
   // Login function
   const handleLogin = (user) => { // Modified to accept user
     // If a user object is provided (even a mock one), consider login successful
     if (user) {
       setIsAuthenticated(true);
+      setUserRole(user.role_code); // Store the user's role
       // For mock purposes, you might want to set a mock token if other parts rely on it
       // sessionStorage.setItem('mockToken', 'true'); 
     } else {
@@ -38,16 +42,22 @@ function App() {
   const handleLogout = () => {
     // Reset authentication state
     setIsAuthenticated(false);
+    setUserRole(null); // Clear the user's role
     // Clear any mock token if you set one
     // sessionStorage.removeItem('mockToken');
     // localStorage.removeItem('token'); // Also clear real token if it was set
   };
 
   // Protected Route component
-  const ProtectedRoute = ({ children }) => {
+  const ProtectedRoute = ({ children, allowedRoles = [] }) => {
     if (!isAuthenticated) {
       // Redirect to login if not authenticated
       return <Navigate to="/login" replace />;
+    }
+    
+    // If roles are specified and user's role doesn't match, redirect to home
+    if (allowedRoles.length > 0 && !allowedRoles.includes(userRole)) {
+      return <Navigate to="/" replace />;
     }
     
     return children;
@@ -56,7 +66,7 @@ function App() {
   return (
     <Router>
       <div className="min-h-screen bg-blue-100">
-        <Header isAuthenticated={isAuthenticated} />
+        <Header isAuthenticated={isAuthenticated} userRole={userRole} />
         <main>
           <Routes>
             <Route path="/" element={<HomePage />} />
@@ -95,8 +105,16 @@ function App() {
             <Route
               path="/admin-dashboard"
               element={
-                <ProtectedRoute>
+                <ProtectedRoute allowedRoles={['ADM']}>
                   <AdminDashboard />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/audit-logs"
+              element={
+                <ProtectedRoute allowedRoles={['ADM']}>
+                  <AuditLogPage />
                 </ProtectedRoute>
               }
             />
