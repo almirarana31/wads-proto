@@ -13,8 +13,10 @@ import Footer from './components/Footer';
 import TicketDetailsPage from './pages/TicketDetailsPage';
 import Logout from './components/Logout';
 import AdminDashboard from './pages/AdminDashPage';
-import Chatroom from './pages/Chatroom'; // Import the Chatroom component
+import Chatroom from './pages/Chatroom';
 import AuditLogPage from './pages/AuditLogPage';
+import StaffDashPage from './pages/StaffDashPage';
+import StaffTicketView from './pages/StaffTicketView';
 
 function App() {
   // For demo purposes - in a real app, this would come from auth context/state
@@ -101,12 +103,27 @@ function App() {
                   <Logout onLogout={handleLogout} />
                 </ProtectedRoute>
               }
-            />
-            <Route
+            />            <Route
               path="/admin-dashboard"
               element={
                 <ProtectedRoute allowedRoles={['ADM']}>
                   <AdminDashboard />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/staff-dashboard"
+              element={
+                <ProtectedRoute allowedRoles={['STF']}>
+                  <StaffDashPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/staff/ticket/:ticketId"
+              element={
+                <ProtectedRoute allowedRoles={['STF']}>
+                  <StaffTicketView />
                 </ProtectedRoute>
               }
             />

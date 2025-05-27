@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
+import PrimaryButton from '../components/buttons/PrimaryButton';
 
 function ForgotPasswordPage() {  
   const [email, setEmail] = useState('');
@@ -14,12 +15,22 @@ function ForgotPasswordPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    // Mock functionality for UI development
-    if (email) {
-      setMessage('If an account with that email exists, a password reset link has been sent (mock).');
-      setSubmitted(true);
-    } else {
-      setError('Please enter your email address.');
+    setError('');
+    setLoading(true);
+
+    try {
+      // Mock functionality for UI development
+      await new Promise(resolve => setTimeout(resolve, 1000)); // Simulating API call
+      if (email) {
+        setMessage('If an account with that email exists, a password reset link has been sent (mock).');
+        setSubmitted(true);
+      } else {
+        setError('Please enter your email address.');
+      }
+    } catch (err) {
+      setError('Failed to send reset email. Please try again.');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -82,13 +93,13 @@ function ForgotPasswordPage() {
             </div>
             
             <div className="flex justify-center mb-4">
-              <button
+              <PrimaryButton
                 type="submit"
                 disabled={loading}
-                className={`bg-blue-700 hover:bg-blue-800 text-white py-3 px-8 rounded-md text-lg font-medium w-full sm:w-auto transition-colors ${loading ? 'opacity-70 cursor-not-allowed' : ''}`}
+                fullWidth
               >
                 {loading ? 'Sending...' : 'Reset Password'}
-              </button>
+              </PrimaryButton>
             </div>
             
             <div className="text-center">

@@ -61,6 +61,15 @@ function Header({ isAuthenticated = false, userRole }) {
           </Link>
         </>
       )}
+      {userRole === 'STF' && (
+        <Link
+          to="/staff-dashboard" 
+          className={`${getActiveLinkClass('/staff-dashboard')} font-medium`}
+          onClick={() => setIsMenuOpen(false)}
+        >
+          STAFF DASHBOARD
+        </Link>
+      )}
       <Link
         to="/logout" 
         className={`${getActiveLinkClass('/logout')} font-medium`}

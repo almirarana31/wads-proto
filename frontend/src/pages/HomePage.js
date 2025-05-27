@@ -1,5 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import PrimaryButton from '../components/buttons/PrimaryButton';
+import SecondaryButton from '../components/buttons/SecondaryButton';
 
 function HomePage() {
   const navigate = useNavigate();
@@ -29,19 +31,19 @@ function HomePage() {
         </p>
         
         <div className="flex flex-col sm:flex-row flex-wrap gap-4 justify-center">
-          <button 
+          <PrimaryButton 
             onClick={handleNavigateToTicketPage}
-            className="bg-blue-700 hover:bg-blue-800 text-white py-3 px-6 rounded-md text-lg font-medium transition-colors w-full sm:w-auto"
+            className="w-full sm:w-auto"
           >
             Submit a Ticket
-          </button>
+          </PrimaryButton>
           
-          <button 
+          <SecondaryButton 
             onClick={handleNavigateToViewTickets}
-            className="bg-white hover:bg-gray-100 text-blue-700 border border-blue-700 py-3 px-6 rounded-md text-lg font-medium transition-colors w-full sm:w-auto"
+            className="w-full sm:w-auto"
           >
             View your Tickets
-          </button>
+          </SecondaryButton>
         </div>
       </div>
     </div>

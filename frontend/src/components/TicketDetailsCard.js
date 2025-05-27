@@ -8,6 +8,8 @@ const getStatusStyle = (status) => {
       return 'bg-purple-200 text-purple-800';
     case 'Resolved':
       return 'bg-green-400 text-green-800';
+    case 'Cancelled':
+      return 'bg-red-200 text-red-800';
     default:
       return 'bg-gray-200 text-gray-800';
   }
@@ -21,12 +23,14 @@ const getBorderStyle = (status) => {
       return 'border-l-4 border-purple-500';
     case 'Resolved':
       return 'border-l-4 border-green-500';
+    case 'Cancelled':
+      return 'border-l-4 border-red-500';
     default:
       return '';
   }
 };
 
-function TicketCard({ ticket, onViewDetails }) {
+function TicketCard({ ticket }) {
   return (
     <div className={`bg-gray-100 p-6 rounded-md ${getBorderStyle(ticket.status)}`}>
       <div className="flex flex-col md:flex-row justify-between mb-3 gap-2">

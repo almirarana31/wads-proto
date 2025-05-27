@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate, Link } from 'react-router-dom';
+import PrimaryButton from '../components/buttons/PrimaryButton';
 
 function ResetPasswordPage() {
   const [searchParams] = useSearchParams();
@@ -151,12 +152,12 @@ function ResetPasswordPage() {
             </div>
             
             <div className="flex justify-center mb-4">
-              <button
+              <PrimaryButton
                 type="submit"
-                className="bg-blue-700 hover:bg-blue-800 text-white py-3 px-8 rounded-md text-lg font-medium w-full sm:w-auto transition-colors"
+                fullWidth
               >
                 Reset Password
-              </button>
+              </PrimaryButton>
             </div>
             
             <div className="text-center">

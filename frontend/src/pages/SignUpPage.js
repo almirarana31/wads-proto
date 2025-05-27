@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { authService } from '../api/authService';
 import checkIcon from '../assets/accept.png';
+import PrimaryButton from '../components/buttons/PrimaryButton';
 
 function SignUpPage() {
   const navigate = useNavigate();
@@ -38,14 +39,16 @@ function SignUpPage() {
     try {
       // Remove confirmPassword before sending to API
       const { confirmPassword, ...signUpData } = formData;
-      const response = await authService.signup(signUpData);
+      await authService.signup(signUpData);
       
       // Show success message after successful registration
-      setSuccess(true);
       setSuccessEmail(formData.email);
-    } catch (error) {
-      console.error('Sign up error:', error);
-      setError(error.response?.data?.message || 'An error occurred during registration');
+      setSuccess(true);
+      setTimeout(() => {
+        navigate('/login');
+      }, 3000);
+    } catch (err) {
+      setError(err.message || 'Failed to create account');
     } finally {
       setLoading(false);
     }
@@ -148,13 +151,13 @@ function SignUpPage() {
             </div>
             
             <div className="flex justify-center">
-              <button
+              <PrimaryButton
                 type="submit"
-                className="bg-blue-700 hover:bg-blue-800 text-white py-2 sm:py-3 px-6 sm:px-8 rounded-md text-base sm:text-lg font-medium w-full sm:w-auto disabled:opacity-50"
                 disabled={loading}
+                fullWidth
               >
                 {loading ? 'Creating Account...' : 'Create Account'}
-              </button>
+              </PrimaryButton>
             </div>
             <div className="text-center text-gray-600">
                 Already have an account? 

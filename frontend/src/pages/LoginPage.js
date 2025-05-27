@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-// import { authService } from '../api/authService';
+import PrimaryButton from '../components/buttons/PrimaryButton';
 
 const MOCK_USERS = {
   'admin@bianca.com': {
@@ -134,13 +134,13 @@ function LoginPage({ onLogin }) {
             </div>
             
             <div className="flex justify-center mb-4">
-              <button
+              <PrimaryButton
                 type="submit"
-                className="bg-blue-700 hover:bg-blue-800 text-white py-3 px-8 rounded-md text-lg font-medium disabled:opacity-50"
                 disabled={loading}
+                fullWidth
               >
                 {loading ? 'Logging in...' : 'Login'}
-              </button>
+              </PrimaryButton>
             </div>
             
             <div className="text-center">

@@ -1,8 +1,12 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { ChevronDown } from 'lucide-react';
 import checkIcon from '../assets/accept.png';
+import PrimaryButton from '../components/buttons/PrimaryButton';
+import SecondaryButton from '../components/buttons/SecondaryButton';
 
 function SubmitTicketPage() {
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     email: '',
     title: '',
@@ -65,12 +69,12 @@ function SubmitTicketPage() {
               You can view the status of this ticket and all your other tickets in <a href="/your-tickets" className="text-blue-600 hover:underline">Your Tickets</a>.
             </p>
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
-              <button onClick={() => setTicket(null)} className="text-center border border-blue-600 text-blue-600 hover:bg-blue-50 py-2 px-4 rounded-md transition-colors">
+              <SecondaryButton onClick={() => setTicket(null)}>
                 Submit another Ticket
-              </button>
-              <a href="/view-tickets" className="text-center bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-md transition-colors">
+              </SecondaryButton>
+              <PrimaryButton onClick={() => navigate('/view-tickets')}>
                 View your Tickets
-              </a>
+              </PrimaryButton>
             </div>
           </div>
         </div>
@@ -138,13 +142,12 @@ function SubmitTicketPage() {
             ></textarea>
           </div>
           <div className="flex justify-center pt-4">
-            <button
-              type="button"
+            <PrimaryButton
               onClick={handleSubmit}
-              className="bg-blue-700 hover:bg-blue-800 text-white py-3 px-6 sm:px-8 rounded-md text-lg font-medium transition-colors w-full sm:w-auto"
+              fullWidth
             >
               Submit a Ticket
-            </button>
+            </PrimaryButton>
           </div>
         </div>
       </div>

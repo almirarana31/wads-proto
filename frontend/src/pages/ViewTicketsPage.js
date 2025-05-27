@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import TicketCard from '../components/TicketCard';
+import PrimaryButton from '../components/buttons/PrimaryButton';
 
 function ViewTicketsPage() {
   const navigate = useNavigate();
@@ -124,12 +125,11 @@ function ViewTicketsPage() {
               </div>
             </div>
             
-            <button
+            <PrimaryButton
               onClick={handleSubmitNewTicket}
-              className="bg-blue-700 hover:bg-blue-800 text-white py-2 px-4 rounded whitespace-nowrap"
             >
               Submit a Ticket
-            </button>
+            </PrimaryButton>
           </div>
           
           {/* Ticket List */}

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import SecondaryButton from '../components/buttons/SecondaryButton';
 
 function AuditLogPage() {
   // Mock audit log data - replace with API call later
@@ -32,11 +33,27 @@ function AuditLogPage() {
     }
   ]);
 
-  const [filters] = useState({
+  const [filters, setFilters] = useState({
     startDate: '',
     endDate: '',
     action: '',
     user: ''
+  });
+
+  const handleFilterChange = (e, field) => {
+    setFilters(prev => ({
+      ...prev,
+      [field]: e.target.value
+    }));
+  };
+
+  // Filter logs based on filters
+  const filteredLogs = auditLogs.filter(log => {
+    if (filters.startDate && new Date(log.timestamp) < new Date(filters.startDate)) return false;
+    if (filters.endDate && new Date(log.timestamp) > new Date(filters.endDate)) return false;
+    if (filters.action && log.action !== filters.action) return false;
+    if (filters.user && !log.user.toLowerCase().includes(filters.user.toLowerCase())) return false;
+    return true;
   });
 
   return (
@@ -46,12 +63,21 @@ function AuditLogPage() {
           <h1 className="text-3xl font-bold text-gray-800 mb-2">System Audit Log</h1>
           <p className="text-gray-600 mb-6">Track and monitor system activities</p>
 
+          {/* Action Buttons */}
+          <div className="flex justify-end mb-6">
+            <SecondaryButton onClick={() => console.log('Export logs')}>
+              Export Log
+            </SecondaryButton>
+          </div>
+
           {/* Filters */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Start Date</label>
               <input
                 type="date"
+                value={filters.startDate}
+                onChange={(e) => handleFilterChange(e, 'startDate')}
                 className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-300"
               />
             </div>
@@ -59,12 +85,18 @@ function AuditLogPage() {
               <label className="block text-sm font-medium text-gray-700 mb-1">End Date</label>
               <input
                 type="date"
+                value={filters.endDate}
+                onChange={(e) => handleFilterChange(e, 'endDate')}
                 className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-300"
               />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Action Type</label>
-              <select className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-300">
+              <select
+                value={filters.action}
+                onChange={(e) => handleFilterChange(e, 'action')}
+                className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-300"
+              >
                 <option value="">All Actions</option>
                 <option>User Login</option>
                 <option>Ticket Created</option>
@@ -78,6 +110,8 @@ function AuditLogPage() {
               <input
                 type="text"
                 placeholder="Search by user email"
+                value={filters.user}
+                onChange={(e) => handleFilterChange(e, 'user')}
                 className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-300"
               />
             </div>
@@ -99,7 +133,7 @@ function AuditLogPage() {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {auditLogs.map((log) => (
+                {filteredLogs.map((log) => (
                   <tr key={log.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
                       {new Date(log.timestamp).toLocaleString()}

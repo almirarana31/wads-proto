@@ -1,65 +1,60 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import PrimaryButton from '../components/buttons/PrimaryButton';
-import SecondaryButton from '../components/buttons/SecondaryButton';
 
-function AdminDashboard() {
+function StaffDashPage() {
   const navigate = useNavigate();
-  const [tickets] = useState([
-    {
-      id: 'TKT-001',
-      title: 'Payment Failure',
-      name: 'John Doe',
-      email: 'john@example.com',
-      createdAt: '2025-05-27T10:30:00Z',
-      category: 'Billing',
-      priority: 'High',
-      status: 'Pending'
-    }
-    // Add more mock tickets as needed
-  ]);
-
-  const [stats] = useState({
-    total: 100,
-    pending: 25,
-    inProgress: 50,
-    resolved: 25
-  });
-
-  const [staffPerformance] = useState([
-    {
-      name: 'John Smith',
-      assigned: 45,
-      resolved: 38
-    },
-    {
-      name: 'Sarah Johnson',
-      assigned: 52,
-      resolved: 45
-    },
-    {
-      name: 'Mike Wilson',
-      assigned: 38,
-      resolved: 35
-    }
-  ]);
-
+  const [searchQuery, setSearchQuery] = useState('');
   const [filters, setFilters] = useState({
-    search: '',
     priority: 'All priority',
     status: 'All status',
     category: 'All category'
   });
+  const [stats] = useState({
+    total: 45,
+    pending: 15,
+    inProgress: 20,
+    resolved: 10
+  });
 
-  const [searchQuery, setSearchQuery] = useState('');
+  // Mock data - replace with API call in real app
+  const tickets = [
+    { 
+      id: 'TKT-001', 
+      title: 'Payment Failure',
+      name: 'User Name',
+      email: 'user@example.com',
+      createdAt: '2025-04-16T19:11:36.632Z',
+      category: 'Billing',
+      priority: 'High',
+      status: 'Pending',
+      assignedTo: 'staff1'
+    },
+    { 
+      id: 'TKT-002',
+      title: 'Technical Issue',
+      name: 'Another User',
+      email: 'another@example.com',
+      createdAt: '2025-04-16T19:11:36.632Z',
+      category: 'Technical',
+      priority: 'Medium',
+      status: 'In Progress',
+      assignedTo: 'staff1'
+    },
+    { 
+      id: 'TKT-003',
+      title: 'Service Request',
+      name: 'Third User',
+      email: 'third@example.com',
+      createdAt: '2025-04-16T19:11:36.632Z',
+      category: 'Service',
+      priority: 'Low',
+      status: 'Resolved',
+      assignedTo: 'staff1'
+    }
+  ];
 
   const handleViewTicket = (ticketId) => {
-    navigate(`/ticket/${ticketId}`);
-  };
-
-  const handleAssignTicket = (ticketId) => {
-    // Implement ticket assignment logic here
-    console.log('Assigning ticket:', ticketId);
+    navigate(`/staff/ticket/${ticketId}`);
   };
 
   // Filter tickets based on search and filters
@@ -78,15 +73,14 @@ function AdminDashboard() {
 
   return (
     <div className="min-h-screen bg-blue-100 py-6 sm:py-12 px-4">
-      <div className="bg-white p-6 md:p-10 rounded shadow-md max-w-auto mx-auto">
-      <div className="max-w-7xl mx-auto">
-        <h1 className="text-3xl font-bold text-gray-800 text-center mb-2">Admin Dashboard</h1>
+      <div className="bg-white p-6 md:p-10 rounded shadow-md max-w-[1200px] mx-auto">
+        <h1 className="text-3xl font-bold text-gray-800 text-center mb-2">Staff Dashboard</h1>
         <p className="text-center text-gray-600 mb-8">
-          Welcome <span className="font-medium text-blue-600">Admin</span>, manage your dashboard here
+          Welcome <span className="font-medium text-blue-600">Staff</span>, manage your assigned tickets here
         </p>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-8">
           <div className="bg-white p-4 rounded-lg shadow-md text-center">
             <h3 className="text-xl font-semibold text-gray-700 mb-1">Total</h3>
             <p className="text-4xl font-bold text-gray-800">{stats.total}</p>
@@ -103,10 +97,6 @@ function AdminDashboard() {
             <h3 className="text-xl font-semibold text-green-800 mb-1">Resolved</h3>
             <p className="text-4xl font-bold text-green-700">{stats.resolved}</p>
           </div>
-          <div className="bg-red-100 p-4 rounded-lg shadow-md text-center">
-            <h3 className="text-xl font-semibold text-red-800 mb-1">Cancelled</h3>
-            <p className="text-4xl font-bold text-red-700">{stats.cancelled}</p>
-          </div>
         </div>
 
         {/* Ticket Management Section */}
@@ -115,10 +105,10 @@ function AdminDashboard() {
           <div className="mb-4">
             <input
               type="text"
-              placeholder="Search ticket by ID, title, description..."
-              className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-300"
+              placeholder="Search ticket by ID, title, name, email..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-300"
             />
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
@@ -141,7 +131,6 @@ function AdminDashboard() {
               <option value="Pending">Pending</option>
               <option value="In Progress">In Progress</option>
               <option value="Resolved">Resolved</option>
-              <option value="Cancelled">Cancelled</option>
             </select>
             <select
               className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-300 bg-white"
@@ -175,42 +164,23 @@ function AdminDashboard() {
                     <td className="p-3 text-sm text-gray-700 whitespace-nowrap">{ticket.title}</td>
                     <td className="p-3 text-sm text-gray-700 whitespace-nowrap">{ticket.name}</td>
                     <td className="p-3 text-sm text-gray-700 whitespace-nowrap">{ticket.email}</td>
-                    <td className="p-3 text-sm text-gray-700 whitespace-nowrap">{new Date(ticket.createdAt).toLocaleDateString()}</td>
                     <td className="p-3 text-sm text-gray-700 whitespace-nowrap">
-                      <select defaultValue={ticket.category} className="p-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-blue-300 bg-white">
-                        <option>Billing</option>
-                        <option>Technical</option>
-                        <option>General</option>
-                        <option>Service</option>
-                      </select>
+                      {new Date(ticket.createdAt).toLocaleDateString()}
+                    </td>
+                    <td className="p-3 text-sm text-gray-700 whitespace-nowrap">{ticket.category}</td>
+                    <td className="p-3 text-sm text-gray-700 whitespace-nowrap">
+                      <span className={getPriorityStyle(ticket.priority)}>{ticket.priority}</span>
                     </td>
                     <td className="p-3 text-sm text-gray-700 whitespace-nowrap">
-                       <select defaultValue={ticket.priority} className="p-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-blue-300 bg-white">
-                        <option>High</option>
-                        <option>Medium</option>
-                        <option>Low</option>
-                      </select>
+                      <span className={getStatusStyle(ticket.status)}>{ticket.status}</span>
                     </td>
-                    <td className="p-3 text-sm text-gray-700 whitespace-nowrap">
-                      <select defaultValue={ticket.status} className="p-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-blue-300 bg-white">
-                        <option>Pending</option>
-                        <option>In Progress</option>
-                        <option>Resolved</option>
-                        <option>Cancelled</option>
-                      </select>
-                    </td>
-                    <td className="p-3 text-sm text-gray-700 whitespace-nowrap">
-                      <SecondaryButton
+                    <td className="p-3 text-sm whitespace-nowrap">
+                      <button 
                         onClick={() => handleViewTicket(ticket.id)}
-                        className="mr-3"
+                        className="text-blue-600 hover:text-blue-800 font-medium hover:underline"
                       >
                         View
-                      </SecondaryButton>
-                      <PrimaryButton
-                        onClick={() => handleAssignTicket(ticket.id)}
-                      >
-                        Assign
-                      </PrimaryButton>
+                      </button>
                     </td>
                   </tr>
                 )) : (
@@ -222,27 +192,36 @@ function AdminDashboard() {
             </table>
           </div>
         </div>
-
-        {/* Staff Performance Section */}
-        <div>
-          <h2 className="text-2xl font-bold mb-4 text-blue-700">Staff Performance</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {staffPerformance.map((staff, index) => (
-              <div key={index} className="p-6 bg-white rounded-lg shadow-md border border-gray-200">
-                <h3 className="font-bold text-xl text-gray-800 mb-3">{staff.name}</h3>
-                <p className="text-gray-600 text-sm">Assigned: <span className="font-medium">{staff.assigned}</span></p>
-                <p className="text-gray-600 text-sm">Resolved: <span className="font-medium">{staff.resolved}</span></p>
-                <p className="text-gray-600 text-sm">Resolution Rate: <span className="font-medium text-green-600">{staff.resolutionRate}</span></p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
       </div>
     </div>
   );
 }
 
-export default AdminDashboard;
+// Utility functions for styling
+function getStatusStyle(status) {
+  switch (status) {
+    case 'Pending':
+      return 'px-2 py-1 text-yellow-800 bg-yellow-200 rounded-full';
+    case 'In Progress':
+      return 'px-2 py-1 text-purple-800 bg-purple-200 rounded-full';
+    case 'Resolved':
+      return 'px-2 py-1 text-green-800 bg-green-400 rounded-full';
+    default:
+      return 'px-2 py-1 text-gray-800 bg-gray-200 rounded-full';
+  }
+}
 
+function getPriorityStyle(priority) {
+  switch (priority) {
+    case 'High':
+      return 'px-2 py-1 text-red-800 bg-red-200 rounded-full';
+    case 'Medium':
+      return 'px-2 py-1 text-orange-800 bg-orange-200 rounded-full';
+    case 'Low':
+      return 'px-2 py-1 text-green-800 bg-green-200 rounded-full';
+    default:
+      return 'px-2 py-1 text-gray-800 bg-gray-200 rounded-full';
+  }
+}
 
+export default StaffDashPage;
