@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import PrimaryButton from '../components/buttons/PrimaryButton';
+import { PageTitle, Text, Label } from '../components/text';
 
 function ForgotPasswordPage() {  
   const [email, setEmail] = useState('');
@@ -36,15 +37,16 @@ function ForgotPasswordPage() {
 
   if (submitted) {
     return (
-      <div className="min-h-screen bg-blue-100 py-6 sm:py-12 px-4">
-        <div className="max-w-md mx-auto">
+      <div className="min-h-screen bg-blue-100 py-6 sm:py-12 px-4">        <div className="max-w-md mx-auto">
           <div className="bg-white rounded-md shadow-md p-6 sm:p-8">
-            <h1 className="text-2xl sm:text-3xl font-bold text-gray-800 text-center mb-6">Password Reset Email Sent</h1>
+            <PageTitle 
+              title="Password Reset Email Sent"
+            />
             
-            <p className="text-center mb-6">
+            <Text align="center" className="mb-6">
               If an account exists with the email <strong>{email}</strong>, 
               you will receive a password reset link shortly.
-            </p>
+            </Text>
             
             <div className="text-center">
               <Link 
@@ -61,13 +63,12 @@ function ForgotPasswordPage() {
   }
 
   return (
-    <div className="min-h-screen bg-blue-100 py-6 sm:py-12 px-4">
-      <div className="max-w-md mx-auto">
+    <div className="min-h-screen bg-blue-100 py-6 sm:py-12 px-4">      <div className="max-w-md mx-auto">
         <div className="bg-white rounded-md shadow-md p-6 sm:p-8">
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-800 text-center mb-1">Forgot Password</h1>
-          <p className="text-gray-600 text-center mb-6 sm:mb-8">
-            Enter your email address below and we'll send you a link to reset your password
-          </p>
+          <PageTitle 
+            title="Forgot Password"
+            subtitle="Enter your email address below and we'll send you a link to reset your password"
+          />
             {error && (
             <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
               {error}
@@ -77,11 +78,9 @@ function ForgotPasswordPage() {
             <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4">
               {message}
             </div>
-          )}
-
-          <form onSubmit={handleSubmit}>
+          )}          <form onSubmit={handleSubmit}>
             <div className="mb-6">
-              <label htmlFor="email" className="block text-blue-700 mb-2">Email Address:</label>
+              <Label htmlFor="email">Email Address:</Label>
               <input
                 type="email"
                 id="email"

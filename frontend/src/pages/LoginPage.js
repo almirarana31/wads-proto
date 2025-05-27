@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import PrimaryButton from '../components/buttons/PrimaryButton';
+import { PageTitle, Text, Label } from '../components/text';
 
 const MOCK_USERS = {
   'admin@bianca.com': {
@@ -80,11 +81,9 @@ function LoginPage({ onLogin }) {
   };
 
   return (
-    <div className="min-h-screen bg-blue-100 pt-8 pb-12">
-      <div className="max-w-md mx-auto p-6">
+    <div className="min-h-screen bg-blue-100 pt-8 pb-12">      <div className="max-w-md mx-auto p-6">
         <div className="bg-white rounded-md shadow-md p-8">
-          <h1 className="text-4xl font-bold text-gray-800 text-center mb-1">Login</h1>
-          <p className="text-gray-600 text-center mb-8">Login to your account below</p>
+          <PageTitle title="Login" subtitle="Login to your account below" className="mb-8" />
           
           {error && (
             <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
@@ -94,7 +93,7 @@ function LoginPage({ onLogin }) {
           
           <form onSubmit={handleSubmit}>
             <div className="mb-6">
-              <label htmlFor="email" className="block text-blue-700 mb-2">Email Address:</label>
+              <Label htmlFor="email">Email Address:</Label>
               <input
                 type="email"
                 id="email"
@@ -103,11 +102,10 @@ function LoginPage({ onLogin }) {
                 onChange={handleInputChange}
                 className="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-300"
                 disabled={loading}
-              />
-            </div>
+              />            </div>
             
             <div className="mb-6">
-              <label htmlFor="password" className="block text-blue-700 mb-2">Password:</label>
+              <Label htmlFor="password">Password:</Label>
               <input
                 type="password"
                 id="password"
@@ -144,16 +142,18 @@ function LoginPage({ onLogin }) {
             </div>
             
             <div className="text-center">
-              <Link to="/forgot-password" className="text-gray-600 hover:underline block mb-4">
-                Forgot your password?
-              </Link>
+              <Text color="gray" center className="hover:underline block mb-4">
+                <Link to="/forgot-password">
+                  Forgot your password?
+                </Link>
+              </Text>
               
-              <div className="text-gray-600">
+              <Text color="gray" center>
                 Don't have an account? 
                 <Link to="/signup" className="text-blue-600 hover:underline ml-1">
                   Sign up
                 </Link>
-              </div>
+              </Text>
             </div>
           </form>
         </div>

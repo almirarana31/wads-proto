@@ -18,8 +18,7 @@ function Header({ isAuthenticated = false, userRole }) {
       ? "text-blue-800 font-bold" 
       : "text-blue-700 hover:text-blue-600";
   };
-  
-  // Authenticated user navigation
+    // Authenticated user navigation
   const AuthenticatedNav = () => (
     <nav className={`${isMenuOpen ? 'flex' : 'hidden'} md:flex flex-col md:flex-row gap-4 md:gap-8 w-full md:w-auto items-center`}>
       <Link 
@@ -29,21 +28,24 @@ function Header({ isAuthenticated = false, userRole }) {
       >
         HOME
       </Link>
-      <Link 
-        to="/submit-ticket" 
-        className={`${getActiveLinkClass('/submit-ticket')} font-medium`}
-        onClick={() => setIsMenuOpen(false)}
-      >
-        SUBMIT TICKET
-      </Link>
-      <Link 
-        to="/view-tickets" 
-        className={`${getActiveLinkClass('/view-tickets')} font-medium`}
-        onClick={() => setIsMenuOpen(false)}
-      >
-        VIEW TICKETS
-      </Link>
-      {userRole === 'ADM' && (
+      {userRole !== 'ADM' && (
+        <>
+          <Link 
+            to="/submit-ticket" 
+            className={`${getActiveLinkClass('/submit-ticket')} font-medium`}
+            onClick={() => setIsMenuOpen(false)}
+          >
+            SUBMIT TICKET
+          </Link>
+          <Link 
+            to="/view-tickets" 
+            className={`${getActiveLinkClass('/view-tickets')} font-medium`}
+            onClick={() => setIsMenuOpen(false)}
+          >
+            VIEW TICKETS
+          </Link>
+        </>
+      )}      {userRole === 'ADM' && (
         <>
           <Link
             to="/admin-dashboard" 

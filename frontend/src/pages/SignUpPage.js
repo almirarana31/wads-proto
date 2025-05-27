@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { authService } from '../api/authService';
 import checkIcon from '../assets/accept.png';
 import PrimaryButton from '../components/buttons/PrimaryButton';
+import { PageTitle, Text, Label, Heading } from '../components/text';
 
 function SignUpPage() {
   const navigate = useNavigate();
@@ -53,21 +54,20 @@ function SignUpPage() {
       setLoading(false);
     }
   };
-
   if (success) {
     return (
       <div className="min-h-screen bg-blue-100 py-6 sm:py-12 px-4 flex items-center justify-center">
         <div className="max-w-md w-full mx-auto">
           <div className="bg-white rounded-md shadow-md p-8 text-center">
-            <h1 className="text-3xl font-bold text-gray-800 mb-8">
+            <Heading level={1} center className="mb-8">
               Account Successfully Made!
-            </h1>
+            </Heading>
             <div className="flex justify-center mb-6">
               <img src={checkIcon} alt="Success" className="w-16 h-16" />
             </div>
-            <p className="text-lg text-gray-600 mb-8">
+            <Text size="lg" center className="mb-8">
               Verification link sent to <span className="text-blue-600">{successEmail || 'user@example.com'}</span>
-            </p>
+            </Text>
             <Link 
               to="/login" 
               className="inline-block bg-blue-700 hover:bg-blue-800 text-white py-3 px-8 rounded-md text-lg font-medium transition-colors"
@@ -81,11 +81,9 @@ function SignUpPage() {
   }
 
   return (
-    <div className="bg-blue-100 py-6 md:py-12 px-4 flex-grow">
-      <div className="max-w-md mx-auto">
+    <div className="bg-blue-100 py-6 md:py-12 px-4 flex-grow">      <div className="max-w-md mx-auto">
         <div className="bg-white rounded-md shadow-md p-6 sm:p-8">
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-800 text-center mb-1">Sign Up</h1>
-          <p className="text-gray-600 text-center mb-6 sm:mb-8">Create a new account</p>
+          <PageTitle title="Sign Up" subtitle="Create a new account" className="mb-6 sm:mb-8" />
           
           {error && (
             <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
@@ -95,7 +93,7 @@ function SignUpPage() {
           
           <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-5">
             <div>
-              <label htmlFor="username" className="block text-blue-700 mb-2">Username:</label>
+              <Label htmlFor="username">Username:</Label>
               <input
                 type="text"
                 id="username"
@@ -105,11 +103,10 @@ function SignUpPage() {
                 className="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-300"
                 required
                 disabled={loading}
-              />
-            </div>
+              />            </div>
             
             <div>
-              <label htmlFor="email" className="block text-blue-700 mb-2">Email Address:</label>
+              <Label htmlFor="email">Email Address:</Label>
               <input
                 type="email"
                 id="email"
@@ -123,7 +120,7 @@ function SignUpPage() {
             </div>
             
             <div>
-              <label htmlFor="password" className="block text-blue-700 mb-2">Password:</label>
+              <Label htmlFor="password">Password:</Label>
               <input
                 type="password"
                 id="password"
@@ -137,7 +134,7 @@ function SignUpPage() {
             </div>
             
             <div className="mb-6 sm:mb-8">
-              <label htmlFor="confirmPassword" className="block text-blue-700 mb-2">Confirm Password:</label>
+              <Label htmlFor="confirmPassword">Confirm Password:</Label>
               <input
                 type="password"
                 id="confirmPassword"
@@ -159,12 +156,12 @@ function SignUpPage() {
                 {loading ? 'Creating Account...' : 'Create Account'}
               </PrimaryButton>
             </div>
-            <div className="text-center text-gray-600">
+            <Text center color="gray">
                 Already have an account? 
                 <Link to="/login" className="text-blue-600 hover:underline ml-1">
                 Login
                 </Link>
-            </div>
+            </Text>
           </form>
         </div>
       </div>

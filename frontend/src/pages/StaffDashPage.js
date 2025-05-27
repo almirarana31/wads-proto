@@ -1,9 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { PageTitle, Text, Subheading, StatText } from '../components/text';
 
 function StaffDashPage() {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
+  const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' });
   const [filters, setFilters] = useState({
     priority: 'All priority',
     status: 'All status',
@@ -51,9 +53,7 @@ function StaffDashPage() {
       status: 'Resolved',
       assignedTo: 'staff1'
     }
-  ];
-
-  const handleViewTicket = (ticketId) => {
+  ];  const handleViewTicket = (ticketId) => {
     navigate(`/staff/ticket/${ticketId}`);
   };
 
@@ -71,37 +71,93 @@ function StaffDashPage() {
     );
   });
 
-  return (
-    <div className="min-h-screen bg-blue-100 py-6 sm:py-12 px-4">
+  // Sorting functionality
+  const handleSort = (key) => {
+    let direction = 'asc';
+    if (sortConfig.key === key && sortConfig.direction === 'asc') {
+      direction = 'desc';
+    }
+    setSortConfig({ key, direction });
+  };
+
+  const getSortIcon = (columnKey) => {
+    if (sortConfig.key !== columnKey) {
+      return <span className="text-gray-400">↕</span>;
+    }
+    return sortConfig.direction === 'asc' ? 
+      <span className="text-blue-600">↑</span> : 
+      <span className="text-blue-600">↓</span>;
+  };
+
+  const sortedTickets = useMemo(() => {
+    let sortableTickets = [...filteredTickets];
+    if (sortConfig.key) {
+      sortableTickets.sort((a, b) => {
+        let aValue = a[sortConfig.key];
+        let bValue = b[sortConfig.key];
+
+        // Handle date sorting
+        if (sortConfig.key === 'createdAt') {
+          aValue = new Date(aValue);
+          bValue = new Date(bValue);
+        }
+
+        // Handle priority sorting (High > Medium > Low)
+        if (sortConfig.key === 'priority') {
+          const priorityOrder = { 'High': 3, 'Medium': 2, 'Low': 1 };
+          aValue = priorityOrder[aValue] || 0;
+          bValue = priorityOrder[bValue] || 0;
+        }
+
+        // Handle status sorting (Pending > In Progress > Resolved)
+        if (sortConfig.key === 'status') {
+          const statusOrder = { 'Pending': 3, 'In Progress': 2, 'Resolved': 1 };
+          aValue = statusOrder[aValue] || 0;
+          bValue = statusOrder[bValue] || 0;
+        }
+
+        if (aValue < bValue) {
+          return sortConfig.direction === 'asc' ? -1 : 1;
+        }
+        if (aValue > bValue) {
+          return sortConfig.direction === 'asc' ? 1 : -1;
+        }
+        return 0;
+      });
+    }
+    return sortableTickets;
+  }, [filteredTickets, sortConfig]);
+
+  return (    <div className="min-h-screen bg-blue-100 py-6 sm:py-12 px-4">
       <div className="bg-white p-6 md:p-10 rounded shadow-md max-w-[1200px] mx-auto">
-        <h1 className="text-3xl font-bold text-gray-800 text-center mb-2">Staff Dashboard</h1>
-        <p className="text-center text-gray-600 mb-8">
-          Welcome <span className="font-medium text-blue-600">Staff</span>, manage your assigned tickets here
-        </p>
+        <PageTitle 
+          title="Staff Dashboard" 
+          subtitle={
+            <>
+              Welcome <span className="font-medium text-blue-600">Staff</span>, manage your assigned tickets here
+            </>
+          }
+          className="mb-8"
+        />
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-8">
-          <div className="bg-white p-4 rounded-lg shadow-md text-center">
-            <h3 className="text-xl font-semibold text-gray-700 mb-1">Total</h3>
-            <p className="text-4xl font-bold text-gray-800">{stats.total}</p>
+          <div className="bg-white p-4 rounded-lg shadow-md">
+            <StatText label="Total" value={stats.total} valueColor="gray-darker" labelColor="gray-dark" />
           </div>
-          <div className="bg-yellow-100 p-4 rounded-lg shadow-md text-center">
-            <h3 className="text-xl font-semibold text-yellow-800 mb-1">Pending</h3>
-            <p className="text-4xl font-bold text-yellow-700">{stats.pending}</p>
+          <div className="bg-yellow-100 p-4 rounded-lg shadow-md">
+            <StatText label="Pending" value={stats.pending} valueColor="yellow" labelColor="yellow" />
           </div>
-          <div className="bg-purple-100 p-4 rounded-lg shadow-md text-center">
-            <h3 className="text-xl font-semibold text-purple-800 mb-1">In Progress</h3>
-            <p className="text-4xl font-bold text-purple-700">{stats.inProgress}</p>
+          <div className="bg-purple-100 p-4 rounded-lg shadow-md">
+            <StatText label="In Progress" value={stats.inProgress} valueColor="purple" labelColor="purple" />
           </div>
-          <div className="bg-green-100 p-4 rounded-lg shadow-md text-center">
-            <h3 className="text-xl font-semibold text-green-800 mb-1">Resolved</h3>
-            <p className="text-4xl font-bold text-green-700">{stats.resolved}</p>
+          <div className="bg-green-100 p-4 rounded-lg shadow-md">
+            <StatText label="Resolved" value={stats.resolved} valueColor="green" labelColor="green" />
           </div>
-        </div>
-
+        </div>        
         {/* Ticket Management Section */}
         <div className="bg-white p-6 rounded-lg shadow-md mb-8">
-          <h2 className="text-2xl font-bold mb-4 text-blue-700">Ticket Management</h2>
+          <Subheading size="2xl" color="blue" className="mb-4">Ticket Management</Subheading>
           <div className="mb-4">
             <input
               type="text"
@@ -147,18 +203,62 @@ function StaffDashPage() {
 
           {/* Tickets Table */}
           <div className="overflow-x-auto">
-            <table className="min-w-full table-auto border-collapse border border-gray-200">
-              <thead className="bg-gray-50">
+            <table className="min-w-full table-auto border-collapse border border-gray-200">              <thead className="bg-gray-50">
                 <tr>
-                  {['ID', 'Title', 'Name', 'Email', 'Created At', 'Category', 'Priority', 'Status', 'Actions'].map(header => (
-                    <th key={header} className="p-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider border-b border-gray-200">
-                      {header} <span className="text-gray-400">▼</span>
-                    </th>
-                  ))}
+                  <th 
+                    onClick={() => handleSort('id')}
+                    className="p-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider border-b border-gray-200 cursor-pointer hover:bg-gray-100"
+                  >
+                    ID {getSortIcon('id')}
+                  </th>
+                  <th 
+                    onClick={() => handleSort('title')}
+                    className="p-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider border-b border-gray-200 cursor-pointer hover:bg-gray-100"
+                  >
+                    Title {getSortIcon('title')}
+                  </th>
+                  <th 
+                    onClick={() => handleSort('name')}
+                    className="p-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider border-b border-gray-200 cursor-pointer hover:bg-gray-100"
+                  >
+                    Name {getSortIcon('name')}
+                  </th>
+                  <th 
+                    onClick={() => handleSort('email')}
+                    className="p-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider border-b border-gray-200 cursor-pointer hover:bg-gray-100"
+                  >
+                    Email {getSortIcon('email')}
+                  </th>
+                  <th 
+                    onClick={() => handleSort('createdAt')}
+                    className="p-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider border-b border-gray-200 cursor-pointer hover:bg-gray-100"
+                  >
+                    Created At {getSortIcon('createdAt')}
+                  </th>
+                  <th 
+                    onClick={() => handleSort('category')}
+                    className="p-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider border-b border-gray-200 cursor-pointer hover:bg-gray-100"
+                  >
+                    Category {getSortIcon('category')}
+                  </th>
+                  <th 
+                    onClick={() => handleSort('priority')}
+                    className="p-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider border-b border-gray-200 cursor-pointer hover:bg-gray-100"
+                  >
+                    Priority {getSortIcon('priority')}
+                  </th>
+                  <th 
+                    onClick={() => handleSort('status')}
+                    className="p-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider border-b border-gray-200 cursor-pointer hover:bg-gray-100"
+                  >
+                    Status {getSortIcon('status')}
+                  </th>
+                  <th className="p-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider border-b border-gray-200">
+                    Actions
+                  </th>
                 </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {filteredTickets.length > 0 ? filteredTickets.map((ticket) => (
+              </thead>              <tbody className="bg-white divide-y divide-gray-200">
+                {sortedTickets.length > 0 ? sortedTickets.map((ticket) => (
                   <tr key={ticket.id} className="hover:bg-gray-50">
                     <td className="p-3 text-sm text-gray-700 whitespace-nowrap">{ticket.id}</td>
                     <td className="p-3 text-sm text-gray-700 whitespace-nowrap">{ticket.title}</td>

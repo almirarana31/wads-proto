@@ -4,6 +4,7 @@ import ContentContainer from '../components/ContentContainer';
 import ChatBubble from '../components/ChatBubble';
 import BackButton from '../components/buttons/BackButton';
 import PrimaryButton from '../components/buttons/PrimaryButton';
+import { PageTitle, Text } from '../components/text';
 
 function Chatroom() {
   // Gets the conversation id from the url || fetches the right chat by ID i think in the real app
@@ -69,14 +70,11 @@ function Chatroom() {
   };
 
   return (
-    <ContentContainer>
-      <div className="relative mb-5">
+    <ContentContainer>      <div className="relative mb-5">
         <BackButton onClick={handleBack} className="absolute -top-2 -left-2" />
         <div className="text-center pt-8">
           {/* in fullstack, this title could show the other chat title */}
-          <h1 className="text-4xl font-bold text-gray-800 mb-1">
-            Conversation {conversationId}
-          </h1>
+          <PageTitle title={`Conversation ${conversationId}`} />
         </div>
       </div>
       <div className="border-b border-gray-200 my-6"></div>
@@ -120,10 +118,11 @@ function Chatroom() {
                   d="M5 12l14-7-7 14-2-5-5-2z" />
               </svg>
             </PrimaryButton>
-          </div>
-        ) : (
-          <div className="text-center text-gray-500 py-6 text-lg font-semibold">
-            This conversation has ended.
+          </div>        ) : (
+          <div className="text-center py-6">
+            <Text color="text-gray-500" size="lg" weight="semibold">
+              This conversation has ended.
+            </Text>
           </div>
         )}
       </div>

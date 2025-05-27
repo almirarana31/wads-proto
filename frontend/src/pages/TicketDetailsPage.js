@@ -8,6 +8,7 @@ import BackButton from '../components/buttons/BackButton';
 import DangerButton from '../components/buttons/DangerButton';
 import SecondaryButton from '../components/buttons/SecondaryButton';
 import PrimaryButton from '../components/buttons/PrimaryButton';
+import { PageTitle, Text, Subheading, Label, SmallText } from '../components/text';
 
 function TicketDetailsPage() {
   const { ticketId } = useParams();
@@ -161,10 +162,10 @@ function TicketDetailsPage() {
   };
 
   return (
-    <ContentContainer>
-      <div className="relative mb-5">        <BackButton onClick={handleBack} className="absolute -top-2 -left-2" />
+    <ContentContainer>      <div className="relative mb-5">
+        <BackButton onClick={handleBack} className="absolute -top-2 -left-2" />
         <div className="text-center pt-8">
-          <h1 className="text-4xl font-bold text-gray-800 mb-1">Ticket Details</h1>
+          <PageTitle title="Ticket Details" />
         </div>
       </div>
 
@@ -185,26 +186,25 @@ function TicketDetailsPage() {
           )}
         </div>        {ticket.status === 'Cancelled' ? (
           <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-md">
-            <p className="text-red-800 text-center">
+            <Text color="text-red-800" align="center">
               This ticket has been cancelled and can no longer be modified.
-            </p>
+            </Text>
           </div>
         ) : ticket.status !== 'Pending' && (
           <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-md">
-            <p className="text-blue-800 text-center">
+            <Text color="text-blue-800" align="center">
               This ticket is {ticket.status.toLowerCase()} and can no longer be modified.
-            </p>
+            </Text>
           </div>
         )}
         <div className="border-b border-gray-200 my-6"></div>
       </div>
 
-      {/* Conversations container */}      {ticket.status !== 'Cancelled' ? (
-        <div className="max-w-4xl mx-auto">
+      {/* Conversations container */}      {ticket.status !== 'Cancelled' ? (        <div className="max-w-4xl mx-auto">
           <div className="flex justify-between items-center mb-4">
-            <h2 className="text-2xl font-semibold text-blue-800">Conversation History</h2>
+            <Subheading className="text-blue-800">Conversation History</Subheading>
             <div className="flex items-center">
-              <label htmlFor="sort-order" className="mr-2 text-sm text-gray-600">Sort by:</label>
+              <Label className="mr-2" size="sm">Sort by:</Label>
               <select
                 id="sort-order"
                 value={sortOrder}
@@ -227,13 +227,12 @@ function TicketDetailsPage() {
               />
             ))}
           </div>
-        </div>
-      ) : (
+        </div>      ) : (
         <div className="max-w-4xl mx-auto mt-6">
           <div className="bg-gray-50 p-4 rounded-md border border-gray-200">
-            <p className="text-gray-600 text-center">
+            <Text color="text-gray-600" align="center">
               No conversation history is available for cancelled tickets.
-            </p>
+            </Text>
           </div>
         </div>
       )}
@@ -252,10 +251,9 @@ function TicketDetailsPage() {
             </PrimaryButton>
           </>
         }
-      >
-        <div className="space-y-4">
+      >        <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Title</label>
+            <Label>Title</Label>
             <input
               type="text"
               value={editForm.title}
@@ -264,7 +262,7 @@ function TicketDetailsPage() {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+            <Label>Description</Label>
             <textarea
               value={editForm.description}
               onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
@@ -273,14 +271,16 @@ function TicketDetailsPage() {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>            <select
+            <Label>Category</Label>
+            <select
               value={editForm.category}
               onChange={(e) => setEditForm({ ...editForm, category: e.target.value })}
               className="w-full p-2 border border-gray-300 rounded-md"
             >
               <option value="Billing">Billing</option>
               <option value="Technical">Technical</option>
-              <option value="General">General</option>              <option value="Service">Service</option>
+              <option value="General">General</option>
+              <option value="Service">Service</option>
             </select>
           </div>
         </div>
@@ -306,11 +306,10 @@ function TicketDetailsPage() {
               Yes, Cancel Ticket
             </button>
           </>
-        }
-      >
-        <p className="text-gray-600">
+        }      >
+        <Text color="text-gray-600">
           Are you sure you want to cancel this ticket? This action cannot be undone.
-        </p>
+        </Text>
       </Modal>
     </ContentContainer>
   );

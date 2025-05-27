@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import SecondaryButton from '../components/buttons/SecondaryButton';
+import { PageTitle, Text, Label } from '../components/text';
 
 function AuditLogPage() {
   // Mock audit log data - replace with API call later
@@ -58,22 +59,21 @@ function AuditLogPage() {
 
   return (
     <div className="min-h-screen bg-blue-100 py-6 sm:py-12 px-4">
-      <div className="max-w-7xl mx-auto">
-        <div className="bg-white p-6 rounded-lg shadow-md">
-          <h1 className="text-3xl font-bold text-gray-800 mb-2">System Audit Log</h1>
-          <p className="text-gray-600 mb-6">Track and monitor system activities</p>
+      <div className="max-w-7xl mx-auto">        <div className="bg-white p-6 rounded-lg shadow-md">
+          <PageTitle 
+            title="System Audit Log"
+            subtitle="Track and monitor system activities"
+          />
 
           {/* Action Buttons */}
           <div className="flex justify-end mb-6">
             <SecondaryButton onClick={() => console.log('Export logs')}>
               Export Log
             </SecondaryButton>
-          </div>
-
-          {/* Filters */}
+          </div>          {/* Filters */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Start Date</label>
+              <Label>Start Date</Label>
               <input
                 type="date"
                 value={filters.startDate}
@@ -82,7 +82,7 @@ function AuditLogPage() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">End Date</label>
+              <Label>End Date</Label>
               <input
                 type="date"
                 value={filters.endDate}
@@ -91,7 +91,7 @@ function AuditLogPage() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Action Type</label>
+              <Label>Action Type</Label>
               <select
                 value={filters.action}
                 onChange={(e) => handleFilterChange(e, 'action')}
@@ -103,10 +103,9 @@ function AuditLogPage() {
                 <option>Ticket Updated</option>
                 <option>Ticket Status Changed</option>
                 <option>User Created</option>
-              </select>
-            </div>
+              </select>            </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">User</label>
+              <Label>User</Label>
               <input
                 type="text"
                 placeholder="Search by user email"

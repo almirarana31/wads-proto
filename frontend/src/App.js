@@ -110,19 +110,25 @@ function App() {
                   <AdminDashboard />
                 </ProtectedRoute>
               }
-            />
-            <Route
+            />            <Route
               path="/staff-dashboard"
               element={
-                <ProtectedRoute allowedRoles={['STF']}>
+                <ProtectedRoute allowedRoles={['STF', 'ADM']}>
                   <StaffDashPage />
+                </ProtectedRoute>
+              }
+            />            <Route
+              path="/staff/ticket/:ticketId"
+              element={
+                <ProtectedRoute allowedRoles={['STF', 'ADM']}>
+                  <StaffTicketView />
                 </ProtectedRoute>
               }
             />
             <Route
-              path="/staff/ticket/:ticketId"
+              path="/admin/ticket/:ticketId"
               element={
-                <ProtectedRoute allowedRoles={['STF']}>
+                <ProtectedRoute allowedRoles={['ADM']}>
                   <StaffTicketView />
                 </ProtectedRoute>
               }

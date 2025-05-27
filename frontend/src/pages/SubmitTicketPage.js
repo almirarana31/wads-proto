@@ -4,6 +4,7 @@ import { ChevronDown } from 'lucide-react';
 import checkIcon from '../assets/accept.png';
 import PrimaryButton from '../components/buttons/PrimaryButton';
 import SecondaryButton from '../components/buttons/SecondaryButton';
+import { PageTitle, Text, Label, Heading } from '../components/text';
 
 function SubmitTicketPage() {
   const navigate = useNavigate();
@@ -41,15 +42,14 @@ function SubmitTicketPage() {
       description: ''
     });
   };
-
   if (ticket) {
     return (
       <div className="min-h-screen bg-blue-100 py-6 sm:py-12 px-4">
         <div className="max-w-md mx-auto">
           <div className="bg-white rounded-md shadow-md p-6 sm:p-8">
-            <h1 className="text-3xl font-bold text-gray-800 text-center mb-6">
+            <Heading level={1} center className="mb-6">
               Ticket Submitted Successfully!
-            </h1>
+            </Heading>
             <div className="flex justify-center mb-6">
               <img src={checkIcon} alt="Success" className="w-16 h-16" />
             </div>
@@ -61,13 +61,13 @@ function SubmitTicketPage() {
               <p className="mb-1">We'll contact you via</p>
               <p className="mb-1">Email: <span className="text-blue-600 font-medium">{ticket.email}</span></p>
             </div>
-            <p className="text-gray-600 text-center mb-6">
+            <Text center className="mb-6">
               Our support team will review your ticket and respond as soon as possible.
               You will receive updates through your provided contact method.
-            </p>
-            <p className="text-gray-600 text-center mb-8">
+            </Text>
+            <Text center className="mb-8">
               You can view the status of this ticket and all your other tickets in <a href="/your-tickets" className="text-blue-600 hover:underline">Your Tickets</a>.
-            </p>
+            </Text>
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
               <SecondaryButton onClick={() => setTicket(null)}>
                 Submit another Ticket
@@ -82,14 +82,12 @@ function SubmitTicketPage() {
     );
   }
 
-  return (
-    <div className="bg-blue-100 py-6 md:py-12 px-4 flex-grow">
+  return (    <div className="bg-blue-100 py-6 md:py-12 px-4 flex-grow">
       <div className="bg-white p-6 md:p-8 rounded shadow-md max-w-2xl mx-auto">
-        <h1 className="text-center text-2xl md:text-3xl font-bold text-gray-800 mb-1">Submit a Ticket</h1>
-        <p className="text-center text-gray-600 mb-6">Submit your question or issue below</p>
+        <PageTitle title="Submit a Ticket" subtitle="Submit your question or issue below" className="mb-6" />
         <div className="space-y-6">
           <div>
-            <label htmlFor="email" className="block text-blue-700 mb-2">Email Address:</label>
+            <Label htmlFor="email">Email Address:</Label>
             <input
               type="email"
               id="email"
@@ -97,10 +95,9 @@ function SubmitTicketPage() {
               value={formData.email}
               onChange={handleInputChange}
               className="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-300"
-            />
-          </div>
+            />          </div>
           <div>
-            <label htmlFor="title" className="block text-blue-700 mb-2">Ticket Title:</label>
+            <Label htmlFor="title">Ticket Title:</Label>
             <input
               type="text"
               id="title"
@@ -111,7 +108,7 @@ function SubmitTicketPage() {
             />
           </div>
           <div>
-            <label htmlFor="category" className="block text-blue-700 mb-2">Category:</label>
+            <Label htmlFor="category">Category:</Label>
             <div className="relative">
               <select
                 id="category"
@@ -131,7 +128,7 @@ function SubmitTicketPage() {
             </div>
           </div>
           <div>
-            <label htmlFor="description" className="block text-blue-700 mb-2">Description:</label>
+            <Label htmlFor="description">Description:</Label>
             <textarea
               id="description"
               name="description"

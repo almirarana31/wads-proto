@@ -1,11 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import PrimaryButton from '../components/buttons/PrimaryButton';
 import SecondaryButton from '../components/buttons/SecondaryButton';
+import AssignStaffModal from '../components/AssignStaffModal';
+import { PageTitle, Text, Subheading, StatText } from '../components/text';
 
 function AdminDashboard() {
-  const navigate = useNavigate();
-  const [tickets] = useState([
+  const navigate = useNavigate();  const [tickets, setTickets] = useState([
     {
       id: 'TKT-001',
       title: 'Payment Failure',
@@ -14,33 +15,70 @@ function AdminDashboard() {
       createdAt: '2025-05-27T10:30:00Z',
       category: 'Billing',
       priority: 'High',
-      status: 'Pending'
+      status: 'Pending',
+      assignedStaff: null
+    },
+    {
+      id: 'TKT-002',
+      title: 'Technical Issue',
+      name: 'Jane Smith',
+      email: 'jane@example.com',
+      createdAt: '2025-05-26T14:20:00Z',
+      category: 'Technical',
+      priority: 'Medium',
+      status: 'In Progress',
+      assignedStaff: { id: 'STF002', name: 'Sarah Johnson' }
+    },
+    {
+      id: 'TKT-003',
+      title: 'Service Request',
+      name: 'Bob Wilson',
+      email: 'bob@example.com',
+      createdAt: '2025-05-25T09:15:00Z',
+      category: 'Service',
+      priority: 'Low',
+      status: 'Resolved',
+      assignedStaff: { id: 'STF001', name: 'John Smith' }
     }
-    // Add more mock tickets as needed
   ]);
 
   const [stats] = useState({
-    total: 100,
-    pending: 25,
-    inProgress: 50,
-    resolved: 25
+    total: 10,
+    pending: 2,
+    inProgress: 5,
+    resolved: 2,
+    cancelled: 1
   });
-
   const [staffPerformance] = useState([
     {
+      id: 'STF001',
       name: 'John Smith',
       assigned: 45,
       resolved: 38
     },
     {
+      id: 'STF002',
       name: 'Sarah Johnson',
       assigned: 52,
       resolved: 45
     },
     {
+      id: 'STF003',
       name: 'Mike Wilson',
       assigned: 38,
       resolved: 35
+    },
+    {
+      id: 'STF004',
+      name: 'Emily Chen',
+      assigned: 28,
+      resolved: 26
+    },
+    {
+      id: 'STF005',
+      name: 'David Rodriguez',
+      assigned: 33,
+      resolved: 31
     }
   ]);
 
@@ -50,16 +88,50 @@ function AdminDashboard() {
     status: 'All status',
     category: 'All category'
   });
-
   const [searchQuery, setSearchQuery] = useState('');
-
-  const handleViewTicket = (ticketId) => {
-    navigate(`/ticket/${ticketId}`);
+  const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' });
+  const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
+  const [selectedTicketId, setSelectedTicketId] = useState('');  const handleViewTicket = (ticketId) => {
+    navigate(`/admin/ticket/${ticketId}`);
+  };
+  const handleAssignTicket = (ticketId) => {
+    setSelectedTicketId(ticketId);
+    setIsAssignModalOpen(true);
+  };
+  const handleStaffAssignment = (ticketId, staffId, staffName) => {
+    // Update the tickets state with the assigned staff
+    setTickets(prevTickets => 
+      prevTickets.map(ticket => 
+        ticket.id === ticketId 
+          ? { ...ticket, assignedStaff: { id: staffId, name: staffName } }
+          : ticket
+      )
+    );
+    
+    console.log(`Assigned ticket ${ticketId} to staff ${staffName} (ID: ${staffId})`);
+    alert(`Ticket ${ticketId} has been assigned to ${staffName}!`);
+  };
+  const handleCloseAssignModal = () => {
+    setIsAssignModalOpen(false);
+    setSelectedTicketId('');
   };
 
-  const handleAssignTicket = (ticketId) => {
-    // Implement ticket assignment logic here
-    console.log('Assigning ticket:', ticketId);
+  // Sorting functionality
+  const handleSort = (key) => {
+    let direction = 'asc';
+    if (sortConfig.key === key && sortConfig.direction === 'asc') {
+      direction = 'desc';
+    }
+    setSortConfig({ key, direction });
+  };
+
+  const getSortIcon = (columnKey) => {
+    if (sortConfig.key !== columnKey) {
+      return <span className="text-gray-400">↕</span>;
+    }
+    return sortConfig.direction === 'asc' ? 
+      <span className="text-blue-600">↑</span> : 
+      <span className="text-blue-600">↓</span>;
   };
 
   // Filter tickets based on search and filters
@@ -76,42 +148,83 @@ function AdminDashboard() {
     );
   });
 
+  const sortedTickets = useMemo(() => {
+    let sortableTickets = [...filteredTickets];
+    if (sortConfig.key) {
+      sortableTickets.sort((a, b) => {
+        let aValue = a[sortConfig.key];
+        let bValue = b[sortConfig.key];
+
+        // Handle date sorting
+        if (sortConfig.key === 'createdAt') {
+          aValue = new Date(aValue);
+          bValue = new Date(bValue);
+        }
+
+        // Handle priority sorting (High > Medium > Low)
+        if (sortConfig.key === 'priority') {
+          const priorityOrder = { 'High': 3, 'Medium': 2, 'Low': 1 };
+          aValue = priorityOrder[aValue] || 0;
+          bValue = priorityOrder[bValue] || 0;
+        }
+
+        // Handle status sorting (Pending > In Progress > Resolved > Cancelled)
+        if (sortConfig.key === 'status') {
+          const statusOrder = { 'Pending': 4, 'In Progress': 3, 'Resolved': 2, 'Cancelled': 1 };
+          aValue = statusOrder[aValue] || 0;
+          bValue = statusOrder[bValue] || 0;
+        }
+
+        // Handle assigned staff sorting (assigned first, then by name)
+        if (sortConfig.key === 'assignedStaff') {
+          aValue = a.assignedStaff ? a.assignedStaff.name : '';
+          bValue = b.assignedStaff ? b.assignedStaff.name : '';
+        }
+
+        if (aValue < bValue) {
+          return sortConfig.direction === 'asc' ? -1 : 1;
+        }
+        if (aValue > bValue) {
+          return sortConfig.direction === 'asc' ? 1 : -1;
+        }
+        return 0;
+      });
+    }
+    return sortableTickets;
+  }, [filteredTickets, sortConfig]);
+
   return (
     <div className="min-h-screen bg-blue-100 py-6 sm:py-12 px-4">
-      <div className="bg-white p-6 md:p-10 rounded shadow-md max-w-auto mx-auto">
-      <div className="max-w-7xl mx-auto">
-        <h1 className="text-3xl font-bold text-gray-800 text-center mb-2">Admin Dashboard</h1>
-        <p className="text-center text-gray-600 mb-8">
-          Welcome <span className="font-medium text-blue-600">Admin</span>, manage your dashboard here
-        </p>
-
+      <div className="bg-white p-6 md:p-10 rounded shadow-md max-w-auto mx-auto">      <div className="max-w-7xl mx-auto">
+        <PageTitle 
+          title="Admin Dashboard"
+          subtitle={
+            <>
+              Welcome <span className="font-medium text-blue-600">Admin</span>, manage your dashboard here
+            </>
+          }
+        />        
         {/* Stats Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
           <div className="bg-white p-4 rounded-lg shadow-md text-center">
-            <h3 className="text-xl font-semibold text-gray-700 mb-1">Total</h3>
-            <p className="text-4xl font-bold text-gray-800">{stats.total}</p>
+            <StatText value={stats.total} label="Total" />
           </div>
-          <div className="bg-yellow-100 p-4 rounded-lg shadow-md text-center">
-            <h3 className="text-xl font-semibold text-yellow-800 mb-1">Pending</h3>
-            <p className="text-4xl font-bold text-yellow-700">{stats.pending}</p>
+          <div className="bg-yellow-100 p-4 rounded-lg shadow-md">
+            <StatText label="Pending" value={stats.pending} valueColor="yellow" labelColor="yellow" />
           </div>
-          <div className="bg-purple-100 p-4 rounded-lg shadow-md text-center">
-            <h3 className="text-xl font-semibold text-purple-800 mb-1">In Progress</h3>
-            <p className="text-4xl font-bold text-purple-700">{stats.inProgress}</p>
+          <div className="bg-purple-100 p-4 rounded-lg shadow-md">
+            <StatText label="In Progress" value={stats.inProgress} valueColor="purple" labelColor="purple" />
           </div>
-          <div className="bg-green-100 p-4 rounded-lg shadow-md text-center">
-            <h3 className="text-xl font-semibold text-green-800 mb-1">Resolved</h3>
-            <p className="text-4xl font-bold text-green-700">{stats.resolved}</p>
+          <div className="bg-green-100 p-4 rounded-lg shadow-md">
+            <StatText label="Resolved" value={stats.resolved} valueColor="green" labelColor="green" />
           </div>
-          <div className="bg-red-100 p-4 rounded-lg shadow-md text-center">
-            <h3 className="text-xl font-semibold text-red-800 mb-1">Cancelled</h3>
-            <p className="text-4xl font-bold text-red-700">{stats.cancelled}</p>
+          <div className="bg-red-100 p-4 rounded-lg shadow-md">
+            <StatText value={stats.cancelled} label="Cancelled" valueColor="red" labelColor="red" />
           </div>
-        </div>
-
+        </div>        
         {/* Ticket Management Section */}
         <div className="bg-white p-6 rounded-lg shadow-md mb-8">
-          <h2 className="text-2xl font-bold mb-4 text-blue-700">Ticket Management</h2>
+          <Subheading className="text-blue-700">Ticket Management</Subheading>
           <div className="mb-4">
             <input
               type="text"
@@ -154,22 +267,72 @@ function AdminDashboard() {
               <option value="General">General</option>
               <option value="Service">Service</option>
             </select>
-          </div>
-
-          {/* Tickets Table */}
+          </div>          {/* Tickets Table */}
           <div className="overflow-x-auto">
             <table className="min-w-full table-auto border-collapse border border-gray-200">
               <thead className="bg-gray-50">
                 <tr>
-                  {['ID', 'Title', 'Name', 'Email', 'Created At', 'Category', 'Priority', 'Status', 'Actions'].map(header => (
-                    <th key={header} className="p-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider border-b border-gray-200">
-                      {header} <span className="text-gray-400">▼</span>
-                    </th>
-                  ))}
+                  <th 
+                    onClick={() => handleSort('id')}
+                    className="p-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider border-b border-gray-200 cursor-pointer hover:bg-gray-100"
+                  >
+                    ID {getSortIcon('id')}
+                  </th>
+                  <th 
+                    onClick={() => handleSort('title')}
+                    className="p-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider border-b border-gray-200 cursor-pointer hover:bg-gray-100"
+                  >
+                    Title {getSortIcon('title')}
+                  </th>
+                  <th 
+                    onClick={() => handleSort('name')}
+                    className="p-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider border-b border-gray-200 cursor-pointer hover:bg-gray-100"
+                  >
+                    Name {getSortIcon('name')}
+                  </th>
+                  <th 
+                    onClick={() => handleSort('email')}
+                    className="p-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider border-b border-gray-200 cursor-pointer hover:bg-gray-100"
+                  >
+                    Email {getSortIcon('email')}
+                  </th>
+                  <th 
+                    onClick={() => handleSort('createdAt')}
+                    className="p-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider border-b border-gray-200 cursor-pointer hover:bg-gray-100"
+                  >
+                    Created At {getSortIcon('createdAt')}
+                  </th>
+                  <th 
+                    onClick={() => handleSort('category')}
+                    className="p-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider border-b border-gray-200 cursor-pointer hover:bg-gray-100"
+                  >
+                    Category {getSortIcon('category')}
+                  </th>
+                  <th 
+                    onClick={() => handleSort('priority')}
+                    className="p-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider border-b border-gray-200 cursor-pointer hover:bg-gray-100"
+                  >
+                    Priority {getSortIcon('priority')}
+                  </th>
+                  <th 
+                    onClick={() => handleSort('status')}
+                    className="p-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider border-b border-gray-200 cursor-pointer hover:bg-gray-100"
+                  >
+                    Status {getSortIcon('status')}
+                  </th>
+                  <th 
+                    onClick={() => handleSort('assignedStaff')}
+                    className="p-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider border-b border-gray-200 cursor-pointer hover:bg-gray-100"
+                  >
+                    Assigned Staff {getSortIcon('assignedStaff')}
+                  </th>
+                  <th className="p-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider border-b border-gray-200">
+                    Actions
+                  </th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {filteredTickets.length > 0 ? filteredTickets.map((ticket) => (
+                {sortedTickets.length > 0 ? sortedTickets.map((ticket) => (
                   <tr key={ticket.id} className="hover:bg-gray-50">
                     <td className="p-3 text-sm text-gray-700 whitespace-nowrap">{ticket.id}</td>
                     <td className="p-3 text-sm text-gray-700 whitespace-nowrap">{ticket.title}</td>
@@ -190,8 +353,7 @@ function AdminDashboard() {
                         <option>Medium</option>
                         <option>Low</option>
                       </select>
-                    </td>
-                    <td className="p-3 text-sm text-gray-700 whitespace-nowrap">
+                    </td>                    <td className="p-3 text-sm text-gray-700 whitespace-nowrap">
                       <select defaultValue={ticket.status} className="p-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-blue-300 bg-white">
                         <option>Pending</option>
                         <option>In Progress</option>
@@ -200,45 +362,70 @@ function AdminDashboard() {
                       </select>
                     </td>
                     <td className="p-3 text-sm text-gray-700 whitespace-nowrap">
+                      {ticket.assignedStaff ? (
+                        <div className="flex flex-col">
+                          <Text weight="medium" size="sm">{ticket.assignedStaff.name}</Text>
+                          <Text color="text-gray-500" size="xs">ID: {ticket.assignedStaff.id}</Text>
+                        </div>
+                      ) : (
+                        <PrimaryButton
+                          onClick={() => handleAssignTicket(ticket.id)}
+                          className="text-xs px-2 py-1"
+                        >
+                          Assign
+                        </PrimaryButton>
+                      )}
+                    </td>
+                    <td className="p-3 text-sm text-gray-700 whitespace-nowrap">
                       <SecondaryButton
                         onClick={() => handleViewTicket(ticket.id)}
                         className="mr-3"
                       >
                         View
                       </SecondaryButton>
-                      <PrimaryButton
-                        onClick={() => handleAssignTicket(ticket.id)}
-                      >
-                        Assign
-                      </PrimaryButton>
+                      {ticket.assignedStaff && (
+                        <PrimaryButton
+                          onClick={() => handleAssignTicket(ticket.id)}
+                          className="text-xs"
+                        >
+                          Reassign
+                        </PrimaryButton>
+                      )}
                     </td>
-                  </tr>
-                )) : (
+                  </tr>                )) : (
                   <tr>
-                    <td colSpan="9" className="p-3 text-sm text-gray-500 text-center">No tickets found.</td>
+                    <td colSpan="10" className="p-3 text-center">
+                      <Text color="text-gray-500" size="sm">No tickets found.</Text>
+                    </td>
                   </tr>
                 )}
               </tbody>
             </table>
           </div>
-        </div>
-
-        {/* Staff Performance Section */}
+        </div>        {/* Staff Performance Section */}
         <div>
-          <h2 className="text-2xl font-bold mb-4 text-blue-700">Staff Performance</h2>
+          <Subheading className="text-blue-700">Staff Performance</Subheading>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {staffPerformance.map((staff, index) => (
               <div key={index} className="p-6 bg-white rounded-lg shadow-md border border-gray-200">
-                <h3 className="font-bold text-xl text-gray-800 mb-3">{staff.name}</h3>
-                <p className="text-gray-600 text-sm">Assigned: <span className="font-medium">{staff.assigned}</span></p>
-                <p className="text-gray-600 text-sm">Resolved: <span className="font-medium">{staff.resolved}</span></p>
-                <p className="text-gray-600 text-sm">Resolution Rate: <span className="font-medium text-green-600">{staff.resolutionRate}</span></p>
+                <Text weight="bold" size="xl" className="mb-3">{staff.name}</Text>
+                <Text color="text-gray-600" size="sm">Assigned: <span className="font-medium">{staff.assigned}</span></Text>
+                <Text color="text-gray-600" size="sm">Resolved: <span className="font-medium">{staff.resolved}</span></Text>
+                <Text color="text-gray-600" size="sm">Resolution Rate: <span className="font-medium text-green-600">{staff.resolutionRate}</span></Text>
               </div>
-            ))}
-          </div>
-        </div>
+            ))}        </div>
       </div>
       </div>
+
+      {/* Assign Staff Modal */}
+      <AssignStaffModal
+        isOpen={isAssignModalOpen}
+        onClose={handleCloseAssignModal}
+        onAssign={handleStaffAssignment}
+        staffList={staffPerformance}
+        ticketId={selectedTicketId}
+      />
+    </div>
     </div>
   );
 }

@@ -7,6 +7,7 @@ import BackButton from '../components/buttons/BackButton';
 import DangerButton from '../components/buttons/DangerButton';
 import SuccessButton from '../components/buttons/SuccessButton';
 import PrimaryButton from '../components/buttons/PrimaryButton';
+import { PageTitle, Text, Subheading, Label } from '../components/text';
 
 function StaffTicketView() {
   const { ticketId } = useParams();
@@ -76,10 +77,10 @@ function StaffTicketView() {
   };
 
   return (
-    <ContentContainer>
-      <div className="relative mb-5">        <BackButton onClick={handleBack} className="absolute -top-2 -left-2" />
+    <ContentContainer>      <div className="relative mb-5">
+        <BackButton onClick={handleBack} className="absolute -top-2 -left-2" />
         <div className="text-center pt-8">
-          <h1 className="text-4xl font-bold text-gray-800 mb-1">Ticket Details</h1>
+          <PageTitle title="Ticket Details" />
         </div>
       </div>
 
@@ -87,32 +88,32 @@ function StaffTicketView() {
         {/* Reusing TicketDetailsCard component */}
         <TicketDetailsCard ticket={ticket} />
         
-        {/* Staff Actions */}        <div className="flex justify-end gap-4 mt-6">          <DangerButton onClick={handleCancelTicket}>Cancel Ticket</DangerButton>
+        {/* Staff Actions */}        
+        <div className="flex justify-end gap-4 mt-6">          
+          <DangerButton onClick={handleCancelTicket}>Cancel Ticket</DangerButton>
           <SuccessButton onClick={handleResolveTicket}>Resolve Ticket</SuccessButton>
-        </div>
-
+        </div>        
         {/* Customer Information */}
         <div className="mt-8">
-          <h2 className="text-2xl font-semibold text-blue-800">Customer Information</h2>
+          <Subheading className="text-blue-800">Customer Information</Subheading>
           <div className="bg-white p-6 rounded-lg shadow-md">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <p className="mb-2 text-gray-600">Name: <span className="font-medium text-gray-800">{ticket.customer.name}</span></p>
-                <p className="mb-2 text-gray-600">Account: <span className="font-medium text-gray-800">{ticket.customer.accountType}</span></p>
+                <Text className="mb-2" color="text-gray-600">Name: <span className="font-medium text-gray-800">{ticket.customer.name}</span></Text>
+                <Text className="mb-2" color="text-gray-600">Account: <span className="font-medium text-gray-800">{ticket.customer.accountType}</span></Text>
               </div>
               <div>
-                <p className="mb-2 text-gray-600">Email: <span className="font-medium text-gray-800">{ticket.customer.email}</span></p>
-                <p className="mb-2 text-gray-600">Phone: <span className="font-medium text-gray-800">{ticket.customer.phone}</span></p>
+                <Text className="mb-2" color="text-gray-600">Email: <span className="font-medium text-gray-800">{ticket.customer.email}</span></Text>
+                <Text className="mb-2" color="text-gray-600">Phone: <span className="font-medium text-gray-800">{ticket.customer.phone}</span></Text>
               </div>
             </div>
           </div>
-        </div>        {/* Conversations container */}
-        {ticket.status !== 'Cancelled' ? (
-          <div className="mt-8">
+        </div>{/* Conversations container */}
+        {ticket.status !== 'Cancelled' ? (          <div className="mt-8">
             <div className="flex justify-between items-center mb-4">
-              <h2 className="text-2xl font-semibold text-blue-800">Conversation History</h2>
+              <Subheading className="text-blue-800">Conversation History</Subheading>
               <div className="flex items-center">
-                <label htmlFor="sort-order" className="mr-2 text-sm text-gray-600">Sort by:</label>
+                <Label className="mr-2" size="sm">Sort by:</Label>
                 <select
                   id="sort-order"
                   value={sortOrder}
@@ -138,13 +139,12 @@ function StaffTicketView() {
               Start a New Conversation
             </PrimaryButton>
           </div>
-        ) : (
-          <div className="mt-8">
+        ) : (          <div className="mt-8">
             <div className="max-w-4xl mx-auto mt-6">
               <div className="bg-gray-50 p-4 rounded-md border border-gray-200">
-                <p className="text-gray-600 text-center">
+                <Text color="text-gray-600" align="center">
                   No conversation history is available for cancelled tickets.
-                </p>
+                </Text>
               </div>
             </div>
           </div>

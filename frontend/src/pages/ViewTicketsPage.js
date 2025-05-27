@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import TicketCard from '../components/TicketCard';
 import PrimaryButton from '../components/buttons/PrimaryButton';
+import { PageTitle, Text, Label } from '../components/text';
 
 function ViewTicketsPage() {
   const navigate = useNavigate();
@@ -92,12 +93,15 @@ function ViewTicketsPage() {
   return (
     <div className="min-h-screen bg-blue-100">
       <div className="max-w-6xl mx-auto p-6">
-        <div className="bg-white rounded-md shadow-md p-8">
-          {/* Page Header */}
-          <h1 className="text-4xl font-bold text-gray-800 mb-1">Your Tickets</h1>
-          <p className="text-gray-600 text-xl mb-8">
-            Welcome <span className="underline">User</span>, here are your submitted tickets
-          </p>
+        <div className="bg-white rounded-md shadow-md p-8">          {/* Page Header */}
+          <PageTitle 
+            title="Your Tickets"
+            subtitle={
+              <>
+                Welcome <span className="underline">User</span>, here are your submitted tickets
+              </>
+            }
+          />
           
           {/* Search and Filter */}
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
@@ -109,9 +113,8 @@ function ViewTicketsPage() {
                 onChange={handleSearchChange}
                 className="w-full md:w-80 p-2 border border-gray-300 rounded"
               />
-              
-              <div className="flex items-center">
-                <span className="mr-2 text-gray-700">Filter by status:</span>
+                <div className="flex items-center">
+                <Label className="mr-2">Filter by status:</Label>
                 <select
                   value={filterStatus}
                   onChange={handleFilterChange}
@@ -131,12 +134,11 @@ function ViewTicketsPage() {
               Submit a Ticket
             </PrimaryButton>
           </div>
-          
-          {/* Ticket List */}
+            {/* Ticket List */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {filteredTickets.length === 0 ? (
-              <div className="text-center py-10 text-gray-500 col-span-full">
-                No tickets found matching your criteria.
+              <div className="text-center py-10 col-span-full">
+                <Text color="text-gray-500">No tickets found matching your criteria.</Text>
               </div>
             ) : (
               filteredTickets.map((ticket) => (
