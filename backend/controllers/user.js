@@ -341,6 +341,7 @@ export const submitTicket = async (req, res) => {
     }
 };
 
+// gets user ticket details
 export const getUserTickets = async (req, res) => {
     try {
         const userId = req.user.id; // req.user is set by userAuthZ middleware
