@@ -11,7 +11,7 @@ export const authN = (req, res, next) => {
             if (err) return res.status(403).json({message: "Token Expired or Invalid Authentication"});
             
             // otherwise, IS a user, proceed
-            next()
+            return next()
         })
     } catch (error) {
         return res.status(500).json({message: error.message})
@@ -46,8 +46,61 @@ export const adminAuthZ = async (req, res, next) => {
         
         req.user = user; // user contains, uid, sid, email, uname
         req.admin = staff; // admin contains all admin fields
-        next();
+        return next();
     } catch (error) {
         return res.status(500).json({message: error.message});
+    }
+};
+
+// soft authz
+export const softAuthZ = async (req, res, next) => {
+    try {
+         // get the token from the header if exists => bearer {token}
+        const token = req.headers.authorization?.split(" ")[1];
+
+        // check for access token existence
+        if(!token) {
+            return res.status(401).json({message: "Access token missing"});
+        }
+
+        // verify token
+        const user = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
+        const {staff_id} = user;
+
+        // if is staff, attach user to request body
+        if (staff_id != 0) {
+            req.staff = user
+        } 
+
+        return next();
+    } catch (error) {
+        return res.status(500).json({message: error.message})
+    }
+};
+
+// staff authz
+export const staffAuthZ = async (req, res, next) => {
+    try {
+        // get the token from the header if exists => bearer {token}
+        const token = req.headers.authorization?.split(" ")[1];
+
+        // check for access token existence
+        if(!token) {
+            return res.status(401).json({message: "Access token missing"});
+        }
+
+         // verify token
+        const user = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
+        const {staff_id} = user;
+
+        // not a staff
+        if (staff_id == 0) {
+            return res.status(403).json({message: "Forbiddne access"})
+        }
+
+        req.staff = user;
+        return next();
+    } catch (error) {
+        return res.status(500).json({message: error.message})
     }
 };

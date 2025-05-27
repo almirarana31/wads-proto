@@ -2,8 +2,6 @@ import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import { Staff, User} from '../models/index.js';
 import sendOTP from './otp.js';
-import sequelize from '../config/sequelize.js';
-import { Op } from 'sequelize';
 
 // start with the login/sign up
 
@@ -246,4 +244,74 @@ export const signOut = async (req, res) => {
     } catch (error) {
         return res.status(500).json({error: error.message});
     }
-}
+};
+
+export const forgetPassword = async (req, res) => {
+    const {email, password} = req.body
+
+    try {
+        // check for email validity
+        if (!validateEmail(email)) return res.status(400).json({ message: "Invalid email" });
+
+        const user = await User.findOne({
+            where: {
+                email: email
+            },
+            raw: true,
+            attributes: ['id']
+        });
+
+        const user_id = user.id;
+
+        // if (!user) {
+        //     return res.status(400).json({message: "Not a user"})
+        // }
+        
+        const hashedPassword = await hashPassword(password);
+
+        // create otp token with user info
+        const otpToken = createOTPToken({email: email, id: user_id, password: hashedPassword});
+        const actLink = `${process.env.BASE_URL}/api/user/confirm-password-reset/${otpToken}`;
+        await sendOTP(email, "Reset Password Link", actLink);
+
+        return res.status(200).json({message: "Successfully sent password reset link"});
+    } catch (error) {
+        return res.status(500).json({message: error.message})
+    }
+};
+
+export const confirmPassReset = async (req, res) => {
+    // get token from e
+    const token = req.params.token;
+    try {
+       // verify access token
+        const decode = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
+
+        const {id, password} = decode;
+
+        await User.update({
+            password: password
+        }, {
+            where: {
+                id: id
+            }
+        });
+
+        return res.status(200).json({message: "Password has been reset"});
+    } catch (error) {
+        return res.status(400).json({message: "Invalid reset password link"});
+    }
+};
+
+export const validResetLink = async (req, res) => {
+    // get token from e
+    const token = req.params.token;
+    try {
+       // verify access token
+        const decode = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
+
+        return res.status(200).json({message: "Valid reset password link"});
+    } catch (error) {
+        return res.status(400).json({message: "Invalid reset password link"});
+    }
+};

@@ -4,6 +4,7 @@ import sequelize from './config/sequelize.js';
 import userRoutes from './routes/user_routes.js';
 import defaultQueries from './routes/defaultQueries.js';
 import adminRoutes from './routes/admin_routes.js';
+import ticketRoutes from './routes/ticket_routes.js';
 import { User, Ticket, Role, Category, Priority, Status } from './models/index.js'
 // import { addFK } from './queries.js';
 
@@ -17,6 +18,8 @@ app.use(express.json());
 app.use('/api/user', userRoutes);
 
 app.use('/api/admin', adminRoutes);
+
+app.use('/api/ticket', ticketRoutes);
 
 // remove once ran ONCE
 app.use('/api', defaultQueries);

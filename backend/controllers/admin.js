@@ -1,11 +1,6 @@
-import bcrypt from 'bcrypt';
-import jwt from 'jsonwebtoken';
 import { Staff, User, Ticket, Status, Category, Priority } from '../models/index.js';
-import dotenv from 'dotenv';
-import sessionStorage from 'sessionstorage';
 import sequelize from '../config/sequelize.js';
-import { Op, Sequelize } from 'sequelize';
-import { raw } from 'express';
+import { Op } from 'sequelize';
 
 // dash board begins here
 export const getAdminUsername = async (req, res) => {
@@ -149,8 +144,6 @@ export const getStaffPerformance = async (req, res) => {
     }
 };
 
-// dashboard ends here
-
 // ticket actions start here
 
 // update ticket fields
@@ -217,17 +210,6 @@ export const searchStaff = async (req, res) => {
     }
 }
 
-// assign status to a priority to a ticket
-export const assignStatus = async (req, res) => {
-    // get ticket id from route parameter
-    const ticket_id = req.params.ticket_id
-    try {
-
-    } catch (error) {
-
-    }
-}
-
 // assign staff to a ticket
 export const assignStaff = async (req, res) => {
     // get ticket id from route parameter
@@ -251,3 +233,5 @@ export const assignStaff = async (req, res) => {
         return res.status(500).json({message: error.message})
     };
 }
+
+// dashboard ends here

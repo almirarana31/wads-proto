@@ -17,23 +17,23 @@ router.get('/status-summary', getStatusSummary);
 
 router.get('/username', getAdminUsername);
 
-router.get('/tickets', getTickets);
+router.get('/all-tickets', getTickets);
 
 router.get('/staff-performance', getStaffPerformance);
 
 router.get('/staff/:ticket_id', searchStaff);
 
-// attributes fetching 
-router.get('/categories', getCategory);
-router.get('/priorities', getPriority);
-router.get('/statuses', getStatus);
-
 // attribures updating
 router.patch('/tickets/:id', updateField)
 
+// assigned staff updating
+router.patch('/tickets/:ticket_id/staff', assignStaff)
+
 // admin dashboard ends here
 
-// ticket routes
-router.patch('/tickets/:ticket_id/staff', assignStaff)
+// view action
+// get details of a specific ticket
+
+
 
 export default router;
