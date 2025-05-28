@@ -49,13 +49,12 @@ function ResetPasswordVerifyPage() {
       setIsVerifying(false);
       setIsValid(false);
       setError('No reset token provided. Please request a password reset again.');
-    }
-  }, [token, navigate]);
+    }  }, [token, navigate]);
 
   // Show loading while verifying
   if (isVerifying) {
     return (
-      <div className="min-h-screen bg-blue-100 py-6 sm:py-12 px-4">
+      <div className="min-h-screen py-6 sm:py-12 px-4">
         <div className="max-w-md mx-auto">
           <div className="bg-white rounded-md shadow-md p-6 sm:p-8">
             <h1 className="text-2xl sm:text-3xl font-bold text-gray-800 text-center mb-6">Verifying Reset Link</h1>
@@ -71,7 +70,7 @@ function ResetPasswordVerifyPage() {
   // Show error if token is invalid
   if (!isValid) {
     return (
-      <div className="min-h-screen bg-blue-100 py-6 sm:py-12 px-4">
+      <div className="min-h-screen py-6 sm:py-12 px-4">
         <div className="max-w-md mx-auto">
           <div className="bg-white rounded-md shadow-md p-6 sm:p-8">
             <h1 className="text-2xl sm:text-3xl font-bold text-gray-800 text-center mb-6">Invalid Reset Link</h1>
@@ -91,8 +90,7 @@ function ResetPasswordVerifyPage() {
           </div>
         </div>
       </div>
-    );
-  }
+    );  }
 
   return null; // This shouldn't render as we redirect when valid
 }

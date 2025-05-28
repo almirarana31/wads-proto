@@ -55,6 +55,13 @@ function Header({ isAuthenticated = false, userRole }) {
             ADMIN DASHBOARD
           </Link>
           <Link
+            to="/staff-dashboard" 
+            className={`${getActiveLinkClass('/staff-dashboard')} font-medium`}
+            onClick={() => setIsMenuOpen(false)}
+          >
+            STAFF DASHBOARD
+          </Link>
+          <Link
             to="/audit-logs" 
             className={`${getActiveLinkClass('/audit-logs')} font-medium`}
             onClick={() => setIsMenuOpen(false)}

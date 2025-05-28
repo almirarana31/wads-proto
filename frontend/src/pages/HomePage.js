@@ -13,9 +13,8 @@ function HomePage() {
 
   const handleNavigateToViewTickets = () => {
     navigate('/view-tickets');
-  };
-  return (
-    <div className="text-center bg-blue-100 py-4 md:py-6 px-4 flex-grow flex items-center justify-center min-h-[80vh]">
+  };  return (
+    <div className="text-center py-4 md:py-6 px-4 flex-grow flex items-center justify-center min-h-[80vh]">
       <div className="bg-white p-6 md:p-10 rounded shadow-md max-w-4xl mx-auto">
         <PageTitle 
           title="Welcome to Bianca Aesthetic Helpdesk"

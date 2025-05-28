@@ -34,10 +34,9 @@ function ForgotPasswordPage() {
       setLoading(false);
     }
   };
-
   if (submitted) {
     return (
-      <div className="min-h-screen bg-blue-100 py-6 sm:py-12 px-4">        <div className="max-w-md mx-auto">
+      <div className="min-h-screen py-6 sm:py-12 px-4">        <div className="max-w-md mx-auto">
           <div className="bg-white rounded-md shadow-md p-6 sm:p-8">
             <PageTitle 
               title="Password Reset Email Sent"
@@ -61,9 +60,8 @@ function ForgotPasswordPage() {
       </div>
     );
   }
-
   return (
-    <div className="min-h-screen bg-blue-100 py-6 sm:py-12 px-4">      <div className="max-w-md mx-auto">
+    <div className="min-h-screen py-6 sm:py-12 px-4">      <div className="max-w-md mx-auto">
         <div className="bg-white rounded-md shadow-md p-6 sm:p-8">
           <PageTitle 
             title="Forgot Password"

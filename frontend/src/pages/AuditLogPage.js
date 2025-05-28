@@ -56,10 +56,9 @@ function AuditLogPage() {
     if (filters.user && !log.user.toLowerCase().includes(filters.user.toLowerCase())) return false;
     return true;
   });
-
   return (
-    <div className="min-h-screen bg-blue-100 py-6 sm:py-12 px-4">
-      <div className="max-w-7xl mx-auto">        <div className="bg-white p-6 rounded-lg shadow-md">
+    <div className="min-h-screen py-6 sm:py-12 px-4">
+      <div className="max-w-7xl mx-auto"><div className="bg-white p-6 rounded-lg shadow-md">
           <PageTitle 
             title="System Audit Log"
             subtitle="Track and monitor system activities"
@@ -70,7 +69,8 @@ function AuditLogPage() {
             <SecondaryButton onClick={() => console.log('Export logs')}>
               Export Log
             </SecondaryButton>
-          </div>          {/* Filters */}
+          </div>          
+          {/* Filters */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
             <div>
               <Label>Start Date</Label>
@@ -121,7 +121,7 @@ function AuditLogPage() {
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
-                  {['Timestamp', 'Action', 'User', 'Details', 'IP Address', 'User Agent'].map(header => (
+                  {['Timestamp', 'Action', 'User', 'Details'].map(header => (
                     <th
                       key={header}
                       className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
@@ -145,12 +145,6 @@ function AuditLogPage() {
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-700">
                       {log.details}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                      {log.ipAddress}
-                    </td>
-                    <td className="px-6 py-4 text-sm text-gray-700">
-                      {log.userAgent}
                     </td>
                   </tr>
                 ))}

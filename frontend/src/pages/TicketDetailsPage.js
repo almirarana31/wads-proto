@@ -23,9 +23,8 @@ function TicketDetailsPage() {
     category: '',
     priority: ''
   });
-
   // Use useMemo for both tickets data and finding current ticket
-  const { ticket, tickets } = useMemo(() => {
+  const { initialTicket, tickets } = useMemo(() => {
     const ticketsData = [
       {
         id: 'TKT-001',
@@ -67,9 +66,19 @@ function TicketDetailsPage() {
 
     return {
       tickets: ticketsData,
-      ticket: ticketsData.find(t => t.id === ticketId)
+      initialTicket: ticketsData.find(t => t.id === ticketId)
     };
   }, [ticketId]);
+
+  // Initialize currentTicket with initialTicket data
+  useEffect(() => {
+    if (initialTicket && !currentTicket) {
+      setCurrentTicket(initialTicket);
+    }
+  }, [initialTicket, currentTicket]);
+
+  // Use the currentTicket for display, fallback to initialTicket if not set
+  const ticket = currentTicket || initialTicket;
 
   const editFormInitialState = useMemo(() => ({
     title: ticket.title,
@@ -95,8 +104,13 @@ function TicketDetailsPage() {
       status: 'Pending',
       lastUpdatedAt: new Date().toISOString()
     };
+    
+    // Update the current ticket to reflect changes immediately in the UI
     setCurrentTicket(updatedTicket);
     setIsEditModalOpen(false);
+    
+    // In a real app, this would be an API call to update the ticket
+    console.log('Updated ticket:', updatedTicket);
   };
   const handleCancelTicket = () => {
     // Only allow cancellation of pending tickets
@@ -155,10 +169,9 @@ function TicketDetailsPage() {
   const handleBack = () => {
     navigate(-1);
   };
-
-  const handleConversationClick = (id) => {
-    navigate(`/chatroom/${id}`);
-    // Routes to chatroom page with conversation ID || In real app, replaced with API call
+  const handleConversationClick = (conversationId) => {
+    navigate(`/chatroom/${ticketId}/${conversationId}`);
+    // Routes to chatroom page with ticket ID and conversation ID || In real app, replaced with API call
   };
 
   return (
@@ -169,17 +182,16 @@ function TicketDetailsPage() {
         </div>
       </div>
 
-      {/* Ticket Details Card */}
-      <div className="max-w-4xl mx-auto">
+      {/* Ticket Details Card */}      <div className="w-full max-w-4xl mx-auto px-4 sm:px-6">
         <TicketDetailsCard
           ticket={ticket}
           onViewDetails={() => {}}
         />
-        <div className="flex justify-end gap-4 mt-6">          {ticket.status === 'Pending' && (
-            <>              <PrimaryButton onClick={() => setIsEditModalOpen(true)} className="w-32">
+        <div className="flex flex-col sm:flex-row justify-center sm:justify-end gap-3 mt-6">          {ticket.status === 'Pending' && (
+            <>              <PrimaryButton onClick={() => setIsEditModalOpen(true)} className="w-full sm:w-32">
                 Edit Ticket
               </PrimaryButton>
-              <DangerButton onClick={() => setIsCancelModalOpen(true)} className="w-32">
+              <DangerButton onClick={() => setIsCancelModalOpen(true)} className="w-full sm:w-32">
                 Cancel Ticket
               </DangerButton>
             </>
@@ -198,13 +210,11 @@ function TicketDetailsPage() {
           </div>
         )}
         <div className="border-b border-gray-200 my-6"></div>
-      </div>
-
-      {/* Conversations container */}      {ticket.status !== 'Cancelled' ? (        <div className="max-w-4xl mx-auto">
-          <div className="flex justify-between items-center mb-4">
+      </div>      {/* Conversations container */}      {ticket.status !== 'Cancelled' ? (        <div className="w-full max-w-4xl mx-auto px-4 sm:px-6">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-3">
             <Subheading className="text-blue-800">Conversation History</Subheading>
-            <div className="flex items-center">
-              <Label className="mr-2" size="sm">Sort by:</Label>
+            <div className="flex items-center self-start sm:self-auto">
+              <Label className="mr-2 whitespace-nowrap" size="sm">Sort by:</Label>
               <select
                 id="sort-order"
                 value={sortOrder}
@@ -226,9 +236,8 @@ function TicketDetailsPage() {
                 onClick={() => handleConversationClick(conversation.id)}
               />
             ))}
-          </div>
-        </div>      ) : (
-        <div className="max-w-4xl mx-auto mt-6">
+          </div>        </div>      ) : (
+        <div className="w-full max-w-4xl mx-auto px-4 sm:px-6 mt-6">
           <div className="bg-gray-50 p-4 rounded-md border border-gray-200">
             <Text color="text-gray-600" align="center">
               No conversation history is available for cancelled tickets.
@@ -237,19 +246,19 @@ function TicketDetailsPage() {
         </div>
       )}
 
-      {/* Edit Ticket Modal */}
-      <Modal
+      {/* Edit Ticket Modal */}      <Modal
         isOpen={isEditModalOpen}
         onClose={() => setIsEditModalOpen(false)}
         title="Edit Ticket"
         actions={
-          <>            <SecondaryButton onClick={() => setIsEditModalOpen(false)}>
+          <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+            <SecondaryButton onClick={() => setIsEditModalOpen(false)} className="w-full sm:w-auto">
               Cancel
             </SecondaryButton>
-            <PrimaryButton onClick={handleEditSubmit}>
+            <PrimaryButton onClick={handleEditSubmit} className="w-full sm:w-auto">
               Save Changes
             </PrimaryButton>
-          </>
+          </div>
         }
       >        <div className="space-y-4">
           <div>
@@ -284,29 +293,27 @@ function TicketDetailsPage() {
             </select>
           </div>
         </div>
-      </Modal>
-
-      {/* Cancel Ticket Modal */}
+      </Modal>      {/* Cancel Ticket Modal */}
       <Modal
         isOpen={isCancelModalOpen}
         onClose={() => setIsCancelModalOpen(false)}
         title="Cancel Ticket"
         actions={
-          <>
+          <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
             <button
               onClick={() => setIsCancelModalOpen(false)}
-              className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300"
+              className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 w-full sm:w-auto"
             >
               No, Keep Ticket
             </button>
             <button
               onClick={handleCancelTicket}
-              className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
+              className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 w-full sm:w-auto"
             >
               Yes, Cancel Ticket
             </button>
-          </>
-        }      >
+          </div>
+        }>
         <Text color="text-gray-600">
           Are you sure you want to cancel this ticket? This action cannot be undone.
         </Text>

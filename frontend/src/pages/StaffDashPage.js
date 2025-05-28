@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { PageTitle, Text, Subheading, StatText } from '../components/text';
+import SecondaryButton from '../components/buttons/SecondaryButton';
 
 function StaffDashPage() {
   const navigate = useNavigate();
@@ -127,8 +128,7 @@ function StaffDashPage() {
     }
     return sortableTickets;
   }, [filteredTickets, sortConfig]);
-
-  return (    <div className="min-h-screen bg-blue-100 py-6 sm:py-12 px-4">
+  return (    <div className="min-h-screen py-6 sm:py-12 px-4">
       <div className="bg-white p-6 md:p-10 rounded shadow-md max-w-[1200px] mx-auto">
         <PageTitle 
           title="Staff Dashboard" 
@@ -275,12 +275,9 @@ function StaffDashPage() {
                       <span className={getStatusStyle(ticket.status)}>{ticket.status}</span>
                     </td>
                     <td className="p-3 text-sm whitespace-nowrap">
-                      <button 
-                        onClick={() => handleViewTicket(ticket.id)}
-                        className="text-blue-600 hover:text-blue-800 font-medium hover:underline"
-                      >
-                        View
-                      </button>
+                       <SecondaryButton onClick={() => handleViewTicket(ticket.id)}className="mr-3">
+                         View
+                       </SecondaryButton>
                     </td>
                   </tr>
                 )) : (

@@ -69,24 +69,22 @@ function ResetPasswordPage() {
       setError('Please enter and confirm your new password.');
     }
   };
-
   // Show loading state
   if (loading) {
     return (
-      <div className="min-h-screen bg-blue-100 py-6 sm:py-12 px-4">        <div className="max-w-md mx-auto">
+      <div className="min-h-screen py-6 sm:py-12 px-4">        <div className="max-w-md mx-auto">
           <div className="bg-white rounded-md shadow-md p-6 sm:p-8">
             <PageTitle title="Reset Password" />
             <Text align="center">Loading...</Text>
           </div>
         </div>
       </div>
-    );
-  }
+    );  }
 
   // Show success message
   if (success) {
     return (
-      <div className="min-h-screen bg-blue-100 py-6 sm:py-12 px-4">        <div className="max-w-md mx-auto">
+      <div className="min-h-screen py-6 sm:py-12 px-4">        <div className="max-w-md mx-auto">
           <div className="bg-white rounded-md shadow-md p-6 sm:p-8">
             <PageTitle title="Password Reset Successful" />
             
@@ -107,9 +105,8 @@ function ResetPasswordPage() {
       </div>
     );
   }
-
   return (
-    <div className="min-h-screen bg-blue-100 py-6 sm:py-12 px-4">      <div className="max-w-md mx-auto">
+    <div className="min-h-screen py-6 sm:py-12 px-4">      <div className="max-w-md mx-auto">
         <div className="bg-white rounded-md shadow-md p-6 sm:p-8">
           <PageTitle 
             title="Reset Password"

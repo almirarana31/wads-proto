@@ -53,10 +53,9 @@ function SignUpPage() {
     } finally {
       setLoading(false);
     }
-  };
-  if (success) {
+  };  if (success) {
     return (
-      <div className="min-h-screen bg-blue-100 py-6 sm:py-12 px-4 flex items-center justify-center">
+      <div className="min-h-screen py-6 sm:py-12 px-4 flex items-center justify-center">
         <div className="max-w-md w-full mx-auto">
           <div className="bg-white rounded-md shadow-md p-8 text-center">
             <Heading level={1} center className="mb-8">
@@ -79,9 +78,8 @@ function SignUpPage() {
       </div>
     );
   }
-
   return (
-    <div className="bg-blue-100 py-6 md:py-12 px-4 flex-grow">      <div className="max-w-md mx-auto">
+    <div className="py-6 md:py-12 px-4 flex-grow">      <div className="max-w-md mx-auto">
         <div className="bg-white rounded-md shadow-md p-6 sm:p-8">
           <PageTitle title="Sign Up" subtitle="Create a new account" className="mb-6 sm:mb-8" />
           

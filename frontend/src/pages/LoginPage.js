@@ -81,7 +81,7 @@ function LoginPage({ onLogin }) {
   };
 
   return (
-    <div className="min-h-screen bg-blue-100 pt-8 pb-12">      <div className="max-w-md mx-auto p-6">
+    <div className="min-h-screen pt-8 pb-12">      <div className="max-w-md mx-auto p-6">
         <div className="bg-white rounded-md shadow-md p-8">
           <PageTitle title="Login" subtitle="Login to your account below" className="mb-8" />
           

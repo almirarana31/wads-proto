@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import Header from './components/Header';
 import HomePage from './pages/HomePage';
@@ -22,6 +22,22 @@ function App() {
   // For demo purposes - in a real app, this would come from auth context/state
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [userRole, setUserRole] = useState(null); // Add this to track user role
+  
+  // Check for existing authentication on app load
+  useEffect(() => {
+    const checkAuthStatus = () => {
+      const token = sessionStorage.getItem('token') || localStorage.getItem('token') || sessionStorage.getItem('mockToken');
+      const currentUser = localStorage.getItem('currentUser');
+      
+      if (token && currentUser) {
+        const user = JSON.parse(currentUser);
+        setIsAuthenticated(true);
+        setUserRole(user.role_code);
+      }
+    };
+
+    checkAuthStatus();
+  }, []);
 
   // Login function
   const handleLogin = (user) => { // Modified to accept user
@@ -29,25 +45,28 @@ function App() {
     if (user) {
       setIsAuthenticated(true);
       setUserRole(user.role_code); // Store the user's role
+      // Store user data in localStorage for other components to access
+      localStorage.setItem('currentUser', JSON.stringify(user));
       // For mock purposes, you might want to set a mock token if other parts rely on it
-      // sessionStorage.setItem('mockToken', 'true'); 
+      sessionStorage.setItem('mockToken', 'authenticated'); 
     } else {
       // Fallback to token check if no user object is passed directly
-      const token = sessionStorage.getItem('token') || localStorage.getItem('token');
+      const token = sessionStorage.getItem('token') || localStorage.getItem('token') || sessionStorage.getItem('mockToken');
       if (token) {
         setIsAuthenticated(true);
       }
     }
   };
-  
-  // Logout function
+    // Logout function
   const handleLogout = () => {
     // Reset authentication state
     setIsAuthenticated(false);
     setUserRole(null); // Clear the user's role
-    // Clear any mock token if you set one
-    // sessionStorage.removeItem('mockToken');
-    // localStorage.removeItem('token'); // Also clear real token if it was set
+    // Clear stored user data
+    localStorage.removeItem('currentUser');
+    sessionStorage.removeItem('mockToken');
+    sessionStorage.removeItem('token');
+    localStorage.removeItem('token');
   };
 
   // Protected Route component
@@ -140,9 +159,8 @@ function App() {
                   <AuditLogPage />
                 </ProtectedRoute>
               }
-            />
-            <Route
-              path="/chatroom/:conversationId"
+            />            <Route
+              path="/chatroom/:ticketId/:conversationId"
               element={
                 <ProtectedRoute>
                   <Chatroom />

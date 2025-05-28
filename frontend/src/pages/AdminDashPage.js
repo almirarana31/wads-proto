@@ -192,10 +192,9 @@ function AdminDashboard() {
     }
     return sortableTickets;
   }, [filteredTickets, sortConfig]);
-
   return (
-    <div className="min-h-screen bg-blue-100 py-6 sm:py-12 px-4">
-      <div className="bg-white p-6 md:p-10 rounded shadow-md max-w-auto mx-auto">      <div className="max-w-7xl mx-auto">
+    <div className="min-h-screen py-6 sm:py-12 px-4">
+      <div className="bg-white p-6 md:p-10 rounded shadow-md max-w-auto mx-auto"><div className="max-w-7xl mx-auto">
         <PageTitle 
           title="Admin Dashboard"
           subtitle={
