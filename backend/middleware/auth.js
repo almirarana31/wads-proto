@@ -96,16 +96,25 @@ export const staffAuthZ = async (req, res, next) => {
 
         // not a staff
         if (staff_id == 0) {
-            return res.status(403).json({message: "Forbiddne access"})
+            return res.status(403).json({message: "Forbidden access"})
         }
 
+        const staff = await Staff.findOne({
+            where: {
+                id: user.staff_id // get staff detail where id == staff_id
+            },
+            raw: true
+        });
+
         req.staff = user;
+        req.role_id = staff.role_id;
         return next();
     } catch (error) {
         return res.status(500).json({message: error.message})
     }
 };
 
+// checks for guests
 export const guestAuthZ = async (req, res, next) => {
     const {email} = req.body;
     try{
@@ -143,7 +152,7 @@ export const guestAuthZ = async (req, res, next) => {
             guestUser.id,
             `Guest account created (email: ${email})`
         )
-        console.log(" H LEOO WIORD 2 2 2 2 ")
+        
         req.user = guestUser;
         return next();
     } catch (error) {

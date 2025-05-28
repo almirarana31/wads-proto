@@ -9,32 +9,49 @@ export const getTicketDetail = async (req, res) => {
     const ticket_id = req.params.id
 
     // get staff_id from the body (gained from the request maker)
-    const staff_id = req.staff_id;
+    const staff = req.staff;
+
+    // role id, if 2 admin if 1 starff
+    const role_id = req.role_id;
+    const user = req.user;
 
     // play around with the auth's next body
     // if the user that is sent with the body is not a staff, then the response should not contain priority
 
     try {
-        const ticket = await Ticket.findByPk(ticket_id, {
-            raw: true,
+        const ticket = await Ticket.findOne({
+            where: {
+                id: ticket_id,
+                [Op.or]: [ // the only people that can view the details of this ticket are staff and admin (role_id = 2)
+                  ...(staff ? [{staff_id: staff.staff_id}] : []), 
+                    ...(user  ? [{user_id: user.id}] : []),
+                      ...(role_id == 2 ? [{}] : [])
+                ]
+            },
             include: [{
                 model: Status,
                 attributes: ['name']
             }, {
                 model: Category,
                 attributes: ['name']
-            }, ...(staff_id ? {
+            }, ...(staff ? [{
                 model: Priority,
                 attributes: ['name']
-            } : {}), ...(staff_id ? {
+            }] : []), ...(staff ? [{
                 model: Staff,
+                as: 'Staff',
                 include: [{
                     model: User,
                     attributes: [['username', 'staff_name']]
-                }]
-            } : {})],
+                }],
+                attributes: ['id']
+            }] : [])],
             attributes: ['id', 'subject', 'description', 'createdAt']
         });
+
+        if (!ticket) {
+            return res.status(400).json({message: "Access denied"})
+        }
 
         return res.status(200).json(ticket);
     } catch (error) {

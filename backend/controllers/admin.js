@@ -100,7 +100,6 @@ export const getTickets = async (req, res) => {
             attributes: ['username', 'email']
         }],
         attributes: [['id', 'ticket_id'], 'subject', 'createdAt'],
-        raw: true,
         // if search exists, spread the where clause into this query
         where: {
             ...(search && 
@@ -212,7 +211,6 @@ export const searchStaff = async (req, res) => {
                     )
                 } 
             }],
-            raw: true
         });
 
         return res.status(200).json(staff)
