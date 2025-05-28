@@ -91,8 +91,13 @@ function StaffTicketView() {
     console.log('Resolving ticket:', ticketId);
     setIsResolveModalOpen(false);
   };
-
   const confirmCancelTicket = () => {
+    // Only allow cancellation of pending tickets
+    if (ticket.status !== 'Pending') {
+      setIsCancelModalOpen(false);
+      return;
+    }
+    
     // Update the ticket status to 'Cancelled'
     setTicket(prevTicket => ({
       ...prevTicket,
@@ -112,11 +117,12 @@ function StaffTicketView() {
       </div>      <div className="w-full max-w-4xl mx-auto px-4 sm:px-6">
         {/* Reusing TicketDetailsCard component */}
         <TicketDetailsCard ticket={ticket} />
-          {/* Staff Actions */}        
-        <div className="flex flex-col sm:flex-row justify-center sm:justify-end gap-3 mt-6">          
+          {/* Staff Actions */}          <div className="flex flex-col sm:flex-row justify-center sm:justify-end gap-3 mt-6">          
           {ticket.status !== 'Cancelled' && ticket.status !== 'Resolved' && (
             <>
-              <DangerButton onClick={handleCancelTicket} className="w-full sm:w-auto">Cancel Ticket</DangerButton>
+              {ticket.status === 'Pending' && (
+                <DangerButton onClick={handleCancelTicket} className="w-full sm:w-auto">Cancel Ticket</DangerButton>
+              )}
               <SuccessButton onClick={handleResolveTicket} className="w-full sm:w-auto">Resolve Ticket</SuccessButton>
             </>
           )}

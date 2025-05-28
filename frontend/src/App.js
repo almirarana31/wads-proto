@@ -17,6 +17,7 @@ import Chatroom from './pages/Chatroom';
 import AuditLogPage from './pages/AuditLogPage';
 import StaffDashPage from './pages/StaffDashPage';
 import StaffTicketView from './pages/StaffTicketView';
+import AdminTicketView from './pages/AdminTicketView';
 
 function App() {
   // For demo purposes - in a real app, this would come from auth context/state
@@ -143,12 +144,11 @@ function App() {
                   <StaffTicketView />
                 </ProtectedRoute>
               }
-            />
-            <Route
+            />            <Route
               path="/admin/ticket/:ticketId"
               element={
                 <ProtectedRoute allowedRoles={['ADM']}>
-                  <StaffTicketView />
+                  <AdminTicketView />
                 </ProtectedRoute>
               }
             />
