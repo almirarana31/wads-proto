@@ -18,7 +18,6 @@ function StaffDashPage() {
     inProgress: 20,
     resolved: 10
   });
-
   // Mock data - replace with API call in real app
   const tickets = [
     { 
@@ -27,6 +26,7 @@ function StaffDashPage() {
       name: 'User Name',
       email: 'user@example.com',
       createdAt: '2025-04-16T19:11:36.632Z',
+      lastUpdated: '2025-05-26T14:22:36.632Z', // New field
       category: 'Billing',
       priority: 'High',
       status: 'Pending',
@@ -38,6 +38,7 @@ function StaffDashPage() {
       name: 'Another User',
       email: 'another@example.com',
       createdAt: '2025-04-16T19:11:36.632Z',
+      lastUpdated: '2025-05-27T09:45:12.421Z', // New field
       category: 'Technical',
       priority: 'Medium',
       status: 'In Progress',
@@ -49,6 +50,7 @@ function StaffDashPage() {
       name: 'Third User',
       email: 'third@example.com',
       createdAt: '2025-04-16T19:11:36.632Z',
+      lastUpdated: '2025-05-28T08:15:36.789Z', // New field
       category: 'Service',
       priority: 'Low',
       status: 'Resolved',
@@ -228,12 +230,17 @@ function StaffDashPage() {
                     className="p-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider border-b border-gray-200 cursor-pointer hover:bg-gray-100"
                   >
                     Email {getSortIcon('email')}
-                  </th>
-                  <th 
+                  </th>                  <th 
                     onClick={() => handleSort('createdAt')}
                     className="p-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider border-b border-gray-200 cursor-pointer hover:bg-gray-100"
                   >
                     Created At {getSortIcon('createdAt')}
+                  </th>
+                  <th 
+                    onClick={() => handleSort('lastUpdated')}
+                    className="p-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider border-b border-gray-200 cursor-pointer hover:bg-gray-100"
+                  >
+                    Last Updated {getSortIcon('lastUpdated')}
                   </th>
                   <th 
                     onClick={() => handleSort('category')}
@@ -263,9 +270,11 @@ function StaffDashPage() {
                     <td className="p-3 text-sm text-gray-700 whitespace-nowrap">{ticket.id}</td>
                     <td className="p-3 text-sm text-gray-700 whitespace-nowrap">{ticket.title}</td>
                     <td className="p-3 text-sm text-gray-700 whitespace-nowrap">{ticket.name}</td>
-                    <td className="p-3 text-sm text-gray-700 whitespace-nowrap">{ticket.email}</td>
-                    <td className="p-3 text-sm text-gray-700 whitespace-nowrap">
+                    <td className="p-3 text-sm text-gray-700 whitespace-nowrap">{ticket.email}</td>                    <td className="p-3 text-sm text-gray-700 whitespace-nowrap">
                       {new Date(ticket.createdAt).toLocaleDateString()}
+                    </td>
+                    <td className="p-3 text-sm text-gray-700 whitespace-nowrap">
+                      {new Date(ticket.lastUpdated).toLocaleDateString()}
                     </td>
                     <td className="p-3 text-sm text-gray-700 whitespace-nowrap">{ticket.category}</td>
                     <td className="p-3 text-sm text-gray-700 whitespace-nowrap">

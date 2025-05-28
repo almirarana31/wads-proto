@@ -57,9 +57,13 @@ function StaffTicketView() {
       return sortOrder === 'newest' ? dateB - dateA : dateA - dateB;
     });
   }, [sortOrder]);
-
   const handleBack = () => {
-    navigate('/staff-dashboard');
+    // Check if the URL contains "admin" to determine which dashboard to return to
+    if (window.location.pathname.includes('/admin/')) {
+      navigate('/admin-dashboard');
+    } else {
+      navigate('/staff-dashboard');
+    }
   };
   const handleStartConversation = () => {
     // Navigate to the chat room with the current ticket ID and indicating it's a new conversation

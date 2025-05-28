@@ -13,6 +13,7 @@ function AdminDashboard() {
       name: 'John Doe',
       email: 'john@example.com',
       createdAt: '2025-05-27T10:30:00Z',
+      lastUpdated: '2025-05-27T15:45:22.123Z',
       category: 'Billing',
       priority: 'High',
       status: 'Pending',
@@ -24,17 +25,18 @@ function AdminDashboard() {
       name: 'Jane Smith',
       email: 'jane@example.com',
       createdAt: '2025-05-26T14:20:00Z',
+      lastUpdated: '2025-05-28T09:12:34.456Z',
       category: 'Technical',
       priority: 'Medium',
       status: 'In Progress',
       assignedStaff: { id: 'STF002', name: 'Sarah Johnson' }
     },
-    {
-      id: 'TKT-003',
+    {      id: 'TKT-003',
       title: 'Service Request',
       name: 'Bob Wilson',
       email: 'bob@example.com',
       createdAt: '2025-05-25T09:15:00Z',
+      lastUpdated: '2025-05-27T11:30:15.789Z',
       category: 'Service',
       priority: 'Low',
       status: 'Resolved',
@@ -294,12 +296,17 @@ function AdminDashboard() {
                     className="p-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider border-b border-gray-200 cursor-pointer hover:bg-gray-100"
                   >
                     Email {getSortIcon('email')}
-                  </th>
-                  <th 
+                  </th>                  <th 
                     onClick={() => handleSort('createdAt')}
                     className="p-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider border-b border-gray-200 cursor-pointer hover:bg-gray-100"
                   >
                     Created At {getSortIcon('createdAt')}
+                  </th>
+                  <th 
+                    onClick={() => handleSort('lastUpdated')}
+                    className="p-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider border-b border-gray-200 cursor-pointer hover:bg-gray-100"
+                  >
+                    Last Updated {getSortIcon('lastUpdated')}
                   </th>
                   <th 
                     onClick={() => handleSort('category')}
@@ -335,9 +342,9 @@ function AdminDashboard() {
                   <tr key={ticket.id} className="hover:bg-gray-50">
                     <td className="p-3 text-sm text-gray-700 whitespace-nowrap">{ticket.id}</td>
                     <td className="p-3 text-sm text-gray-700 whitespace-nowrap">{ticket.title}</td>
-                    <td className="p-3 text-sm text-gray-700 whitespace-nowrap">{ticket.name}</td>
-                    <td className="p-3 text-sm text-gray-700 whitespace-nowrap">{ticket.email}</td>
+                    <td className="p-3 text-sm text-gray-700 whitespace-nowrap">{ticket.name}</td>                    <td className="p-3 text-sm text-gray-700 whitespace-nowrap">{ticket.email}</td>
                     <td className="p-3 text-sm text-gray-700 whitespace-nowrap">{new Date(ticket.createdAt).toLocaleDateString()}</td>
+                    <td className="p-3 text-sm text-gray-700 whitespace-nowrap">{new Date(ticket.lastUpdated).toLocaleDateString()}</td>
                     <td className="p-3 text-sm text-gray-700 whitespace-nowrap">
                       <select defaultValue={ticket.category} className="p-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-blue-300 bg-white">
                         <option>Billing</option>
