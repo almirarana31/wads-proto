@@ -76,18 +76,20 @@ function AssignStaffModal({ isOpen, onClose, onAssign, staffList, ticketId }) {
                   }`}
                   onClick={() => handleStaffSelect(staff.id)}
                 >
-                  <div className="flex justify-between items-center">
-                    <div>
+                  <div className="flex justify-between items-center">                    <div>
                       <Text weight="medium">{staff.name}</Text>
                       <Text size="sm" color="text-gray-600">ID: {staff.id}</Text>
                     </div>
                     <div className="text-right">
                       <Text size="sm" color="text-gray-600">
-                        Assigned: {staff.assigned}
+                        Resolution Rate: <span className="font-medium text-green-600">{staff.resolutionRate || '0%'}</span>
                       </Text>
-                      <Text size="sm" color="text-gray-600">
-                        Resolved: {staff.resolved}
-                      </Text>
+                      <div className="flex items-center justify-end mt-1">
+                        <Text size="xs" color="text-gray-600">Status: </Text>
+                        <span className={`ml-1 px-2 py-0.5 rounded-full text-xs font-medium ${staff.activelyAssigned ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}>
+                          {staff.activelyAssigned ? 'Active' : 'Available'}
+                        </span>
+                      </div>
                     </div>
                     {selectedStaff === staff.id && (
                       <div className="ml-2">
