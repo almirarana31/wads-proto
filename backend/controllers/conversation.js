@@ -20,36 +20,23 @@ export const getConversation = async (req, res) => {
                 conversation_id: conversation_id,
             }, 
             include: [{
-                model: Ticket,
-                attributes: ['user_id', 'staff_id'],
+                model: User,
+                attributes: ['username'],
                 required: true
             }],
             order: [['sentAt', 'ASC']]
         });
 
-        const participants = await User.findAll({
-            where: {
-                [Op.or]: [
-                    {id: messages.Ticket.user_id},
-                    {staff_id: messages.Ticket.staff_id}
-                ]
-            }
-        })
+        const result = messages.map(msg => ({
+            id: msg.id,
+            content: msg.content,
+            sentAt: msg.sentAt,
+            sender_id: msg.sender_id,
+            sender_username: msg.User.username,
+            isSender: msg.sender_id === user.id
+        }));
 
-        let user = ""
-        let staff = ""
-
-        for (let i = 0; i < messages.length; i++) {
-            if (messages[i].sender_id == user.id) {
-                messages[i].sender_username = user.username;
-                messages[i].isSender = true
-            } else {
-                messages[i].sender_username = user.username;
-                messages[i].isSender = false
-            }
-        };
-
-        return res.status(200).json(messages)
+        return res.status(200).json(result)
     } catch (error) {
         return res.status(500).json({message: error.message})
     }
@@ -84,13 +71,15 @@ export const getConversationHistory = async (req, res) => {
     }
 }
 
-// post
 export const sendMessage = async (req, res) => {
-
-    const conversation_id = req.query.id
+    const conversation_id = req.params.id
     const user = req.user
     const content = req.body.content
     try {
+        const isOpen = await Conversation.findByPk(conversation_id);
+
+        // endedAt is typically null, if has date then it means ended
+        if (isOpen.endedAt) return res.status(400).json({message: "Conversation closed"});
 
         // send message
         const message = await Message.create({
@@ -98,10 +87,76 @@ export const sendMessage = async (req, res) => {
             sender_id: user.id,
             content: content,
             sentAt: new Date(Date.now())
-        })
+        });
 
         return res.status(200).json({message: "message successfully sent"})
     }catch (error) {
         return res.status(500).json({message: error.message})
     }
 };
+
+// uses staffAuthZ middleware
+export const createConversation = async (req, res) => {
+    const ticket_id = req.params.id
+    const staff = req.staff;
+
+    try {
+        // check if staff is assigned to the ticket
+        const assigned = await Ticket.findOne({
+            where: {
+                id: ticket_id,
+                staff_id: staff.staff_id
+            },
+            raw: true
+        })
+
+        if (!assigned) return res.status(403).json({message: "Staff is not assigned to this ticket"})
+
+        const newConvo = await Conversation.create({
+            ticket_id: assigned.id,
+            endedAt: null  
+        })
+
+        // audit here
+        await logAudit(
+            "Create",
+            staff.id,
+            `
+            Conversation ID ${newConvo.id} created
+            `
+        )
+
+        return res.status(200).json({messager: "Successfully created conversation"})
+    } catch (error) {
+        return res.status(500).json({message: error.message})
+    }
+}
+
+export const closeConversation = async (req, res) => {
+    // get conversation id
+    const conversation_id = req.params.id
+    const staff = req.staff
+    try {
+        // do conversationAuthZ middleware and staffAuthZ middleware
+        const closed = await Conversation.update({
+            endedAt: new Date(Date.now())
+        }, {
+            where: {
+                id: conversation_id
+            }
+        });
+
+        // audit here
+        await logAudit(
+            'Update',
+            staff.id,
+            `
+            Conversation ID ${conversation_id} closed
+            `
+        )
+        
+        return res.status(200).json({message: "Conversation successfully closed"})
+    } catch (error) {
+        return res.status(500).json({message: error.message})
+    }
+}

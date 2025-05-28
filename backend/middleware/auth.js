@@ -197,12 +197,12 @@ export const conversationAuthZ = async (req, res, next) => {
                 model: Ticket,
                 attributes: ['user_id', 'staff_id'],
                 required: true
-            }]
+            }],
         })
-
         // checking to see if belongs to the conversation 
-        const isStaff = staff && staff.id === conversation.Ticket.staff_id;
-        const isUser = user && user.id === conversation.Ticket.user_id;
+
+        const isStaff = staff?.staff_id == conversation.Ticket.staff_id || user.staff_id == conversation.Ticket.staff_id;
+        const isUser = user?.id == conversation.Ticket.user_id;
 
         // if person accessing is neither staff that belongs nor user that belongs to the conversation
         if (!isStaff && !isUser) {

@@ -38,6 +38,8 @@ export {
     Staff,
     User,
     Ticket,
+    Conversation,
+    Message,
     Category,
     Status,
     Priority,

@@ -26,6 +26,10 @@ Message.init(
         content: {
             type: DataTypes.STRING,
             allowNull: false,
+        },
+        sentAt: {
+            type: DataTypes.DATE,
+            allowNull: false
         }
     }, {
         sequelize,

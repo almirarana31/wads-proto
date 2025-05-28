@@ -337,7 +337,6 @@ export const submitTicket = async (req, res) => {
             return res.status(400).json({message: "Title and description fields need to be filled"});
         };  
 
-        console.log("1 1 1 1")
         const ticket = await Ticket.create({
             user_id: id,
             category_id: category_id,
@@ -345,7 +344,7 @@ export const submitTicket = async (req, res) => {
             subject: title,
             description: description
         }, {raw: true});
-        console.log("2 2 2 2")
+        
         await logAudit(
             "Create",
             id,
