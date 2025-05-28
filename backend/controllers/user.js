@@ -379,7 +379,8 @@ export const editTicket = async (req, res) => {
             ...(description ? {description: description} : {})
         }, {
             where: {
-                id: id
+                id: id,
+                user_id: user_id
             },
             raw: true
         });
@@ -408,7 +409,9 @@ export const cancelTicket = async (req, res) => {
             status_id: 4
         }, {
             where: {
-                id: id
+                id: id,
+                user_id: user_id,
+                status_id: 1 // will only cancel the ticket if pending 
             },
             raw: true
         });

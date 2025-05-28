@@ -191,29 +191,27 @@ export const searchStaff = async (req, res) => {
         
         // get ticket category
         const category_id = ticket.category_id;
+        const [stats] = await sequelize.query(
+            `
+            SELECT 
+                s.id AS staff_id,
+                u.username AS staff_name,
+                SUM (CASE WHEN t.status_id = 2 THEN 1 ELSE 0 END) AS in_progress,
+                ROUND(
+                    CASE 
+                        WHEN COUNT (t.id) = 0 THEN 0
+                        ELSE SUM (CASE WHEN t.status_id = 3 THEN 1 ELSE 0 END) * 100.0/COUNT (t.id)
+                    END, 2) AS resolution_rate
+            FROM 
+            "user" u INNER JOIN 
+            "staff" s ON u.staff_id = s.id LEFT JOIN
+            "ticket" t ON s.id = t.staff_id
+            WHERE (t.category_id = ${category_id})
+            GROUP BY s.id, u.username
+            `
+        );
 
-        // get all staff whose field matches the category id from the given ticket
-        const staff = await Staff.findAll({
-            where: {
-                field_id: category_id
-            },
-            include: [{
-                model: User,
-                attributes: ['username'],
-                where:{ 
-                    ...(search && 
-                            {[Op.or]:
-                        [
-                            {username: {[Op.substring]: search}},
-                            ...(!isNaN(search) ? [{staff_id:  parseInt(search)}] : [])
-                        ]
-                    }
-                    )
-                } 
-            }],
-        });
-
-        return res.status(200).json(staff)
+        return res.status(200).json(stats)
     } catch (error) {
         return res.status(500).json({message: error.message})
     }

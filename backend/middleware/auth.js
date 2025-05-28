@@ -1,5 +1,5 @@
 import jwt from 'jsonwebtoken';
-import {Staff, User} from '../models/index.js';
+import {Staff, User, Conversation, Ticket} from '../models/index.js';
 import { logAudit } from '../controllers/audit.js';
 
 export const authN = (req, res, next) => {
@@ -183,3 +183,37 @@ export const userAuthZ = async (req, res, next) => {
         return res.status(500).json({message: error.message})
     }
 };
+
+export const conversationAuthZ = async (req, res, next) => {
+
+    // get the conversation id
+    const id = req.params.id
+    const staff = req.staff
+    const user = req.user
+    try {
+        // get the conversation object from the database 
+        const conversation = await Conversation.findByPk(id, {
+            include: [{
+                model: Ticket,
+                attributes: ['user_id', 'staff_id'],
+                required: true
+            }]
+        })
+
+        // checking to see if belongs to the conversation 
+        const isStaff = staff && staff.id === conversation.Ticket.staff_id;
+        const isUser = user && user.id === conversation.Ticket.user_id;
+
+        // if person accessing is neither staff that belongs nor user that belongs to the conversation
+        if (!isStaff && !isUser) {
+            return res.status(404).json({ message: "You do not have permission to access this conversation" });
+        }
+
+        req.staff_id = conversation.Ticket.staff_id
+        req.user_id = conversation.Ticket.user_id
+
+        return next();
+    } catch (error) {
+        return res.status(500).json({message: error.message})
+    }
+}

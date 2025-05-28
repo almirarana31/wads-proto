@@ -7,6 +7,8 @@ import Status from "./enum/Status.js";
 import Priority from "./enum/Priority.js";
 import Ticket from "./Ticket.js";
 import Audit from "./Audit.js";
+import Conversation from "./Conversation.js";
+import Message from "./Message.js";
 
 // Staff
 Staff.belongsTo(Role, {foreignKey: 'role_id'})
@@ -23,6 +25,11 @@ Ticket.belongsTo(Staff, {foreignKey: 'staff_id', as: 'Staff'})
 Ticket.belongsTo(Category, {foreignKey: 'category_id'})
 Ticket.belongsTo(Priority, {foreignKey: 'priority_id'})
 Ticket.belongsTo(Status, {foreignKey: 'status_id'})
+
+// Conversation
+Message.belongsTo(Conversation, {foreignKey: 'conversation_id'})
+Message.belongsTo(User, {foreignKey: 'sender_id'})
+Conversation.belongsTo(Ticket, {foreignKey: 'ticket_id'});
 
 // Audit
 Audit.belongsTo(User, {foreignKey: 'user_id'});
