@@ -1,28 +1,27 @@
 import sequelize from '../../config/sequelize.js';
-import { Model, DataTypes } from 'sequelize';
-
+import { Model, DataTypes} from 'sequelize';
 class Role extends Model {
 
 }
 
+// tell sequelize to initialize the table
 Role.init(
     {
-        role_code: {
-            type: DataTypes.CHAR(3),
-            allowNull: false,
-            primaryKey: true
-        },
-        role_desc: {
-            type: DataTypes.STRING,
-            allowNull: false
-        }
+       name: {
+        type: DataTypes.STRING,
+        allowNull: false
+       },
+       description: {
+        type: DataTypes.STRING,
+        allowNull: false
+       }
     },
     {
         sequelize,
         modelName: "Role",
-        tableName: "Roles",
+        tableName: "role",
         timestamps: false
     }
 );
 
-export default Role
+export default Role;

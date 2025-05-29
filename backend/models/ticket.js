@@ -1,65 +1,69 @@
-import sequelize from "../config/sequelize.js";
-import {Model, DataTypes} from 'sequelize'
+import sequelize from '../config/sequelize.js';
+import { Model, DataTypes} from 'sequelize';
+class Ticket extends Model {
 
-class Ticket extends Model {};
+}
 
-Ticket.init({
-    userID: {
+// tell sequelize to initialize the table
+Ticket.init(
+    {
+       user_id: {
         type: DataTypes.INTEGER,
         allowNull: false,
         references: {
-            model: 'Users',
+            model: 'user',
             key: 'id'
         }
-    },
-    staffID: {
+       },
+       staff_id: {
         type: DataTypes.INTEGER,
         allowNull: true,
         references: {
-            model: 'Users',
+            model: 'staff',
             key: 'id'
         }
-    },
-    category: {
+       }, 
+       category_id: {
         type: DataTypes.INTEGER,
         allowNull: false,
         references: {
-            model: 'Categories',
+            model: 'category',
             key: 'id'
         }
-        
-    },
-    subject: {
-        type: DataTypes.STRING,
-        allowNull: false
-    },
-    description: {
-        type: DataTypes.STRING,
-        allowNull: false
-    },
-    priority: {
-        type: DataTypes.INTEGER, // 1, 2, 3, 4: low, medium, high, urgent
+       },
+       priority_id: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+        references: {
+            model: 'priority',
+            key: 'id'
+        }
+       },
+       status_id: {
+        type: DataTypes.INTEGER,
         allowNull: false,
         references: {
-            model: 'Priorities',
+            model: 'status',
             key: 'id'
         }
-    },
-    status: {
-        type: DataTypes.INTEGER, // 1, 2, 3, 4, 5: pend, in prog, resolved, closed, cancelled
-        allowNull: false,
-        references: {
-            model: 'Statuses',
-            key: 'id'
-        }
-    },
-    resolved_at: {
+       },
+       subject: {
+        type: DataTypes.STRING,
+        allowNull: false
+       },
+       description: {
+        type: DataTypes.STRING,
+        allowNull: false
+       },
+       resolved_at: {
         type: DataTypes.DATE,
         allowNull: true
-    }
+       }
     },
     {
-        sequelize
+        sequelize,
+        modelName: "Ticket",
+        tableName: "ticket"
     }
 );
 

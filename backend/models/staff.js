@@ -1,5 +1,5 @@
 import sequelize from '../config/sequelize.js';
-import { Model, DataTypes } from 'sequelize';
+import { Model, DataTypes} from 'sequelize';
 class Staff extends Model {
 
 }
@@ -7,24 +7,39 @@ class Staff extends Model {
 // tell sequelize to initialize the table
 Staff.init(
     {
-        email: {
-            type: DataTypes.STRING,
-            allowNull: false
-        },
-        role_code: {
-            type: DataTypes.CHAR(3),
-            allowNull: false,
-            references: {
-                model: "Roles",
-                key: "role_code"
-            }
+       email: {
+        type: DataTypes.STRING,
+        allowNull: false
+       },
+       role_id: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        references: {
+            model: 'role',
+            key: 'id'
         }
+       },
+       field_id: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        references: {
+            model: 'category',
+            key: 'id'
+        }
+       },
+       job_id: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        references: {
+            model: 'job',
+            key: 'id'
+        }
+       }
     },
     {
         sequelize,
         modelName: "Staff",
-        tableName: "Staffs",
-        timestamps: false
+        tableName: "staff"
     }
 );
 

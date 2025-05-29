@@ -1,5 +1,6 @@
 import sequelize from '../config/sequelize.js';
-import { Model, DataTypes } from 'sequelize';
+import { Model, DataTypes} from 'sequelize';
+import StaffDetail from './Staff.js';
 class User extends Model {
 
 }
@@ -7,34 +8,40 @@ class User extends Model {
 // tell sequelize to initialize the table
 User.init(
     {
-        username: {
-            type: DataTypes.STRING(18),
-            allowNull: false
-        },
-        password: {
-            type: DataTypes.STRING(100),
-            allowNull: false
-        },
-        email: {
-            type: DataTypes.STRING(50),
-            allowNull: false
-        },
-        role_code: {
-            type: DataTypes.CHAR(3),
-            allowNull: false,
-            references: {
-                model: "Roles",
-                key: "role_code"
-            }
-        },
-        last_login: {
-            type: DataTypes.DATE
+       staff_id: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+        references: {
+            model: 'staff',
+            key: 'id'
         }
+       },
+       username: {
+        type: DataTypes.STRING,
+        allowNull: true
+       },
+       password: {
+        type: DataTypes.STRING,
+        allowNull: true
+       },
+       email: {
+        type: DataTypes.STRING,
+        allowNull: false
+       },
+       last_login: {
+        type: DataTypes.DATE,
+        allowNull: true
+       },
+       is_guest: {
+        type: DataTypes.BOOLEAN,
+        allowNull: false
+       }
     },
     {
         sequelize,
         modelName: "User",
-        tableName: "Users"
+        tableName: "user",
+        timestamps: false
     }
 );
 
