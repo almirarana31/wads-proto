@@ -11,7 +11,8 @@ export const authService = {
     },
 
     async signup(userData) {
-        const response = await api.post('/user/sign-up', userData);
+        // Use the correct endpoint as per backend: 'USER/sign-up'
+        const response = await api.post('/USER/sign-up', userData);
         return response.data;
     },
 
