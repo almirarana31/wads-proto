@@ -100,3 +100,39 @@ export const getSummary = async (req, res) => {
         return res.status(500).json({message: error.message})
     }
 };
+
+export const resolveTicket = async (req, res) => {
+    try {
+        const ticketId = parseInt(req.params.id); // Parse the ID to ensure it's a number
+        
+        if (isNaN(ticketId)) {
+            return res.status(400).json({ message: 'Invalid ticket ID' });
+        }
+
+        const ticket = await Ticket.findByPk(ticketId);
+        
+        if (!ticket) {
+            return res.status(404).json({ message: 'Ticket not found' });
+        }
+
+        // Update the ticket
+        await ticket.update({
+            status_id: 3, // sets status to resolved
+            resolved_at: new Date(),
+            staff_id: req.staff.id 
+        });
+
+        res.status(200).json({ 
+            success: true,
+            message: 'Ticket resolved successfully',
+            ticket
+        });
+    } catch (error) {
+        console.error('Error resolving ticket:', error);
+        res.status(500).json({ 
+            success: false,
+            message: 'Error resolving ticket',
+            error: error.message 
+        });
+    }
+};
