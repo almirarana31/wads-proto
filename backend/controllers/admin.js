@@ -132,7 +132,7 @@ export const getStaffPerformance = async (req, res) => {
         if (search) {
             whereClause += ' AND (u.username ~* :search '
             if (!isNaN(search)) {
-                whereClause += ' OR u.id = :search '
+                whereClause += ' OR u.id = :search OR s.id = :search'
                 replacements.searchId = Number(search);
             }
             whereClause += ')'
@@ -142,7 +142,7 @@ export const getStaffPerformance = async (req, res) => {
             SELECT 
                 u.username AS staff_name,
                 u.id AS user_id,
-                s.role_id AS role_id,
+                s.id AS staff_id,
                 COUNT (t.id) AS assigned,
                 SUM (CASE WHEN t.status_id = 3 THEN 1 ELSE 0 END) AS resolved,
                 ROUND(
@@ -154,7 +154,7 @@ export const getStaffPerformance = async (req, res) => {
             INNER JOIN "staff" s ON u.staff_id = s.id
             LEFT JOIN "ticket" t ON s.id = t.staff_id
             WHERE (${whereClause})
-            GROUP BY u.username, u.id, role_id
+            GROUP BY u.username, u.id, s.id
             `,
             {
                 replacements: {
@@ -169,6 +169,72 @@ export const getStaffPerformance = async (req, res) => {
         return res.status(500).json({message: error.message})
     }
 };
+
+export const getStaff = async (req, res) => {
+    
+    // get the user_id of the staff from the staff-performance as a route parameter
+    const staff_id = req.params.id
+    try {
+        const [results] = await sequelize.query(
+            `
+            SELECT 
+                u.username AS staff_name,
+                c.name AS field_name,
+                s."createdAt" AS created_at,
+                SUM (CASE WHEN t.status_id = 2 THEN 1 ELSE 0 END) AS in_progress,
+                SUM (CASE WHEN t.status_id = 3 THEN 1 ELSE 0 END) AS resolved,
+                SUM (CASE WHEN t.status_id = 4 THEN 1 ELSE 0 END) AS cancelled
+            FROM 
+                "user" u 
+                LEFT JOIN "staff" s ON u.staff_id = s.id
+                LEFT JOIN "ticket" t ON s.id = t.staff_id
+                LEFT JOIN "category" c ON t.category_id = c.id
+            WHERE (s.id = ${staff_id})
+            GROUP BY u.username, c.name, s."createdAt"
+            `
+            );
+        return res.status(200).json(results)   
+    } catch (error){
+        return res.status(500).json({message: error.message})
+    }
+}
+
+export const editStaff = async (req, res) => {
+    const staff_id = req.params.id 
+    const admin = req.user
+    const {category_id, is_guest} = req.body
+    try {
+        const staff = await Staff.update({
+            ...(category_id ? {category_id: category_id} : {})
+        }, {
+            where: {
+                id: staff_id
+            }
+        })
+
+        const user = await User.update({
+            ...(is_guest ? {is_guest: true} : {})
+        }, {
+            where: {
+                staff_id: staff_id
+            },
+            returning: true
+        }) 
+
+        // audit here
+        await logAudit(
+            'Update',
+            admin.id,
+            `
+            Staff ID ${staff_id} updated
+            `
+        )
+
+        return res.status(200).json({message: "Successfully editted staff"})
+    } catch (error) {
+        return res.status(500).json({message: error.message})
+    }
+}
 
 // ticket actions start here
 const roundRobinAssignment = async (ticket_id, category_id, admin_id) => {
