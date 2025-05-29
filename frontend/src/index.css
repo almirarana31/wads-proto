@@ -9,6 +9,8 @@ body {
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  background-color: #dbeafe; /* Blue-100 background for all pages */
+  min-height: 100vh; /* Ensure full viewport height coverage */
 }
 
 code {

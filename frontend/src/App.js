@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import Header from './components/Header';
 import HomePage from './pages/HomePage';
@@ -13,41 +13,73 @@ import Footer from './components/Footer';
 import TicketDetailsPage from './pages/TicketDetailsPage';
 import Logout from './components/Logout';
 import AdminDashboard from './pages/AdminDashPage';
-import Chatroom from './pages/Chatroom'; // Import the Chatroom component
+import Chatroom from './pages/Chatroom';
+import AuditLogPage from './pages/AuditLogPage';
+import StaffDashPage from './pages/StaffDashPage';
+import StaffTicketView from './pages/StaffTicketView';
+import AdminTicketView from './pages/AdminTicketView';
 
 function App() {
   // For demo purposes - in a real app, this would come from auth context/state
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [userRole, setUserRole] = useState(null); // Add this to track user role
+  
+  // Check for existing authentication on app load
+  useEffect(() => {
+    const checkAuthStatus = () => {
+      const token = sessionStorage.getItem('token') || localStorage.getItem('token') || sessionStorage.getItem('mockToken');
+      const currentUser = localStorage.getItem('currentUser');
+      
+      if (token && currentUser) {
+        const user = JSON.parse(currentUser);
+        setIsAuthenticated(true);
+        setUserRole(user.role_code);
+      }
+    };
+
+    checkAuthStatus();
+  }, []);
+
   // Login function
   const handleLogin = (user) => { // Modified to accept user
     // If a user object is provided (even a mock one), consider login successful
     if (user) {
       setIsAuthenticated(true);
+      setUserRole(user.role_code); // Store the user's role
+      // Store user data in localStorage for other components to access
+      localStorage.setItem('currentUser', JSON.stringify(user));
       // For mock purposes, you might want to set a mock token if other parts rely on it
-      // sessionStorage.setItem('mockToken', 'true'); 
+      sessionStorage.setItem('mockToken', 'authenticated'); 
     } else {
       // Fallback to token check if no user object is passed directly
-      const token = sessionStorage.getItem('token') || localStorage.getItem('token');
+      const token = sessionStorage.getItem('token') || localStorage.getItem('token') || sessionStorage.getItem('mockToken');
       if (token) {
         setIsAuthenticated(true);
       }
     }
   };
-  
-  // Logout function
+    // Logout function
   const handleLogout = () => {
     // Reset authentication state
     setIsAuthenticated(false);
-    // Clear any mock token if you set one
-    // sessionStorage.removeItem('mockToken');
-    // localStorage.removeItem('token'); // Also clear real token if it was set
+    setUserRole(null); // Clear the user's role
+    // Clear stored user data
+    localStorage.removeItem('currentUser');
+    sessionStorage.removeItem('mockToken');
+    sessionStorage.removeItem('token');
+    localStorage.removeItem('token');
   };
 
   // Protected Route component
-  const ProtectedRoute = ({ children }) => {
+  const ProtectedRoute = ({ children, allowedRoles = [] }) => {
     if (!isAuthenticated) {
       // Redirect to login if not authenticated
       return <Navigate to="/login" replace />;
+    }
+    
+    // If roles are specified and user's role doesn't match, redirect to home
+    if (allowedRoles.length > 0 && !allowedRoles.includes(userRole)) {
+      return <Navigate to="/" replace />;
     }
     
     return children;
@@ -56,7 +88,7 @@ function App() {
   return (
     <Router>
       <div className="min-h-screen bg-blue-100">
-        <Header isAuthenticated={isAuthenticated} />
+        <Header isAuthenticated={isAuthenticated} userRole={userRole} />
         <main>
           <Routes>
             <Route path="/" element={<HomePage />} />
@@ -91,17 +123,44 @@ function App() {
                   <Logout onLogout={handleLogout} />
                 </ProtectedRoute>
               }
-            />
-            <Route
+            />            <Route
               path="/admin-dashboard"
               element={
-                <ProtectedRoute>
+                <ProtectedRoute allowedRoles={['ADM']}>
                   <AdminDashboard />
+                </ProtectedRoute>
+              }
+            />            <Route
+              path="/staff-dashboard"
+              element={
+                <ProtectedRoute allowedRoles={['STF', 'ADM']}>
+                  <StaffDashPage />
+                </ProtectedRoute>
+              }
+            />            <Route
+              path="/staff/ticket/:ticketId"
+              element={
+                <ProtectedRoute allowedRoles={['STF', 'ADM']}>
+                  <StaffTicketView />
+                </ProtectedRoute>
+              }
+            />            <Route
+              path="/admin/ticket/:ticketId"
+              element={
+                <ProtectedRoute allowedRoles={['ADM']}>
+                  <AdminTicketView />
                 </ProtectedRoute>
               }
             />
             <Route
-              path="/chatroom/:conversationId"
+              path="/audit-logs"
+              element={
+                <ProtectedRoute allowedRoles={['ADM']}>
+                  <AuditLogPage />
+                </ProtectedRoute>
+              }
+            />            <Route
+              path="/chatroom/:ticketId/:conversationId"
               element={
                 <ProtectedRoute>
                   <Chatroom />

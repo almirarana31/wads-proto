@@ -2,19 +2,31 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import ContentContainer from '../components/ContentContainer';
 import ChatBubble from '../components/ChatBubble';
+import BackButton from '../components/buttons/BackButton';
+import PrimaryButton from '../components/buttons/PrimaryButton';
+import { PageTitle, Text } from '../components/text';
 
 function Chatroom() {
   // Gets the conversation id from the url || fetches the right chat by ID i think in the real app
-  const { conversationId } = useParams();
+  const { ticketId, conversationId } = useParams();
   const navigate = useNavigate();
 
+  // Check if this is a new conversation
+  const isNewConversation = conversationId === 'new';
+
   // dummy data for now || fullstack version will fetch from the backend api
-  const [chatMessages, setChatMessages] = useState([
-    { sender: 'staff', content: "Hello, I'm Staff here to help. Could you explain the details of your issue?", timestamp: '09:00 AM', showSender: true },
-    { sender: 'user', content: 'Yes, when I tried to pay, it said "Payment Failed" even though I did all the cocorect steps.', timestamp: '09:01 AM', showSender: true },
-    { sender: 'user', content: '*correct. Sorry for the typo.', timestamp: '09:02 AM', showSender: false },
-    { sender: 'staff', content: 'The issue has been solved, I will close this conversation.', timestamp: '09:02 AM', showSender: true }
-  ]);
+  const [chatMessages, setChatMessages] = useState(
+    isNewConversation ? 
+    // Empty chat for new conversation
+    [] : 
+    // Sample data for existing conversation
+    [
+      { sender: 'staff', content: "Hello, I'm Staff here to help. Could you explain the details of your issue?", timestamp: '09:00 AM', showSender: true },
+      { sender: 'user', content: 'Yes, when I tried to pay, it said "Payment Failed" even though I did all the cocorect steps.', timestamp: '09:01 AM', showSender: true },
+      { sender: 'user', content: '*correct. Sorry for the typo.', timestamp: '09:02 AM', showSender: false },
+      { sender: 'staff', content: 'The issue has been solved, I will close this conversation.', timestamp: '09:02 AM', showSender: true }
+    ]
+  );
   const [input, setInput] = useState('');
 
   // ref that scrolls the chat to the bottom after new message
@@ -22,7 +34,7 @@ function Chatroom() {
 
   // --- IMPORTANTES: Only frontend demo, REMOVE this logic when implementing the fullstack ---
   // conversationId is '1' is closed for demo purposes. In real app, get this from backend!!!
-  const ticketStatus = conversationId === '1' ? 'closed' : 'open';
+  const ticketStatus = isNewConversation ? 'open' : (conversationId === '1' ? 'closed' : 'open');
   // --- IMPORTANTES ---
 
   useEffect(() => {
@@ -67,20 +79,11 @@ function Chatroom() {
   };
 
   return (
-    <ContentContainer>
-      <div className="relative mb-5">
-        {/* back button is just for navigation || real app maybe check unsaved changes or confirm */}
-        <button
-          onClick={handleBack}
-          className="absolute -top-2 -left-2 w-20 h-10 bg-blue-800 hover:bg-blue-900 text-white rounded-xl flex items-center justify-center shadow-md text-sm whitespace-nowrap"
-        >
-          ← Back
-        </button>
+    <ContentContainer>        <div className="relative mb-5">
+        <BackButton onClick={handleBack} className="absolute -top-2 -left-2" />
         <div className="text-center pt-8">
           {/* in fullstack, this title could show the other chat title */}
-          <h1 className="text-4xl font-bold text-gray-800 mb-1">
-            Conversation {conversationId}
-          </h1>
+          <PageTitle title={isNewConversation ? 'New Conversation' : `Conversation ${conversationId}`} />
         </div>
       </div>
       <div className="border-b border-gray-200 my-6"></div>
@@ -111,11 +114,11 @@ function Chatroom() {
               onChange={e => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
             />
-            <button
+            <PrimaryButton
               onClick={handleSend}
-              className="px-5 flex items-center justify-center text-blue-700 hover:text-blue-900"
               aria-label="Send"
               type="button"
+              className="px-5 flex items-center justify-center"
             >
               {/* in real app, maybe show loading spinner if sending */}
               <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none"
@@ -123,11 +126,12 @@ function Chatroom() {
                 <path strokeLinecap="round" strokeLinejoin="round"
                   d="M5 12l14-7-7 14-2-5-5-2z" />
               </svg>
-            </button>
-          </div>
-        ) : (
-          <div className="text-center text-gray-500 py-6 text-lg font-semibold">
-            This conversation has ended.
+            </PrimaryButton>
+          </div>        ) : (
+          <div className="text-center py-6">
+            <Text color="text-gray-500" size="lg" weight="semibold">
+              This conversation has ended.
+            </Text>
           </div>
         )}
       </div>

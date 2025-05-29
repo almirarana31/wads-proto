@@ -2,7 +2,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 
 const ConversationCard = ({ number, startedDate, endedDate, onClick }) => {
-  // Format dates for display
+  // format dates for display
   const formatDate = (dateString) => {
     if (!dateString) return 'N/A';
     const date = new Date(dateString);

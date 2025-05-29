@@ -5,16 +5,16 @@ function Logout({ onLogout }) {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Clear all auth-related data
+    // clear all auth-related data
     sessionStorage.removeItem('token');
     sessionStorage.removeItem('user');
     sessionStorage.removeItem('sessionExpires');
     localStorage.removeItem('token');
     
-    // Call the onLogout handler from App.js
+    // call the onLogout handler from App.js
     onLogout();
     
-    // Redirect to home page
+    // redirect to home page
     navigate('/');
   }, [onLogout, navigate]);
 

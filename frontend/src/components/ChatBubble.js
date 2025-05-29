@@ -1,14 +1,18 @@
 import React from 'react';
+import { Text, SmallText } from './text';
 
 function ChatBubble({ message, sender = 'user', timestamp, showSender = true }) {
   const isUser = sender === 'user';
 
-  return (
-    <div className={`mb-2 flex flex-col ${isUser ? 'items-end' : 'items-start'}`}>
+  return (    
+  <div className={`mb-2 flex flex-col ${isUser ? 'items-end' : 'items-start'}`}>
       {showSender && (
-        <div className={`mb-1 text-xs font-semibold ${isUser ? 'text-blue-700' : 'text-gray-600'}`}>
+        <SmallText 
+          weight="semibold" 
+          className={`mb-1 ${isUser ? 'text-blue-700' : 'text-gray-600'}`}
+        >
           {sender === 'user' ? 'You' : sender}
-        </div>
+        </SmallText>
       )}
       <div
         className={`px-4 py-2 rounded-2xl shadow-md max-w-xs break-words ${
@@ -20,9 +24,11 @@ function ChatBubble({ message, sender = 'user', timestamp, showSender = true }) 
         {message}
       </div>
       {timestamp && (
-        <div className={`text-xs mt-1 ${isUser ? 'text-right text-gray-400' : 'text-left text-gray-500'}`}>
+        <SmallText 
+          className={`mt-1 ${isUser ? 'text-right text-gray-400' : 'text-left text-gray-500'}`}
+        >
           {timestamp}
-        </div>
+        </SmallText>
       )}
     </div>
   );
