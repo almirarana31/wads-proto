@@ -1,0 +1,160 @@
+import React, { useState } from 'react';
+import SecondaryButton from '../components/buttons/SecondaryButton';
+import { PageTitle, Text, Label } from '../components/text';
+
+function AuditLogPage() {
+  // Mock audit log data - replace with API call later
+  const [auditLogs] = useState([
+    {
+      id: 'LOG-001',
+      timestamp: '2025-05-27T10:30:00Z',
+      action: 'Ticket Status Updated',
+      user: 'admin@example.com',
+      details: 'Changed ticket TKT-001 status from Pending to In Progress',
+      ipAddress: '192.168.1.1',
+      userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'
+    },
+    {
+      id: 'LOG-002',
+      timestamp: '2025-05-27T10:15:00Z',
+      action: 'User Login',
+      user: 'staff@example.com',
+      details: 'Successful login attempt',
+      ipAddress: '192.168.1.2',
+      userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'
+    },
+    {
+      id: 'LOG-003',
+      timestamp: '2025-05-27T10:00:00Z',
+      action: 'Ticket Created',
+      user: 'user@example.com',
+      details: 'New ticket TKT-003 created',
+      ipAddress: '192.168.1.3',
+      userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 14_7_1)'
+    }
+  ]);
+
+  const [filters, setFilters] = useState({
+    startDate: '',
+    endDate: '',
+    action: '',
+    user: ''
+  });
+
+  const handleFilterChange = (e, field) => {
+    setFilters(prev => ({
+      ...prev,
+      [field]: e.target.value
+    }));
+  };
+
+  // Filter logs based on filters
+  const filteredLogs = auditLogs.filter(log => {
+    if (filters.startDate && new Date(log.timestamp) < new Date(filters.startDate)) return false;
+    if (filters.endDate && new Date(log.timestamp) > new Date(filters.endDate)) return false;
+    if (filters.action && log.action !== filters.action) return false;
+    if (filters.user && !log.user.toLowerCase().includes(filters.user.toLowerCase())) return false;
+    return true;
+  });
+  return (
+    <div className="min-h-screen py-6 sm:py-12 px-4">
+      <div className="max-w-7xl mx-auto"><div className="bg-white p-6 rounded-lg shadow-md">
+          <PageTitle 
+            title="System Audit Log"
+            subtitle="Track and monitor system activities"
+          />
+
+          {/* Action Buttons */}
+          <div className="flex justify-end mb-6">
+            <SecondaryButton onClick={() => console.log('Export logs')}>
+              Export Log
+            </SecondaryButton>
+          </div>          
+          {/* Filters */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+            <div>
+              <Label>Start Date</Label>
+              <input
+                type="date"
+                value={filters.startDate}
+                onChange={(e) => handleFilterChange(e, 'startDate')}
+                className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-300"
+              />
+            </div>
+            <div>
+              <Label>End Date</Label>
+              <input
+                type="date"
+                value={filters.endDate}
+                onChange={(e) => handleFilterChange(e, 'endDate')}
+                className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-300"
+              />
+            </div>
+            <div>
+              <Label>Action Type</Label>
+              <select
+                value={filters.action}
+                onChange={(e) => handleFilterChange(e, 'action')}
+                className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-300"
+              >
+                <option value="">All Actions</option>
+                <option>User Login</option>
+                <option>Ticket Created</option>
+                <option>Ticket Updated</option>
+                <option>Ticket Status Changed</option>
+                <option>User Created</option>
+              </select>            </div>
+            <div>
+              <Label>User</Label>
+              <input
+                type="text"
+                placeholder="Search by user email"
+                value={filters.user}
+                onChange={(e) => handleFilterChange(e, 'user')}
+                className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-300"
+              />
+            </div>
+          </div>
+
+          {/* Audit Log Table */}
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  {['Timestamp', 'Action', 'User', 'Details'].map(header => (
+                    <th
+                      key={header}
+                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                    >
+                      {header}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {filteredLogs.map((log) => (
+                  <tr key={log.id} className="hover:bg-gray-50">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                      {new Date(log.timestamp).toLocaleString()}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                      {log.action}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                      {log.user}
+                    </td>
+                    <td className="px-6 py-4 text-sm text-gray-700">
+                      {log.details}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default AuditLogPage;
