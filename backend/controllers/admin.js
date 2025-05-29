@@ -99,7 +99,7 @@ export const getTickets = async (req, res) => {
             as: 'User',
             attributes: ['username', 'email']
         }],
-        attributes: [['id', 'ticket_id'], 'subject', 'createdAt'],
+        attributes: [['id', 'ticket_id'], 'subject', 'createdAt', 'note'],
         // if search exists, spread the where clause into this query
         where: {
             ...(search && 
@@ -135,6 +135,7 @@ export const getStaffPerformance = async (req, res) => {
             FROM "user" u 
             INNER JOIN "staff" s ON u.staff_id = s.id
             LEFT JOIN "ticket" t ON s.id = t.staff_id
+            WHERE (s.role_id != 2)
             GROUP BY u.username
             `
         );
@@ -149,16 +150,16 @@ export const getStaffPerformance = async (req, res) => {
 // update ticket fields
 export const updateField = async (req, res) => {
     // get updated fields (only one will have a value at a time)
-    const {category_id, priority_id, status_id} = req.body
-    
+    // const {category_id, priority_id, status_id} = req.body
+    const {priority_id} = req.body
     // get the selected ticket by route params
     const ticket_id = req.params.id
     try {
         // update 
         const ticket = await Ticket.update({
-            ...(category_id && {category_id: category_id}),
+            // ...(category_id && {category_id: category_id}),
             ...(priority_id && {priority_id: priority_id}),
-            ...(status_id && {status_id: status_id})
+            // ...(status_id && {status_id: status_id})
         }, {
             where: {
                 id: ticket_id
@@ -166,13 +167,12 @@ export const updateField = async (req, res) => {
             raw: true
         });
 
+        // auto assign ticket
+
         await logAudit(
             "Update",
             req.user.id,
-            `Ticket ID ${ticket_id} fields updated 
-            category_id: ${category_id ? category_id : "no change"} 
-            priority_id: ${priority_id ? priority_id: "no change"} 
-            status_id: ${status_id ? status_id: "no change"}`
+            `Ticket ID ${ticket_id} fields updated priority_id: ${priority_id ? priority_id: "no change"} `
         );
 
         return res.status(200).json(ticket);
@@ -206,7 +206,7 @@ export const searchStaff = async (req, res) => {
             "user" u INNER JOIN 
             "staff" s ON u.staff_id = s.id LEFT JOIN
             "ticket" t ON s.id = t.staff_id
-            WHERE (t.category_id = ${category_id})
+            WHERE (t.category_id = ${category_id} AND s.role_id != 2 AND u.id != t.user_id)
             GROUP BY s.id, u.username
             `
         );
@@ -223,6 +223,7 @@ export const assignStaff = async (req, res) => {
     const ticket_id = req.params.ticket_id
     // get selected staff info from the request body
     const {id} = req.body;
+    const admin = req.admin;
     try {
         // update the staff assigned to the ticket and the status
         const ticket = await Ticket.update({
@@ -239,7 +240,6 @@ export const assignStaff = async (req, res) => {
         await logAudit(
             "Update",
             req.user.id,
-
         )
         return res.status(200).json(ticket)
     } catch (error) {

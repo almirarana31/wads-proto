@@ -59,6 +59,16 @@ export const getTicketDetail = async (req, res) => {
     }
 }
 
+export const getTicket = async (req, res) => {
+    const ticket_id = req.params.id
+
+    try {
+
+    } catch (error) {
+        
+    }
+}
+
 // get category
 export const getCategory = async (req, res) => {
     try {
@@ -98,6 +108,33 @@ export const getStatus = async (req, res) => {
         return res.status(500).json({message:error.message})
     }
 };
+
+// add note to ticket
+export const addNote = async (req, res) => {
+    // ticket id from the query
+    const ticket_id = req.query.id
+    // get staff id from the auth
+    const staff = req.staff
+    // not content
+    const {note} = req.body 
+    try {
+        // update ticket where staff_id = staff_id
+        const ticket = await Ticket.update({
+            note: note
+        }, {
+            where: {
+                staff_id: staff.staff_id
+            }
+        })
+
+        // if ticket empty does not exist return 400 error
+        if (!ticket) return res.status(400).json({message: "Ticket does not exist"})
+
+        return res.status(200).json({message: "Not successfully added"})
+    } catch (error) {
+        return res.status(500).json({message: error.message})
+    }
+} 
 
 export const escalatePriority = async (req, res) => {
     try {
