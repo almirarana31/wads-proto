@@ -59,15 +59,6 @@ export const getTicketDetail = async (req, res) => {
     }
 }
 
-export const getTicket = async (req, res) => {
-    const ticket_id = req.params.id
-
-    try {
-
-    } catch (error) {
-        
-    }
-}
 
 // get category
 export const getCategory = async (req, res) => {
@@ -136,12 +127,12 @@ export const addNote = async (req, res) => {
     }
 } 
 
-export const escalatePriority = async (req, res) => {
+export const escalatePriority = async () => {
     try {
         const tickets = await Ticket.findAll({
             where: {
                 createdAt: {[Op.lt]: new Date(Date.now() - 24 * 60 * 60 * 1000)},
-                priorit_id: {[Op.lt]: 3}
+                priority_id: {[Op.lt]: 3}
             }
         })
 
@@ -149,7 +140,7 @@ export const escalatePriority = async (req, res) => {
             ticket.priority_id += 1;
             await ticket.save();
         }
-        return res.status(200).json({message: "Successfully escalated ticket priority"})
+        
     } catch (error) {
         console.log(error.message)
     }

@@ -1,4 +1,4 @@
-import { Staff, User, Ticket, Status, Category, Priority } from '../models/index.js';
+import { Staff, User, Ticket, Status, Category, Priority, Assignment } from '../models/index.js';
 import sequelize from '../config/sequelize.js';
 import { Op } from 'sequelize';
 import { logAudit } from './audit.js';
@@ -146,6 +146,85 @@ export const getStaffPerformance = async (req, res) => {
 };
 
 // ticket actions start here
+const roundRobinAssignment = async (ticket_id, category_id, admin_id) => {
+    try {
+        // get all staff
+        const staffs = await Staff.findAll({
+            where: {
+                field_id: category_id
+            },
+            raw: true
+        })
+
+        const assignment = await Assignment.findOne({
+            where: {
+                category_id: category_id
+            },
+            raw: true
+        })
+
+        const last_staff = assignment?.last_staff
+        const lastIndex = staffs.findIndex(staff => staff.id === last_staff); // returns -1 if last_staff doesnt exist
+
+        for (let i = 1; i <= staffs.length; i++) {
+            const index = (lastIndex + i) % staffs.length
+
+            const count = await Ticket.count({
+                where: {
+                    staff_id: staffs[index].id,
+                    status_id: {[Op.notIn]: [4, 3]} // not resolved, not cancelled
+                }
+            })
+
+            if (count < 3) {
+                // update the ticket
+                const ticket = await Ticket.update({
+                    status_id: 2,
+                    staff_id: staffs[index].id
+                }, {
+                    where: {
+                    id: ticket_id
+                  }
+                })
+
+                // update the assignment
+                if (last_staff) {
+                    assignment.last_staff = staffs[index].id
+                    await assignment.save();
+                    // audit
+                    await logAudit(
+                        'Update',
+                        admin_id,
+                        `
+                        Ticket ID ${ticket_id} assigned to staff ID ${staffs[index].id}
+                        `
+                    )
+                    return true
+                }
+
+                const newAssignment = await Assignment.create({
+                    category_id: category_id,
+                    last_staff: staffs[index].id
+                })
+
+                // audit
+                await logAudit(
+                    'Update',
+                    admin_id,
+                    `
+                    Ticket ID ${ticket_id} assigned to staff ID ${staffs[index].id}
+                    `
+                )
+                return true // if true ticket has been automatically assigned
+            }
+            
+            // if false res.status(200).json({message: "Ticket sent to the ticket pool"})
+            return false
+        }
+    } catch(error) {
+        console.log(error.message)
+    }
+}
 
 // update ticket fields
 export const updateField = async (req, res) => {
@@ -154,20 +233,26 @@ export const updateField = async (req, res) => {
     const {priority_id} = req.body
     // get the selected ticket by route params
     const ticket_id = req.params.id
+    const admin = req.admin
     try {
         // update 
-        const ticket = await Ticket.update({
+        const [count, ticket] = await Ticket.update({
             // ...(category_id && {category_id: category_id}),
             ...(priority_id && {priority_id: priority_id}),
             // ...(status_id && {status_id: status_id})
         }, {
             where: {
-                id: ticket_id
+                id: ticket_id,
+                priority_id: {[Op.or]: [{[Op.ne]: priority_id}, null]} // could be where priority_id: 1 instead will have to consult the rest
             },
-            raw: true
+            returning: true
         });
+        
+        if (count === 0) return res.status(400).json({message: "No row updated"});
 
         // auto assign ticket
+
+        const robin = await roundRobinAssignment(ticket_id, ticket[0].category_id, admin.id)
 
         await logAudit(
             "Update",
@@ -175,7 +260,9 @@ export const updateField = async (req, res) => {
             `Ticket ID ${ticket_id} fields updated priority_id: ${priority_id ? priority_id: "no change"} `
         );
 
-        return res.status(200).json(ticket);
+        const newTick = await Ticket.findByPk(ticket[0].id)
+
+        return res.status(200).json(newTick);
     } catch (error) {
         return res.status(500).json({message: error.message});
     }
