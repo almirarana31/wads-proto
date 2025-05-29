@@ -2,24 +2,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import PrimaryButton from '../components/buttons/PrimaryButton';
 import { PageTitle, Text, Label } from '../components/text';
-
-const MOCK_USERS = {
-  'admin@bianca.com': {
-    password: 'admin123',
-    name: 'Admin User',
-    role_code: 'ADM'
-  },
-  'staff@bianca.com': {
-    password: 'staff123',
-    name: 'Staff Member',
-    role_code: 'STF'
-  },
-  'customer@bianca.com': {
-    password: 'customer123',
-    name: 'Customer User',
-    role_code: 'USR'
-  }
-};
+import { authService } from '../api/authService';
 
 function LoginPage({ onLogin }) {
   const navigate = useNavigate();
@@ -51,30 +34,39 @@ function LoginPage({ onLogin }) {
       return;
     }
     try {
-      // Mock login logic
-      const mockUser = MOCK_USERS[formData.email];
-      
-      if (mockUser && mockUser.password === formData.password) {
-        const userInfo = {
-          email: formData.email,
-          name: mockUser.name,
-          role_code: mockUser.role_code
-        };
-        
-        if (onLogin) onLogin(userInfo);
-        
-        // Redirect based on role
-        if (mockUser.role_code === 'ADM') {
-          navigate('/admin-dashboard');
-        } else {
-          navigate('/view-tickets');
-        }
+      // Call backend login
+      const res = await authService.login(formData);
+      // Store tokens
+      if (res.sessionToken) {
+        sessionStorage.setItem('token', res.sessionToken);
+      }
+      if (formData.rememberMe && res.localToken) {
+        localStorage.setItem('token', res.localToken);
+      }
+      // Build user info for context
+      const userInfo = {
+        email: formData.email,
+        username: res.username || formData.email,
+        role_code: res.role_code || (res.staff_id ? (res.staff_id === 1 ? 'ADM' : 'STF') : 'USR'),
+        staff_id: res.staff_id,
+        id: res.id
+      };
+      if (onLogin) onLogin(userInfo);
+      // Redirect based on role
+      if (userInfo.role_code === 'ADM') {
+        navigate('/admin-dashboard');
+      } else if (userInfo.role_code === 'STF') {
+        navigate('/staff-dashboard');
       } else {
-        setError('Invalid email or password');
+        navigate('/view-tickets');
       }
     } catch (error) {
-      console.error('Login error:', error);
-      setError('An error occurred during login');
+      setError(
+        error.response?.data?.message ||
+        error.response?.data?.error ||
+        error.message ||
+        'Invalid email or password'
+      );
     } finally {
       setLoading(false);
     }
