@@ -155,14 +155,14 @@ export const resolveTicket = async (req, res) => {
             staff_id: req.staff.id 
         });
 
-        res.status(200).json({ 
+        return res.status(200).json({ 
             success: true,
             message: 'Ticket resolved successfully',
             ticket
         });
     } catch (error) {
         console.error('Error resolving ticket:', error);
-        res.status(500).json({ 
+        return res.status(500).json({ 
             success: false,
             message: 'Error resolving ticket',
             error: error.message 
