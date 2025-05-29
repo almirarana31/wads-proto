@@ -33,6 +33,8 @@ function StaffTicketView() {
       phone: '08123456789'
     }
   });
+  const [note, setNote] = useState(ticket.note || '');
+  const [isNoteSaved, setIsNoteSaved] = useState(false);
 
   // Use useMemo for both conversations data and sorting
   const conversations = useMemo(() => {
@@ -108,6 +110,19 @@ function StaffTicketView() {
     setIsCancelModalOpen(false);
   };
 
+  // Only allow editing note if ticket is in progress and user is owner/assigned staff
+  const canEditNote = ticket.status === 'In Progress';
+
+  const handleNoteChange = (e) => {
+    setNote(e.target.value);
+    setIsNoteSaved(false);
+  };
+
+  const handleSaveNote = () => {
+    setTicket(prevTicket => ({ ...prevTicket, note }));
+    setIsNoteSaved(true);
+  };
+
   return (
     <ContentContainer>      <div className="relative mb-5">
         <BackButton onClick={handleBack} className="absolute -top-2 -left-2" />
@@ -136,7 +151,33 @@ function StaffTicketView() {
               This ticket has been cancelled
             </div>
           )}
-        </div>        {/* Customer Information */}
+        </div>
+        {/* Note Feature */}
+        <div className="mt-6">
+          <Label className="mb-1">Internal Note (visible to staff & admin only)</Label>
+          {canEditNote ? (
+            <div className="flex flex-col sm:flex-row gap-2 items-start">
+              <textarea
+                value={note}
+                onChange={handleNoteChange}
+                rows={2}
+                className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-300"
+                placeholder="Add a note for this ticket..."
+                maxLength={120}
+              />
+              <PrimaryButton onClick={handleSaveNote} disabled={isNoteSaved || note.trim() === ''}>
+                {isNoteSaved ? 'Saved' : 'Save Note'}
+              </PrimaryButton>
+            </div>
+          ) : (
+            note && (
+              <div className="inline-block px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium mt-2">
+                {note}
+              </div>
+            )
+          )}
+        </div>
+        {/* Customer Information */}
         <div className="mt-8">
           <Subheading className="text-blue-800">Customer Information</Subheading>
           <div className="bg-white p-4 sm:p-6 rounded-lg shadow-md">
