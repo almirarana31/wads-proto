@@ -49,7 +49,12 @@ function SignUpPage() {
         navigate('/login');
       }, 3000);
     } catch (err) {
-      setError(err.message || 'Failed to create account');
+      setError(
+        err.response?.data?.message ||
+        err.response?.data?.error ||
+        err.message ||
+        'Failed to create account'
+      );
     } finally {
       setLoading(false);
     }
@@ -101,7 +106,8 @@ function SignUpPage() {
                 className="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-300"
                 required
                 disabled={loading}
-              />            </div>
+              />            
+              </div>
             
             <div>
               <Label htmlFor="email">Email Address:</Label>
