@@ -1,5 +1,8 @@
 import express from 'express';
-import { getStatusSummary, getTickets, getAdminUsername, getStaffPerformance } from '../controllers/admin.js';
+import { getStatusSummary, getTickets, getAdminUsername, 
+    getStaffPerformance, searchStaff, assignStaff, 
+    getCategory, getPriority, getStatus,
+    updateField } from '../controllers/admin.js';
 import { authN, adminAuthZ } from '../middleware/auth.js';
 
 const router = express.Router();
@@ -8,14 +11,29 @@ const router = express.Router();
 
 router.use(authN, adminAuthZ);
 
-// admin dashboard
+// admin dashboard start here
 
-router.get('/get-status-summary', getStatusSummary);
+router.get('/status-summary', getStatusSummary);
 
-router.get('/get-username/:id', getAdminUsername);
+router.get('/username', getAdminUsername);
 
-router.get('/get-tickets', getTickets);
+router.get('/all-tickets', getTickets);
 
-router.get('/get-staff-performance', getStaffPerformance);
+router.get('/staff-performance', getStaffPerformance);
+
+router.get('/staff/:ticket_id', searchStaff);
+
+// attribures updating
+router.patch('/tickets/:id', updateField)
+
+// assigned staff updating
+router.patch('/tickets/:ticket_id/staff', assignStaff)
+
+// admin dashboard ends here
+
+// view action
+// get details of a specific ticket
+
+
 
 export default router;

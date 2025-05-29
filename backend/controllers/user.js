@@ -1,8 +1,10 @@
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
-import { Staff, User } from '../models/index.js';
+import { Staff, User, Ticket, Category, Status} from '../models/index.js';
 import sendOTP from './otp.js';
-import sessionStorage from 'sessionstorage';
+import { logAudit } from './audit.js';
+import sequelize from '../config/sequelize.js';
+import {Op} from 'sequelize';
 
 // start with the login/sign up
 
@@ -26,16 +28,16 @@ function validateEmail(email) {
 
 // check if email in database, default behaviour: false
 async function emailExists(input_email) {
-    const user_email = await User.findOne({
+    // get from user table
+    const user = await User.findOne({
         where: {
-            email : input_email
+            email: input_email
         }
-    })
-    if (debug) {
-        console.log("This is user email: ", user_email);
-    }
-    // if it exists return false
-    if (user_email) return true;
+    });
+
+    // if it exists return true
+    if (user) return true 
+
     return false;
 }
 
@@ -47,33 +49,46 @@ function validatePassword(password) {
 
 // check role in database
 async function checkRole(user_email) {
-    const dbEmail = await Staff.findOne({
+
+    const user = await Staff.findOne({
         where: {
             email: user_email
-        }
+        },
+        raw: true
     });
 
-    if (dbEmail) {
-        const role = dbEmail.role_code;
-        return role
-    }
+    if (user) {
+        const staff_id = user.id
+        return staff_id
+    };
 
-    return "USR";
+    return false;
 }
 
 async function getCreds(user_email, password) {
-    
+
     const user = await User.findOne({
         where: {
             email: user_email
         }
     })
-    const isMatch = await bcrypt.compare(password, user.password);
-    console.log(user_email, isMatch);
 
-    if (isMatch) return true
+    if (!user) {
+        return false
+    }
 
-    return false
+    // check password validity
+    const validPass = await bcrypt.compare(password, user.password);
+
+    if (!validPass) {
+        return false
+    }
+
+    return user.id
+};
+
+function createRememberMeToken(payload) {
+    return jwt.sign(payload, process.env.ACCESS_TOKEN_SECRET, {expiresIn: '7d'});
 };
 
 function createAccessToken(payload) { // is a refresh token that expires quicker
@@ -111,18 +126,21 @@ export const signUp = async (req, res) => {
         if (!validatePassword(password)) return res.status(400).json({message: "Password should be 6 to 20 characters long with a numeric, 1 lowercase and 1 uppercase letters"});
 
         // send email here, not yet stored the refresh token
-        const role_code = await checkRole(email);
+        const staff_id = await checkRole(email);
         const hashedPassword = await hashPassword(password);
         const newUser = {
             username: username,
             password: hashedPassword,
             email: email,
-            role_code: role_code
+            staff_id: staff_id ? staff_id : false
         };
         // create otp token with user info
         const otpToken = createOTPToken(newUser);
         const actLink = `${process.env.BASE_URL}/api/user/activate/${otpToken}`;
         await sendOTP(email, "OTP Sign Up Verification", actLink);
+
+        // only for development
+        console.log(otpToken);
 
         console.log("hello world");
 
@@ -142,19 +160,29 @@ export const activate = async (req, res) => {
 
     try {
         const decode = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
-        const {username, password, email, role_code} = decode;
+        const {username, password, email, staff_id} = decode;
 
         if(await emailExists(email)) {
             return res.status(400).json({message: "email already exists"})
         }
-        
         // add to database
-        await User.create({
+
+        const user = await User.create({
             username: username,
             password: password,
             email: email,
-            role_code: role_code
+            staff_id: staff_id ? staff_id : null,
+            is_guest: false
         });
+
+        // audit here 
+        await logAudit(
+            "Create", 
+            user.id, 
+            `${staff_id ? "Staff" : "User"} account created (email: ${email}, username: ${username}, id: ${user.id}${staff_id ? `, ${staff_id}` : ""})`
+        )
+        console.log(`${staff_id ? "Staff" : "User"} account created (email: ${email}, username: ${username}, id: ${user.id}${staff_id ? `, ${staff_id}` : ""})`);
+        
         return res.status(200).json({message: 'Successfully signed up!',
             username: username,
             email: email
@@ -173,14 +201,30 @@ export const logIn = async (req, res) => {
             // storing the access token in session storage
             const user = await User.findOne({
                 where: {
-                    email: email
+                    id: login
                 },
-                attributes: ['email', 'id', 'role_code'],
+                attributes: ['id', 'staff_id', 'email', 'username', 'is_guest'],
                 raw: true
             });
 
+            console.log(`Pre-Staff_id: ${user.staff_id}`)
+
+            if (!user.staff_id) {
+                user.staff_id = 0
+            }
+
+            console.log(`Post-Staff_id: ${user.staff_id}`)
+            
+            // for session storage
             const accessToken = createAccessToken(user);
-            sessionStorage.setItem("token", accessToken);
+            let rememberMeToken =  " ";
+
+           // if remember me, create a rememberMe token
+            if (rememberMe) {
+                rememberMeToken = createRememberMeToken(user);
+            } else {
+                rememberMeToken = null;
+            }
             
 
             // update login time
@@ -193,7 +237,10 @@ export const logIn = async (req, res) => {
                     }
                 }
             );
-            return res.status(200).json({message:"Successful login", token: accessToken});
+            
+            return res.status(200).json({message:"Successful login", 
+                sessionToken: accessToken, localToken: rememberMeToken
+        });
         };
         return res.status(400).json({message: "Incorrect credentials"});
     } catch (error) {
@@ -209,4 +256,213 @@ export const signOut = async (req, res) => {
     } catch (error) {
         return res.status(500).json({error: error.message});
     }
-}
+};
+
+export const forgetPassword = async (req, res) => {
+    const {email, password} = req.body
+
+    try {
+        // check for email validity
+        if (!validateEmail(email)) return res.status(400).json({ message: "Invalid email" });
+
+        const user = await User.findOne({
+            where: {
+                email: email
+            },
+            raw: true,
+            attributes: ['id']
+        });
+
+        const user_id = user.id;
+
+        // if (!user) {
+        //     return res.status(400).json({message: "Not a user"})
+        // }
+        
+        const hashedPassword = await hashPassword(password);
+
+        // create otp token with user info
+        const otpToken = createOTPToken({email: email, id: user_id, password: hashedPassword});
+        const actLink = `${process.env.BASE_URL}/api/user/confirm-password-reset/${otpToken}`;
+        await sendOTP(email, "Reset Password Link", actLink);
+
+        return res.status(200).json({message: "Successfully sent password reset link"});
+    } catch (error) {
+        return res.status(500).json({message: error.message})
+    }
+};
+
+export const confirmPassReset = async (req, res) => {
+    // get token from e
+    const token = req.params.token;
+    try {
+       // verify access token
+        const decode = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
+
+        const {id, password} = decode;
+
+        await User.update({
+            password: password
+        }, {
+            where: {
+                id: id
+            }
+        });
+
+        return res.status(200).json({message: "Password has been reset"});
+    } catch (error) {
+        return res.status(400).json({message: "Invalid reset password link"});
+    }
+};
+
+export const validResetLink = async (req, res) => {
+    // get token from e
+    const token = req.params.token;
+    try {
+       // verify access token
+        const decode = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
+
+        return res.status(200).json({message: "Valid reset password link"});
+    } catch (error) {
+        return res.status(400).json({message: "Invalid reset password link"});
+    }
+};
+
+// tickets
+export const submitTicket = async (req, res) => {
+    const {id} = req.user;
+    const {title, category_id, description} = req.body;
+    try {
+        if (!title || !description || !category_id) {
+            return res.status(400).json({message: "Title and description fields need to be filled"});
+        };  
+
+        const ticket = await Ticket.create({
+            user_id: id,
+            category_id: category_id,
+            status_id: 1,
+            subject: title,
+            description: description
+        }, {raw: true});
+        
+        await logAudit(
+            "Create",
+            id,
+            `Ticket ID ${ticket.id} created`
+        );
+
+        return res.status(200).json({message: "Ticket successfully created",
+            ticket_id: ticket.id,
+            title: ticket.subject,
+            created_at: ticket.createdAt,
+            email: req.user.email
+        })
+    } catch (error) {
+        return res.status(500).json({message: error.message})
+    }
+};
+
+// edit ticket details if pending
+export const editTicket = async (req, res) => {
+    // needs to be a route parameter
+    const id = req.params.id
+    // still have user auth so get user id from there 
+    const user_id = req.user.id
+
+    const {title, category_id, description} = req.body
+    console.log("Here 5")
+    try {
+        const ticket = await Ticket.update({
+            ...(title ? {subject: title} : {}),
+            ...(category_id ? {category_id: category_id} : {}),
+            ...(description ? {description: description} : {})
+        }, {
+            where: {
+                id: id,
+                user_id: user_id
+            },
+            raw: true
+        });
+
+        await logAudit(
+            "Update",
+            user_id,
+            `Ticket ID ${id} updated
+            ${title ? `title -> ${title}` : ""}
+            ${category_id ? `category_id -> ${category_id}` : ""}
+            ${description ? `description -> ${description}` : ""}`
+        )
+
+        return res.status(200).json({message: "Successfully updated ticket"});
+    } catch (error) {
+        return res.status(500).json({message: error.message})
+    }
+};
+
+export const cancelTicket = async (req, res) => {
+    const id = req.params.id
+    const user_id = req.user.id
+    try {
+        // update the ticket
+        const ticket = await Ticket.update({
+            status_id: 4
+        }, {
+            where: {
+                id: id,
+                user_id: user_id,
+                status_id: 1 // will only cancel the ticket if pending 
+            },
+            raw: true
+        });
+
+        // audit 
+        await logAudit(
+            "Update",
+            user_id,
+            `Update on Ticket ID ${id} status_id -> 4`
+        )
+
+        return res.status(200).json({message: "Successfully cancelled ticket"})
+    } catch (error) {
+        return res.status(500).json({message: error.message})
+    }
+};
+
+// gets user ticket details
+export const getUserTickets = async (req, res) => {
+    const userId = req.user.id; // req.user is set by userAuthZ middleware
+    const status = req.query.status;
+    const search = req.query.search;
+
+    try {
+        const tickets = await Ticket.findAll({
+            include: [{
+                model: Category,
+                attributes: ['name'],
+                required: true
+            },{
+                model: Status,
+                attributes: ['name'],
+                required: true
+            }],
+            where: { 
+                user_id: userId,
+                ...(search ? 
+                    {[Op.or] : 
+                        [{subject: {[Op.substring]: search}},
+                        {description: {[Op.substring]: search}},
+                        ...(!isNaN(search) ? [{id: parseInt(search)}] : [])
+                    ]
+                    } 
+                        : {}),
+                ...(status ? {'$Status.name$': status} : {})
+            },
+            attributes: ['id', 'subject', 'description', 'createdAt'],
+            order: [['createdAt', 'DESC']]
+        });
+
+        res.status(200).json({ tickets });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};

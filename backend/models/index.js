@@ -1,26 +1,49 @@
-import User from './user.js';
-import Ticket from './ticket.js';
-import Role from './enum/role.js';
-import Category from './enum/category.js';
-import Priority from './enum/priority.js';
-import Status from './enum/status.js';
-import Staff from './staff.js';
+import Staff from './Staff.js';
+import User from './User.js';
+import Role from './enum/Role.js';
+import Job from './enum/Job.js';
+import Category from "./enum/Category.js";
+import Status from "./enum/Status.js";
+import Priority from "./enum/Priority.js";
+import Ticket from "./Ticket.js";
+import Audit from "./Audit.js";
+import Conversation from "./Conversation.js";
+import Message from "./Message.js";
 
+// Staff
+Staff.belongsTo(Role, {foreignKey: 'role_id'})
+Staff.belongsTo(Category, {foreignKey: 'field_id'})
+Staff.belongsTo(Job, {foreignKey: 'job_id'})
 
+// User
+User.belongsTo(Staff, {foreignKey: 'staff_id'})
+Staff.hasOne(User, {foreignKey: 'staff_id'});
 
-// Ticket model: userID and staffID both refer to User table
-Ticket.belongsTo(Category, {foreignKey: 'category'});
-Ticket.belongsTo(Status, {foreignKey: 'status'});
-Ticket.belongsTo(Priority, {foreignKey: 'priority'});
-Ticket.belongsTo(User, { foreignKey: 'userID', as: 'User' });
-Ticket.belongsTo(User, { foreignKey: 'staffID', as: 'Staff' });
+// Ticket 
+Ticket.belongsTo(User, {foreignKey: 'user_id', as: 'User'})
+Ticket.belongsTo(Staff, {foreignKey: 'staff_id', as: 'Staff'})
+Ticket.belongsTo(Category, {foreignKey: 'category_id'})
+Ticket.belongsTo(Priority, {foreignKey: 'priority_id'})
+Ticket.belongsTo(Status, {foreignKey: 'status_id'})
+
+// Conversation
+Message.belongsTo(Conversation, {foreignKey: 'conversation_id'})
+Message.belongsTo(User, {foreignKey: 'sender_id'})
+Conversation.belongsTo(Ticket, {foreignKey: 'ticket_id'});
+
+// Audit
+Audit.belongsTo(User, {foreignKey: 'user_id'});
 
 export {
-    User, 
-    Role,
+    Staff,
+    User,
     Ticket,
+    Conversation,
+    Message,
     Category,
-    Priority,
     Status,
-    Staff
+    Priority,
+    Role,
+    Job,
+    Audit
 };

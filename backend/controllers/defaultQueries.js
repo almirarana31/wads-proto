@@ -1,4 +1,4 @@
-import { Category, Role, Status, Priority} from "../models/index.js";
+import { Category, Role, Status, Priority, Job, Staff} from "../models/index.js";
 
 export default async (req, res) => {
     // insert default values
@@ -7,23 +7,38 @@ export default async (req, res) => {
     // Categories
     const categories = ["General", "Billing", "IT Support"];
 
+    const category_desc = ["For questions about our services, appointments, or anything else not related to billing or technical issues.", "For help with payments, invoices, insurance questions, or account-related concerns.",
+        "For assistance with logging into your account, accessing treatment history, or other technical issues with our online systems."
+    ];
+
 
     for (let i = 0; i < categories.length; i++) {
         await Category.create({
-            name: categories[i]
+            name: categories[i],
+            description: category_desc[i]
         })
     };
 
+    // Job
+    const jobs = ["Cashier", "Doctor", "Technician"];
+
+    for (let i = 0; i < jobs.length; i++) {
+        await Job.create({
+            name: jobs[i]
+        }
+        )   
+    };
+
     // // Roles
-    const roles = ["USR", "STF", "ADM"]
-    const role_desc = ["Can submit tickets to report issues or request support but cannot resolve or assign them.", "Handles ticket resolutions and can also submit new tickets if needed.",
+    const roles = ["STF", "ADM"]
+    const role_desc = ["Handles ticket resolutions and can also submit new tickets if needed.",
         "Manages the ticket system by assigning tickets to staff and resolving tickets when necessary"
     ];
 
     for (let i = 0; i < role_desc.length; i++) {
         await Role.create({
-            role_code: roles[i],
-            role_desc: role_desc[i]
+            name: roles[i],
+            description: role_desc[i]
         })
     };
 
@@ -48,6 +63,14 @@ export default async (req, res) => {
             description: priority_desc[i]
         })
     };
+
+   // Staff Detail
+   await Staff.create({
+        email: "arielprandi34315@gmail.com",
+        role_id: 2,
+        field_id: 3,
+        job_id: 3
+   })
 
     res.status(200).json({message: "Successfully posted default entries"})
 } catch (error) {

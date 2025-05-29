@@ -8,7 +8,7 @@ const sendOTP = async ( email, message, actLink, duration = 2) => {
             to: email,
             subject: "Bianca Help Desk Mail Support",
             html: `<h1>${message}</h1> <a style="color:tomato;
-            font-size:25px;letter-spacing:2px;" href="${actLink}">Click this link to activate your email!</a> This link <b>expires in ${duration} minute(s)</b>`
+            font-size:25px;letter-spacing:2px;" href="${actLink}">Click here</a> This link <b>expires in ${duration} minute(s)</b>`
         };
         await sendEmail(mailOptions);
 
