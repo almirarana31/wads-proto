@@ -108,6 +108,7 @@ export const staffAuthZ = async (req, res, next) => {
 
         req.staff = user;
         req.role_id = staff.role_id;
+        req.staff_field = staff.field_id;
         return next();
     } catch (error) {
         return res.status(500).json({message: error.message})
@@ -199,8 +200,7 @@ export const conversationAuthZ = async (req, res, next) => {
                 required: true
             }],
         })
-        // checking to see if belongs to the conversation 
-
+        // checking to see if belongs to the conversation // slapstick solution should kill myself
         const isStaff = staff?.staff_id == conversation.Ticket.staff_id || user.staff_id == conversation.Ticket.staff_id;
         const isUser = user?.id == conversation.Ticket.user_id;
 

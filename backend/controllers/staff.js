@@ -3,6 +3,7 @@ import sequelize from '../config/sequelize.js';
 import { Op } from 'sequelize';
 import { logAudit } from './audit.js';
 
+// tickets that have been assigned to the staff
 export const getTickets = async (req, res) => {
     // search and filter parameters
     const search = req.query.search
@@ -54,6 +55,33 @@ export const getTickets = async (req, res) => {
         return res.status(500).json({message: error.message})
     }
 };
+
+export const getTicketPool = async (req, res) => {
+    const priority = req.query.priority
+    const staff = req.staff // uses staffAuthZ middleware
+    const staff_field = req.staff_field // field id
+    try{
+        // get Tickets where the staff's field id 
+        const tickets = await Ticket.findAll({
+            where: {
+                field_id: staff_field,
+                status_id: 1
+            },
+            include: [{
+                model: Priority,
+                attributes: ['id', 'name'],
+                required: true
+            }],
+            order: [
+                ['$Priority.id$', 'DESC'], // order by highest priority (1 > 2 > 3)
+                ['createdAt', 'ASC'] // if equal, sort by oldest
+            ] 
+        });
+
+    } catch (error) {
+
+    }
+}
 
 export const getSummary = async (req, res) => {
     try {
