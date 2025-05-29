@@ -57,29 +57,62 @@ export const getTickets = async (req, res) => {
 };
 
 export const getTicketPool = async (req, res) => {
-    const priority = req.query.priority
     const staff = req.staff // uses staffAuthZ middleware
     const staff_field = req.staff_field // field id
     try{
         // get Tickets where the staff's field id 
+        console.log(staff_field)
         const tickets = await Ticket.findAll({
             where: {
-                field_id: staff_field,
+                category_id: staff_field,
                 status_id: 1
             },
             include: [{
                 model: Priority,
-                attributes: ['id', 'name'],
+                attributes: ['name'],
                 required: true
             }],
             order: [
-                ['$Priority.id$', 'DESC'], // order by highest priority (1 > 2 > 3)
+                ['priority_id', 'ASC'], // order by highest priority/lowest number (1 > 2 > 3)
                 ['createdAt', 'ASC'] // if equal, sort by oldest
             ] 
         });
 
+        return res.status(200).json(tickets)
     } catch (error) {
+        return res.status(500).json({message: error.message})
+    }
+}
 
+// uses staffAuthZ
+export const claimTicket = async (req, res) => {
+    
+    const {ticket_id} = req.body
+    const staff = req.staff
+    try {
+        // update
+        const ticket = await Ticket.update({
+            staff_id: staff.staff_id,
+            status_id: 2
+        }, {
+            where: {
+                id: ticket_id
+            },
+            logging: console.log
+        })
+
+        // audit here
+        await logAudit(
+            'Update',
+            staff.id,
+            `
+            Ticket ${ticket_id} claimed for resolving; in progress
+            `
+        );
+
+        return res.status(200).json(ticket)
+    } catch (error) {
+        return res.status(500).json({message: error.message})
     }
 }
 
