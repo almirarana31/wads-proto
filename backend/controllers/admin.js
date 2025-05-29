@@ -135,6 +135,7 @@ export const getStaffPerformance = async (req, res) => {
             FROM "user" u 
             INNER JOIN "staff" s ON u.staff_id = s.id
             LEFT JOIN "ticket" t ON s.id = t.staff_id
+            WHERE (s.role_id != 2)
             GROUP BY u.username
             `
         );
@@ -165,6 +166,8 @@ export const updateField = async (req, res) => {
             },
             raw: true
         });
+
+        // auto assign ticket
 
         await logAudit(
             "Update",
@@ -203,7 +206,7 @@ export const searchStaff = async (req, res) => {
             "user" u INNER JOIN 
             "staff" s ON u.staff_id = s.id LEFT JOIN
             "ticket" t ON s.id = t.staff_id
-            WHERE (t.category_id = ${category_id})
+            WHERE (t.category_id = ${category_id} AND s.role_id != 2 AND u.id != t.user_id)
             GROUP BY s.id, u.username
             `
         );
@@ -220,6 +223,7 @@ export const assignStaff = async (req, res) => {
     const ticket_id = req.params.ticket_id
     // get selected staff info from the request body
     const {id} = req.body;
+    const admin = req.admin;
     try {
         // update the staff assigned to the ticket and the status
         const ticket = await Ticket.update({
@@ -236,7 +240,6 @@ export const assignStaff = async (req, res) => {
         await logAudit(
             "Update",
             req.user.id,
-
         )
         return res.status(200).json(ticket)
     } catch (error) {

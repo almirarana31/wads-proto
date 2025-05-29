@@ -97,8 +97,7 @@ export const claimTicket = async (req, res) => {
         }, {
             where: {
                 id: ticket_id
-            },
-            logging: console.log
+            }
         })
 
         // audit here

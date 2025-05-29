@@ -164,7 +164,7 @@ export const activate = async (req, res) => {
 
         if(await emailExists(email)) {
             return res.status(400).json({message: "email already exists"})
-        }
+        }   
         // add to database
 
         const user = await User.create({
@@ -201,7 +201,8 @@ export const logIn = async (req, res) => {
             // storing the access token in session storage
             const user = await User.findOne({
                 where: {
-                    id: login
+                    id: login,
+                    is_guest: false
                 },
                 attributes: ['id', 'staff_id', 'email', 'username', 'is_guest'],
                 raw: true
