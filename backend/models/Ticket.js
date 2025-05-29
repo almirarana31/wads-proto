@@ -47,6 +47,10 @@ Ticket.init(
             key: 'id'
         }
        },
+       note: {
+        type: DataTypes.STRING,
+        allowNull: true,
+       },
        subject: {
         type: DataTypes.STRING,
         allowNull: false
