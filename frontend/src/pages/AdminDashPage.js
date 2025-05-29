@@ -351,31 +351,19 @@ function AdminDashboard() {
                   <tr key={ticket.id} className="hover:bg-gray-50">
                     <td className="p-3 text-sm text-gray-700 whitespace-nowrap">{ticket.id}</td>
                     <td className="p-3 text-sm text-gray-700 whitespace-nowrap">{ticket.title}</td>
-                    <td className="p-3 text-sm text-gray-700 whitespace-nowrap">{ticket.name}</td>                    <td className="p-3 text-sm text-gray-700 whitespace-nowrap">{ticket.email}</td>
+                    <td className="p-3 text-sm text-gray-700 whitespace-nowrap">{ticket.name}</td>
+                    <td className="p-3 text-sm text-gray-700 whitespace-nowrap">{ticket.email}</td>
                     <td className="p-3 text-sm text-gray-700 whitespace-nowrap">{new Date(ticket.createdAt).toLocaleDateString()}</td>
                     <td className="p-3 text-sm text-gray-700 whitespace-nowrap">{new Date(ticket.lastUpdated).toLocaleDateString()}</td>
+                    <td className="p-3 text-sm text-gray-700 whitespace-nowrap">{ticket.category}</td>
                     <td className="p-3 text-sm text-gray-700 whitespace-nowrap">
-                      <select defaultValue={ticket.category} className="p-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-blue-300 bg-white">
-                        <option>Billing</option>
-                        <option>Technical</option>
-                        <option>General</option>
-                        <option>Service</option>
-                      </select>
-                    </td>
-                    <td className="p-3 text-sm text-gray-700 whitespace-nowrap">
-                       <select defaultValue={ticket.priority} className="p-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-blue-300 bg-white">
+                      <select defaultValue={ticket.priority} className="p-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-blue-300 bg-white">
                         <option>High</option>
                         <option>Medium</option>
                         <option>Low</option>
                       </select>
-                    </td>                    <td className="p-3 text-sm text-gray-700 whitespace-nowrap">
-                      <select defaultValue={ticket.status} className="p-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-blue-300 bg-white">
-                        <option>Pending</option>
-                        <option>In Progress</option>
-                        <option>Resolved</option>
-                        <option>Cancelled</option>
-                      </select>
                     </td>
+                    <td className="p-3 text-sm text-gray-700 whitespace-nowrap">{ticket.status}</td>
                     <td className="p-3 text-sm text-gray-700 whitespace-nowrap">
                       {ticket.assignedStaff ? (
                         <div className="flex flex-col">
