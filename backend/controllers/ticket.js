@@ -100,6 +100,19 @@ export const getStatus = async (req, res) => {
     }
 };
 
+export const getRole = async (req, res) => {
+    try {
+        const roles = await Role.findAll({
+            raw: true,
+            attributes: ['id', 'name']
+        })
+
+        return res.status(200).json(roles)
+    } catch (error) {
+        return res.status(500).json({message: error.message})
+    }
+};
+
 // add note to ticket
 export const addNote = async (req, res) => {
     // ticket id from the query
