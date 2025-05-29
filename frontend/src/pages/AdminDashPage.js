@@ -1,5 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { FaStickyNote } from 'react-icons/fa';
+
 import PrimaryButton from '../components/buttons/PrimaryButton';
 import SecondaryButton from '../components/buttons/SecondaryButton';
 import AssignStaffModal from '../components/AssignStaffModal';
@@ -17,7 +19,8 @@ function AdminDashboard() {
       category: 'Billing',
       priority: 'High',
       status: 'Pending',
-      assignedStaff: null
+      assignedStaff: null,
+      note: 'Follow up with billing team about payment confirmation.' // <-- Example note for tooltip
     },
     {
       id: 'TKT-002',
@@ -29,7 +32,7 @@ function AdminDashboard() {
       category: 'Technical',
       priority: 'Medium',
       status: 'In Progress',
-      assignedStaff: { id: 'STF002', name: 'Sarah Johnson' }
+      assignedStaff: null
     },
     {      id: 'TKT-003',
       title: 'Service Request',
@@ -348,8 +351,18 @@ function AdminDashboard() {
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
                 {sortedTickets.length > 0 ? sortedTickets.map((ticket) => (
-                  <tr key={ticket.id} className="hover:bg-gray-50">
-                    <td className="p-3 text-sm text-gray-700 whitespace-nowrap">{ticket.id}</td>
+                  <tr key={ticket.id} className={`hover:bg-gray-50 ${ticket.note ? 'bg-blue-50' : ''}`}>
+                    <td className="p-3 text-sm text-gray-700 whitespace-nowrap flex items-center gap-2">
+                      {ticket.id}
+                      {ticket.note && (
+                        <span className="relative group cursor-pointer">
+                          <FaStickyNote className="text-blue-500" />
+                          <span className="absolute left-6 top-1/2 -translate-y-1/2 z-10 hidden group-hover:block bg-white border border-gray-300 rounded shadow-md px-3 py-2 text-xs text-gray-800 min-w-[180px] max-w-xs">
+                            {ticket.note}
+                          </span>
+                        </span>
+                      )}
+                    </td>
                     <td className="p-3 text-sm text-gray-700 whitespace-nowrap">{ticket.title}</td>
                     <td className="p-3 text-sm text-gray-700 whitespace-nowrap">{ticket.name}</td>
                     <td className="p-3 text-sm text-gray-700 whitespace-nowrap">{ticket.email}</td>
