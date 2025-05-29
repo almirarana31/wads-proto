@@ -1,19 +1,22 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import axios from '../api/axios';
+import { authService } from '../api/authService';
 
 const ActivateAccountPage = () => {
   const { token } = useParams();
   const [status, setStatus] = useState('pending');
   const [message, setMessage] = useState('Activating your account...');
   const navigate = useNavigate();
+  const hasActivated = useRef(false);
 
   useEffect(() => {
+    if (hasActivated.current) return;
+    hasActivated.current = true;
     const activate = async () => {
       try {
-        const res = await axios.get(`/api/user/activate/${token}`);
+        const res = await authService.activate(token);
         setStatus('success');
-        setMessage(res.data.message || 'Account activated successfully!');
+        setMessage(res.message || 'Account activated successfully!');
         setTimeout(() => navigate('/login'), 3000);
       } catch (err) {
         setStatus('error');

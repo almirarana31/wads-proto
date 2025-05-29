@@ -18,6 +18,7 @@ export const authService = {
 
     async activate(token) {
         const response = await api.get(`/user/activate/${token}`);
+        console.log("hello gigger");
         return response.data;
     }
 };

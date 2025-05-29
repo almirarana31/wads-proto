@@ -136,7 +136,7 @@ export const signUp = async (req, res) => {
         };
         // create otp token with user info
         const otpToken = createOTPToken(newUser);
-        const actLink = `${process.env.BASE_URL}/api/user/activate/${otpToken}`;
+        const actLink = `${process.env.FRONTEND_URL}/activate/${otpToken}`;
         // Improved HTML email body
         const emailBody = `
           <div style="font-family: Arial, sans-serif; background: #f4f8fb; padding: 32px;">
@@ -179,7 +179,7 @@ export const activate = async (req, res) => {
     try {
         const decode = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
         const {username, password, email, staff_id} = decode;
-
+        console.log("ariel gigger");
         if(await emailExists(email)) {
             return res.status(400).json({message: "email already exists"})
         }
