@@ -40,10 +40,10 @@ function TicketDetailsPage() {
         }
         
         const ticketData = response;
-        
-        // Transform backend data to match frontend structure
+          // Transform backend data to match frontend structure
         const formattedTicket = {
-          id: ticketData.id,
+          id: `TKT-${ticketData.id.toString().padStart(3, '0')}`,  // Format as TKT-001
+          rawId: ticketData.id, // Keep original ID for API calls
           title: ticketData.subject,
           description: ticketData.description,
           status: ticketData.Status ? ticketData.Status.name : ticketData.status,
@@ -95,8 +95,7 @@ function TicketDetailsPage() {
     if (ticketId) {
       fetchTicketDetails();
     }
-  }, [ticketId]);
-  // Handle edit form submission
+  }, [ticketId]);  // Handle edit form submission
   const handleEditSubmit = async () => {
     // Only allow editing of pending tickets
     if (!ticket || ticket.status !== 'Pending') {
@@ -110,7 +109,7 @@ function TicketDetailsPage() {
       const ticketData = {
         subject: editForm.title,
         description: editForm.description,
-        categoryId: getCategoryId(editForm.category) // You'll need to map category name to ID
+        categoryId: getCategoryId(editForm.category)
       };
       
       await authService.editTicket(ticketId, ticketData);

@@ -45,17 +45,20 @@ function ViewTicketsPage() {
         }
         
         // Fetch tickets
-        const response = await authService.getUserTickets();
-        // Transform backend data to match frontend structure if needed
-        const formattedTickets = response.tickets.map(ticket => ({
-          id: ticket.id || ticket.ticketId,
-          title: ticket.subject,
-          description: ticket.description,
-          status: ticket.Status ? ticket.Status.name : ticket.status,
-          category: ticket.Category ? ticket.Category.name : ticket.category,
-          created: ticket.createdAt || ticket.created,
-          unreadResponses: ticket.unreadResponses || 0
-        }));
+        const response = await authService.getUserTickets();        // Transform backend data to match frontend structure if needed
+        const formattedTickets = response.tickets.map(ticket => {
+          const rawId = ticket.id || ticket.ticketId;
+          return {
+            id: `TKT-${rawId.toString().padStart(3, '0')}`,
+            rawId: rawId, // Keep the raw ID for API calls
+            title: ticket.subject,
+            description: ticket.description,
+            status: ticket.Status ? ticket.Status.name : ticket.status,
+            category: ticket.Category ? ticket.Category.name : ticket.category,
+            created: ticket.createdAt || ticket.created,
+            unreadResponses: ticket.unreadResponses || 0
+          };
+        });
         
         setTickets(formattedTickets);
         setError(null);
@@ -84,10 +87,12 @@ function ViewTicketsPage() {
   const handleSubmitNewTicket = () => {
     navigate('/submit-ticket');
   };
-  
-  // View ticket details
-  const handleViewDetails = (ticketId) => {
-    navigate(`/ticket/${ticketId}`);
+    // View ticket details
+  const handleViewDetails = (ticketId, rawId) => {
+    // If rawId is provided, use that for the API call
+    // Otherwise, extract the raw ID if the ticket ID is formatted as "TKT-XXX"
+    const idForApi = rawId || (ticketId.startsWith('TKT-') ? ticketId.substring(4).replace(/^0+/, '') : ticketId);
+    navigate(`/ticket/${idForApi}`);
   };
 
   // Filter tickets based on search query and status filter
@@ -189,12 +194,11 @@ function ViewTicketsPage() {
                 <div className="text-center py-10 col-span-full">
                   <Text color="text-gray-500">No tickets found matching your criteria.</Text>
                 </div>
-              ) : (
-                filteredTickets.map((ticket) => (
+              ) : (                filteredTickets.map((ticket) => (
                   <TicketCard
                     key={ticket.id}
                     ticket={ticket}
-                    onViewDetails={handleViewDetails}
+                    onViewDetails={() => handleViewDetails(ticket.id, ticket.rawId)}
                   />
                 ))
               )}
