@@ -215,5 +215,47 @@ export const conversationAuthZ = async (req, res, next) => {
         return next();
     } catch (error) {
         return res.status(500).json({message: error.message})
-    }
+    } 
+}
+export const getUserRoles = async (req, res) => {
+
+    try {
+        // decode jwt
+        const token = req.headers.authorization?.split(" ")[1];
+        const decode = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
+        const {id, staff_id} = decode
+
+        const staff = await Staff.findOne({
+            where: {
+                ...(staff_id ? {id: staff_id} : {})
+            },
+            attributes: ['role_id']
+        })
+
+        if (!staff) {
+            return res.status(200).json({
+                isUser: true,
+                isStaff: false,
+                isAdmin: false
+            })
+        }
+        if (staff.role_id === 1) {
+            return res.status(200).json({
+                isUser: false,
+                isStaff: true,
+                isAdmin: false
+            })
+        }
+        if (staff.role_id === 2) {
+            return res.status(200).json({
+                isUser: false,
+                isStaff: false,
+                isAdmin: true
+            })
+        }
+
+        return res.status(400).json({message: "Invalid token"})
+    } catch(error) {
+        return res.status(500).json({message: error.message})
+    }
 }

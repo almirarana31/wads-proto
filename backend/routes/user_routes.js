@@ -27,4 +27,6 @@ router.patch('/tickets/:id', authN, userAuthZ, cancelTicket) // uses authN
 // user dashboard -- use userAuthZ middleware
 router.get('/tickets', userAuthZ, getUserTickets); 
 
+router.get('/user-roles');
+
 export default router;
