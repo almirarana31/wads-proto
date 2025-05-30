@@ -29,7 +29,7 @@ Staff.init(
        },
        job_id: {
         type: DataTypes.INTEGER,
-        allowNull: true,
+        allowNull: false,
         references: {
             model: 'job',
             key: 'id'

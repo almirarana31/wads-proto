@@ -1,5 +1,5 @@
 import express from 'express';
-import { signUp, activate, logIn, signOut, forgetPassword, getUserTickets, submitTicket, editTicket, cancelTicket, enterNewPass } from '../controllers/user.js';
+import { signUp, activate, logIn, signOut, forgetPassword, confirmPassReset, getUserTickets, submitTicket, editTicket, cancelTicket } from '../controllers/user.js';
 import { userAuthZ, guestAuthZ, authN } from '../middleware/auth.js'; // to be used for user-resource fetching 
 
 const router = express.Router();
@@ -15,7 +15,7 @@ router.get('/activate/:token', activate);
 
 router.post('/forget-password', forgetPassword);
 
-router.post('/enter-new-password/:token', enterNewPass);
+router.get('/confirm-password-reset/:token', confirmPassReset);
 
 // ticket submission
 router.post('/tickets', guestAuthZ, submitTicket); // no authentication required because of guest users

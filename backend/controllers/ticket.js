@@ -59,7 +59,6 @@ export const getTicketDetail = async (req, res) => {
     }
 }
 
-
 // get category
 export const getCategory = async (req, res) => {
     try {
@@ -100,52 +99,12 @@ export const getStatus = async (req, res) => {
     }
 };
 
-export const getRole = async (req, res) => {
-    try {
-        const roles = await Role.findAll({
-            raw: true,
-            attributes: ['id', 'name']
-        })
-
-        return res.status(200).json(roles)
-    } catch (error) {
-        return res.status(500).json({message: error.message})
-    }
-};
-
-// add note to ticket
-export const addNote = async (req, res) => {
-    // ticket id from the query
-    const ticket_id = req.query.id
-    // get staff id from the auth
-    const staff = req.staff
-    // not content
-    const {note} = req.body 
-    try {
-        // update ticket where staff_id = staff_id
-        const ticket = await Ticket.update({
-            note: note
-        }, {
-            where: {
-                staff_id: staff.staff_id
-            }
-        })
-
-        // if ticket empty does not exist return 400 error
-        if (!ticket) return res.status(400).json({message: "Ticket does not exist"})
-
-        return res.status(200).json({message: "Not successfully added"})
-    } catch (error) {
-        return res.status(500).json({message: error.message})
-    }
-} 
-
-export const escalatePriority = async () => {
+export const escalatePriority = async (req, res) => {
     try {
         const tickets = await Ticket.findAll({
             where: {
                 createdAt: {[Op.lt]: new Date(Date.now() - 24 * 60 * 60 * 1000)},
-                priority_id: {[Op.lt]: 3}
+                priorit_id: {[Op.lt]: 3}
             }
         })
 
@@ -153,7 +112,7 @@ export const escalatePriority = async () => {
             ticket.priority_id += 1;
             await ticket.save();
         }
-        
+        return res.status(200).json({message: "Successfully escalated ticket priority"})
     } catch (error) {
         console.log(error.message)
     }
