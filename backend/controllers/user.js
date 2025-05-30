@@ -260,35 +260,51 @@ export const signOut = async (req, res) => {
 };
 
 export const forgetPassword = async (req, res) => {
-    const {email, password} = req.body
+    const {email} = req.body
 
     try {
         // check for email validity
         if (!validateEmail(email)) return res.status(400).json({ message: "Invalid email" });
 
-        const user = await User.findOne({
-            where: {
-                email: email
-            },
-            raw: true,
-            attributes: ['id']
-        });
-
-        const user_id = user.id;
-
-        // if (!user) {
-        //     return res.status(400).json({message: "Not a user"})
-        // }
-        
-        const hashedPassword = await hashPassword(password);
-
         // create otp token with user info
-        const otpToken = createOTPToken({email: email, id: user_id, password: hashedPassword});
-        const actLink = `${process.env.BASE_URL}/api/user/confirm-password-reset/${otpToken}`;
+        const otpToken = createOTPToken({email: email});
+        const actLink = `${process.env.BASE_URL}/api/user/enter-new-password/${otpToken}`;
         await sendOTP(email, "Reset Password Link", actLink);
 
         return res.status(200).json({message: "Successfully sent password reset link"});
     } catch (error) {
+        return res.status(500).json({message: error.message})
+    }
+};
+
+export const enterNewPass = async (req, res) => {
+    const token = req.params.token
+    const {password} = req.body
+    try {
+        if (!token) return res.status(401).json({message: "Token missing"})
+        const decode = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
+        const {email} = decode;
+
+        const hashedPassword = await hashPassword(password)
+        const [count, user] = await User.update({
+            password: hashedPassword
+        }, {
+            where: {
+                email: email
+            },
+            returning: true
+        })
+
+        if (count === 0) return res.status(400).json({message: "User does not exist"})
+        // audit here
+        await logAudit(
+            'Update',
+            user[0].id,
+            `User ${user[0].id} updated passwords`
+            
+        )
+        return res.status(200).json({message: "Successfully updated like a heck!"})
+    } catch(error) {
         return res.status(500).json({message: error.message})
     }
 };
