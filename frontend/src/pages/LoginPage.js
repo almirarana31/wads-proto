@@ -43,22 +43,13 @@ function LoginPage({ onLogin }) {
       if (formData.rememberMe && res.localToken) {
         localStorage.setItem('token', res.localToken);
       }
-      // Build user info for context
-      const userInfo = {
-        email: res.email || formData.email,
-        username: res.username || formData.email,
-        role_id: res.role_id, // use role_id from backend
-        staff_id: res.staff_id,
-        id: res.id
-      };
-      if (onLogin) onLogin(userInfo);
-      // Redirect based on role_id
-      if (userInfo.role_id === 1) {
-        navigate('/admin-dashboard');
-      } else if (userInfo.role_id === 2) {
-        navigate('/staff-dashboard');
-      } else {
-        navigate('/view-tickets');
+      const role = await authService.getUserRoles();
+      if (role.isAdmin) {
+        window.location.href = '/admin-dashboard';
+      } else if (role.isStaff) {
+        window.location.href = '/staff-dashboard';
+      } else if (role.isUser) {
+        window.location.href = '/view-tickets';
       }
     } catch (error) {
       setError(
@@ -73,7 +64,8 @@ function LoginPage({ onLogin }) {
   };
 
   return (
-    <div className="min-h-screen pt-8 pb-12">      <div className="max-w-md mx-auto p-6">
+    <div className="min-h-screen pt-8 pb-12">      
+    <div className="max-w-md mx-auto p-6">
         <div className="bg-white rounded-md shadow-md p-8">
           <PageTitle title="Login" subtitle="Login to your account below" className="mb-8" />
           

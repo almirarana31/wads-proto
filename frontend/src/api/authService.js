@@ -20,5 +20,16 @@ export const authService = {
         const response = await api.get(`/user/activate/${token}`);
         console.log("hello gigger");
         return response.data;
-    }
+    },
+
+    async getUserRoles() {
+        const response = await api.get('/user/user-roles');
+        console.log("Hello GIGGA");
+        return response.data;
+    },
+
+    async sendTicket(ticketData) {
+        const response = await api.post('/user/tickets', ticketData);
+        return response.data;
+    },
 };

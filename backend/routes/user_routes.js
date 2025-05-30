@@ -1,6 +1,6 @@
 import express from 'express';
 import { signUp, activate, logIn, signOut, forgetPassword, getUserTickets, submitTicket, editTicket, cancelTicket, enterNewPass } from '../controllers/user.js';
-import { userAuthZ, guestAuthZ, authN } from '../middleware/auth.js'; // to be used for user-resource fetching 
+import { userAuthZ, guestAuthZ, authN, getUserRoles } from '../middleware/auth.js'; // to be used for user-resource fetching 
 
 const router = express.Router();
 
@@ -27,6 +27,6 @@ router.patch('/tickets/:id', authN, userAuthZ, cancelTicket) // uses authN
 // user dashboard -- use userAuthZ middleware
 router.get('/tickets', userAuthZ, getUserTickets); 
 
-router.get('/user-roles');
+router.get('/user-roles', getUserRoles);
 
 export default router;

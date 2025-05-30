@@ -5,6 +5,7 @@ import checkIcon from '../assets/accept.png';
 import PrimaryButton from '../components/buttons/PrimaryButton';
 import SecondaryButton from '../components/buttons/SecondaryButton';
 import { PageTitle, Text, Label, Heading } from '../components/text';
+import { authService } from '../api/authService';
 
 function SubmitTicketPage() {
   const navigate = useNavigate();
@@ -36,26 +37,43 @@ function SubmitTicketPage() {
     setFormData({ ...formData, [name]: value });
   };
 
-  const handleSubmit = () => {
-    console.log('Form submitted:', formData);
-
-    const ticketId = 'TKT-' + Math.floor(Math.random() * 1000).toString().padStart(3, '0');
-
-    const newTicket = {
-      ticketId: ticketId,
-      title: formData.title,
-      createdAt: new Date().toISOString(),
-      email: formData.email
-    };
-
-    setTicket(newTicket);
-
-    setFormData({
-      email: '',
-      title: '',
-      category: 'General',
-      description: ''
-    });
+  const handleSubmit = async () => {
+    try {
+      // Call backend to submit ticket (for guests, no token is sent)
+      const ticketData = {
+        email: formData.email,
+        title: formData.title,
+        category_id:
+          formData.category === 'General' ? 1 :
+          formData.category === 'Billing' ? 2 :
+          formData.category === 'Technical' || formData.category === 'IT Support' ? 3 : 1,
+        description: formData.description
+      };
+      const res = await authService.sendTicket(ticketData);
+      setTicket({
+        ticketId: res.ticket_id || res.id || 'TKT-' + Math.floor(Math.random() * 1000).toString().padStart(3, '0'),
+        title: res.title || formData.title,
+        createdAt: res.created_at || res.createdAt || new Date().toISOString(),
+        email: res.email || formData.email
+      });
+      setFormData({
+        email: '',
+        title: '',
+        category: 'General',
+        description: ''
+      });
+    } catch (error) {
+      if (error.response?.data?.message === 'Email is verified. Please log in') {
+        alert('This email is already registered. Please log in to submit a ticket.');
+        return;
+      }
+      alert(
+        error.response?.data?.message ||
+        error.response?.data?.error ||
+        error.message ||
+        'Failed to submit ticket.'
+      );
+    }
   };  if (ticket) {
     return (
       <div className="min-h-screen py-6 sm:py-12 px-4 sm:px-6">
@@ -122,7 +140,8 @@ function SubmitTicketPage() {
                   </PrimaryButton>
                 </div>
               </>
-            )}          </div>
+            )}          
+            </div>
         </div>
       </div>
     );
@@ -165,7 +184,6 @@ function SubmitTicketPage() {
                 <option value="General">General</option>
                 <option value="Technical">Technical</option>
                 <option value="Billing">Billing</option>
-                <option value="Service">Service</option>
               </select>
               <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
                 <ChevronDown className="h-5 w-5 text-gray-500" />

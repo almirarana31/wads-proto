@@ -224,15 +224,19 @@ export const getUserRoles = async (req, res) => {
         const token = req.headers.authorization?.split(" ")[1];
         const decode = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
         const {id, staff_id} = decode
-
+        console.log(`This is staff_id: ${staff_id}`)
+        // if no staff_id, then is a user
         const staff = await Staff.findOne({
             where: {
-                ...(staff_id ? {id: staff_id} : {})
+                ...(staff_id != 0 ? {id: staff_id} : {id: 273198213982163})
             },
             attributes: ['role_id']
         })
 
+        console.log(`Oh wow it works, role id is: ${staff?.role_id}`)
+
         if (!staff) {
+            console.log("user")
             return res.status(200).json({
                 isUser: true,
                 isStaff: false,
@@ -240,6 +244,7 @@ export const getUserRoles = async (req, res) => {
             })
         }
         if (staff.role_id === 1) {
+            console.log("staff")
             return res.status(200).json({
                 isUser: false,
                 isStaff: true,
@@ -247,6 +252,7 @@ export const getUserRoles = async (req, res) => {
             })
         }
         if (staff.role_id === 2) {
+            console.log("admin")
             return res.status(200).json({
                 isUser: false,
                 isStaff: false,
