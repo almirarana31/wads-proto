@@ -71,6 +71,12 @@ export const getTicketPool = async (req, res) => {
                 model: Priority,
                 attributes: ['name'],
                 required: true
+            },
+            {
+                model: User,
+                as: 'User',
+                attributes: ['username', 'email'],
+                required: true
             }],
             order: [
                 ['priority_id', 'ASC'], // order by highest priority/lowest number (1 > 2 > 3)
