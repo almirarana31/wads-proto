@@ -49,5 +49,9 @@ export const authService = {
     async cancelTicket(ticketId) {
         const response = await api.patch(`/user/tickets/${ticketId}`);
         return response.data;
+    },
+    async getUserDetail() {
+        const response = await api.get('/user/details');
+        return response.data;
     }
 };

@@ -1,5 +1,5 @@
 import express from 'express';
-import { signUp, activate, logIn, signOut, forgetPassword, getUserTickets, submitTicket, editTicket, cancelTicket, enterNewPass } from '../controllers/user.js';
+import { signUp, activate, logIn, signOut, forgetPassword, getUserTickets, submitTicket, editTicket, cancelTicket, enterNewPass, getUserDetail } from '../controllers/user.js';
 import { userAuthZ, guestAuthZ, authN, getUserRoles } from '../middleware/auth.js'; // to be used for user-resource fetching 
 
 const router = express.Router();
@@ -18,7 +18,7 @@ router.post('/forget-password', forgetPassword);
 router.post('/enter-new-password/:token', enterNewPass);
 
 // ticket submission
-router.post('/tickets', guestAuthZ, submitTicket); // no authentication required because of guest users
+router.post('/tickets', guestAuthZ, userAuthZ, submitTicket); // no authentication required because of guest users
 
 router.put('/tickets/:id', authN, userAuthZ, editTicket) // uses authN
 
@@ -28,5 +28,7 @@ router.patch('/tickets/:id', authN, userAuthZ, cancelTicket) // uses authN
 router.get('/tickets', userAuthZ, getUserTickets); 
 
 router.get('/user-roles', getUserRoles);
+
+router.get('/details', userAuthZ, getUserDetail);
 
 export default router;

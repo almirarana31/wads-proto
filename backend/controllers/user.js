@@ -502,3 +502,16 @@ export const getUserTickets = async (req, res) => {
         res.status(500).json({ message: error.message });
     }
 };
+
+// use userAuthZ
+export const getUserDetail = async (req, res) => {
+    const {email, username} = req.user
+    try {
+        return res.status(200).json({
+            email: email,
+            username: username
+        })
+    } catch(error) {
+        return res.status(500).json({message: error.message})
+    }
+};

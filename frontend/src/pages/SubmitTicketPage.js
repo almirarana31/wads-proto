@@ -17,10 +17,9 @@ function SubmitTicketPage() {
   const [ticket, setTicket] = useState(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [userEmail, setUserEmail] = useState('');
-
   // Check authentication status and get user email when component mounts
   useEffect(() => {
-    const checkAuthStatus = () => {
+    const checkAuthStatus = async () => {
       // Check multiple sources for authentication state
       const token = sessionStorage.getItem('token') || localStorage.getItem('token');
       const currentUser = localStorage.getItem('currentUser') || sessionStorage.getItem('user');
@@ -29,22 +28,45 @@ function SubmitTicketPage() {
       const isAuth = !!(token || currentUser);
       setIsAuthenticated(isAuth);
       
-      // If authenticated, get and set the user's email
+      // If authenticated, get and set the user's email from API
       if (isAuth) {
-        let email = '';
         try {
-          // Try to get email from currentUser if it's available
+          // First try to get user details from API
+          const userDetails = await authService.getUserDetail();
+          if (userDetails && userDetails.email) {
+            setUserEmail(userDetails.email);
+            setFormData(prev => ({ ...prev, email: userDetails.email }));
+            return;
+          }
+          
+          // Fallback: Try to get email from currentUser if API fails
+          let email = '';
           if (currentUser) {
             const userData = JSON.parse(currentUser);
             email = userData.email;
           }
+          
+          if (email) {
+            setUserEmail(email);
+            // Set the email in the form data
+            setFormData(prev => ({ ...prev, email }));
+          }
         } catch (error) {
-          console.error('Error parsing user data:', error);
+          console.error('Error fetching user details:', error);
+          
+          // Fallback to local storage if API fails
+          try {
+            if (currentUser) {
+              const userData = JSON.parse(currentUser);
+              if (userData.email) {
+                setUserEmail(userData.email);
+                setFormData(prev => ({ ...prev, email: userData.email }));
+              }
+            }
+          } catch (parseError) {
+            console.error('Error parsing user data:', parseError);
+          }
         }
-        
-        setUserEmail(email);
-        // Set the email in the form data
-        setFormData(prev => ({ ...prev, email }));
       }
     };
 
@@ -177,16 +199,12 @@ function SubmitTicketPage() {
               onChange={handleInputChange}
               readOnly={isAuthenticated}
               disabled={isAuthenticated}
-              className={`w-full p-2 border border-gray-300 rounded ${
-                isAuthenticated 
-                  ? 'bg-gray-100 text-gray-600 cursor-not-allowed' 
-                  : 'focus:outline-none focus:ring-2 focus:ring-blue-300'
+              className={`w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-300 ${
+                isAuthenticated ? 'bg-gray-100 text-gray-600 cursor-not-allowed' : ''
               }`}
             />
             {isAuthenticated && (
-              <small className="text-gray-500 mt-1 block">
-                You are logged in. We'll use your account email.
-              </small>
+              <p className="text-xs text-gray-500 mt-1">Email is automatically filled since you're logged in.</p>
             )}
           </div>
           <div>

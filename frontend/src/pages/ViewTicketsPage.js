@@ -12,14 +12,41 @@ function ViewTicketsPage() {
   const [tickets, setTickets] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
-  
-  // Fetch tickets from API when component mounts
+  const [username, setUsername] = useState('User');
+  const [isLoadingUsername, setIsLoadingUsername] = useState(true);
+    // Fetch user details and tickets from API when component mounts
   useEffect(() => {
-    const fetchTickets = async () => {
+    const fetchUserData = async () => {
       try {
-        setIsLoading(true);
+        setIsLoading(true);        // Fetch user details to get username
+        setIsLoadingUsername(true);
+        try {
+          const userDetails = await authService.getUserDetail();
+          if (userDetails && userDetails.username) {
+            setUsername(userDetails.username);
+          }
+        } catch (userErr) {
+          console.error('Error fetching user details:', userErr);
+          
+          // Try to get user info from local storage as fallback
+          try {
+            const currentUser = localStorage.getItem('currentUser') || sessionStorage.getItem('user');
+            if (currentUser) {
+              const userData = JSON.parse(currentUser);
+              if (userData.username) {
+                setUsername(userData.username);
+              }
+            }
+          } catch (parseErr) {
+            console.error('Error parsing stored user data:', parseErr);
+          }
+        } finally {
+          setIsLoadingUsername(false);
+        }
+        
+        // Fetch tickets
         const response = await authService.getUserTickets();
-          // Transform backend data to match frontend structure if needed
+        // Transform backend data to match frontend structure if needed
         const formattedTickets = response.tickets.map(ticket => ({
           id: ticket.id || ticket.ticketId,
           title: ticket.subject,
@@ -40,7 +67,7 @@ function ViewTicketsPage() {
       }
     };
 
-    fetchTickets();
+    fetchUserData();
   }, []);
 
   // Handle search input change
@@ -88,12 +115,16 @@ function ViewTicketsPage() {
     <div className="min-h-screen">
       <div className="max-w-6xl mx-auto p-6">
         <div className="bg-white rounded-md shadow-md p-8">
-          {/* Page Header */}
-          <PageTitle 
+          {/* Page Header */}          <PageTitle 
             title="Your Tickets"
             subtitle={
               <>
-                Welcome <span className="underline">User</span>, here are your submitted tickets
+                Welcome <span className={`underline ${isLoadingUsername ? 'opacity-70' : ''}`}>
+                  {isLoadingUsername ? 'User' : username}
+                  {isLoadingUsername && (
+                    <span className="inline-block w-4 h-4 ml-1 border-t-2 border-blue-500 border-r-2 rounded-full animate-spin"></span>
+                  )}
+                </span>, here are your submitted tickets
               </>
             }
           />
