@@ -223,6 +223,10 @@ export const logIn = async (req, res) => {
                     id: login,
                     is_guest: false
                 },
+                include: [{
+                    model: Staff,
+                    attributes: ['role_id']
+                }],
                 attributes: ['id', 'staff_id', 'email', 'username', 'is_guest'],
                 raw: true
             });
@@ -231,6 +235,7 @@ export const logIn = async (req, res) => {
 
             if (!user.staff_id) {
                 user.staff_id = 0
+                user.Staff.role_id = 0
             }
 
             console.log(`Post-Staff_id: ${user.staff_id}`)
