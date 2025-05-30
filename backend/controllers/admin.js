@@ -1,4 +1,4 @@
-import { Staff, User, Ticket, Status, Category, Priority } from '../models/index.js';
+import { Staff, User, Ticket, Status, Category, Priority, Assignment } from '../models/index.js';
 import sequelize from '../config/sequelize.js';
 import { Op } from 'sequelize';
 import { logAudit } from './audit.js';
@@ -99,7 +99,7 @@ export const getTickets = async (req, res) => {
             as: 'User',
             attributes: ['username', 'email']
         }],
-        attributes: [['id', 'ticket_id'], 'subject', 'createdAt'],
+        attributes: [['id', 'ticket_id'], 'subject', 'createdAt', 'note'],
         // if search exists, spread the where clause into this query
         where: {
             ...(search && 
@@ -121,61 +121,239 @@ export const getTickets = async (req, res) => {
 
 // staff performance
 export const getStaffPerformance = async (req, res) => {
+    const {category_id, search} = req.query
     try {
+        let whereClause = 's.role_id != 2'
+        const replacements = {}
+        if (category_id) {
+            whereClause += ' AND s.field_id = :category_id'
+            replacements.category_id = Number(category_id);
+        }
+        if (search) {
+            whereClause += ' AND (u.username ~* :search '
+            if (!isNaN(search)) {
+                whereClause += ' OR u.id = :search OR s.id = :search'
+                replacements.searchId = Number(search);
+            }
+            whereClause += ')'
+        }
         const [results] = await sequelize.query(
             `
-            SELECT u.username AS staff_name,
-            COUNT (t.id) AS assigned,
-            SUM (CASE WHEN t.status_id = 3 THEN 1 ELSE 0 END) AS resolved,
-            ROUND(
-            CASE 
-                WHEN COUNT (t.id) = 0 THEN 0
-                ELSE SUM (CASE WHEN t.status_id = 3 THEN 1 ELSE 0 END) * 100.0/COUNT (t.id)
-            END, 2) AS resolution_rate
+            SELECT 
+                u.username AS staff_name,
+                u.id AS user_id,
+                s.id AS staff_id,
+                COUNT (t.id) AS assigned,
+                SUM (CASE WHEN t.status_id = 3 THEN 1 ELSE 0 END) AS resolved,
+                ROUND(
+                CASE 
+                    WHEN COUNT (t.id) = 0 THEN 0
+                    ELSE SUM (CASE WHEN t.status_id = 3 THEN 1 ELSE 0 END) * 100.0/COUNT (t.id)
+                END, 2) AS resolution_rate
             FROM "user" u 
             INNER JOIN "staff" s ON u.staff_id = s.id
             LEFT JOIN "ticket" t ON s.id = t.staff_id
-            GROUP BY u.username
-            `
+            WHERE (${whereClause})
+            GROUP BY u.username, u.id, s.id
+            `,
+            {
+                replacements: {
+                    category_id: category_id,
+                    search: search
+                }
+            }
         );
+
         return res.status(200).json(results);
     } catch (error) {
         return res.status(500).json({message: error.message})
     }
 };
 
+export const getStaff = async (req, res) => {
+    
+    // get the user_id of the staff from the staff-performance as a route parameter
+    const staff_id = req.params.id
+    try {
+        const [results] = await sequelize.query(
+            `
+            SELECT 
+                u.username AS staff_name,
+                c.name AS field_name,
+                s."createdAt" AS created_at,
+                SUM (CASE WHEN t.status_id = 2 THEN 1 ELSE 0 END) AS in_progress,
+                SUM (CASE WHEN t.status_id = 3 THEN 1 ELSE 0 END) AS resolved,
+                SUM (CASE WHEN t.status_id = 4 THEN 1 ELSE 0 END) AS cancelled
+            FROM 
+                "user" u 
+                LEFT JOIN "staff" s ON u.staff_id = s.id
+                LEFT JOIN "ticket" t ON s.id = t.staff_id
+                LEFT JOIN "category" c ON t.category_id = c.id
+            WHERE (s.id = ${staff_id})
+            GROUP BY u.username, c.name, s."createdAt"
+            `
+            );
+        return res.status(200).json(results)   
+    } catch (error){
+        return res.status(500).json({message: error.message})
+    }
+}
+
+export const editStaff = async (req, res) => {
+    const staff_id = req.params.id 
+    const admin = req.user
+    const {category_id, is_guest} = req.body
+    try {
+        const staff = await Staff.update({
+            ...(category_id ? {category_id: category_id} : {})
+        }, {
+            where: {
+                id: staff_id
+            }
+        })
+
+        const user = await User.update({
+            ...(is_guest ? {is_guest: true} : {})
+        }, {
+            where: {
+                staff_id: staff_id
+            },
+            returning: true
+        }) 
+
+        // audit here
+        await logAudit(
+            'Update',
+            admin.id,
+            `
+            Staff ID ${staff_id} updated
+            `
+        )
+
+        return res.status(200).json({message: "Successfully editted staff"})
+    } catch (error) {
+        return res.status(500).json({message: error.message})
+    }
+}
+
 // ticket actions start here
+const roundRobinAssignment = async (ticket_id, category_id, admin_id) => {
+    try {
+        // get all staff
+        const staffs = await Staff.findAll({
+            where: {
+                field_id: category_id
+            },
+            raw: true
+        })
+
+        const assignment = await Assignment.findOne({
+            where: {
+                category_id: category_id
+            },
+            raw: true
+        })
+
+        const last_staff = assignment?.last_staff
+        const lastIndex = staffs.findIndex(staff => staff.id === last_staff); // returns -1 if last_staff doesnt exist
+
+        for (let i = 1; i <= staffs.length; i++) {
+            const index = (lastIndex + i) % staffs.length
+
+            const count = await Ticket.count({
+                where: {
+                    staff_id: staffs[index].id,
+                    status_id: {[Op.notIn]: [4, 3]} // not resolved, not cancelled
+                }
+            })
+
+            if (count < 3) {
+                // update the ticket
+                const ticket = await Ticket.update({
+                    status_id: 2,
+                    staff_id: staffs[index].id
+                }, {
+                    where: {
+                    id: ticket_id
+                  }
+                })
+
+                // update the assignment
+                if (last_staff) {
+                    assignment.last_staff = staffs[index].id
+                    await assignment.save();
+                    // audit
+                    await logAudit(
+                        'Update',
+                        admin_id,
+                        `
+                        Ticket ID ${ticket_id} assigned to staff ID ${staffs[index].id}
+                        `
+                    )
+                    return true
+                }
+
+                const newAssignment = await Assignment.create({
+                    category_id: category_id,
+                    last_staff: staffs[index].id
+                })
+
+                // audit
+                await logAudit(
+                    'Update',
+                    admin_id,
+                    `
+                    Ticket ID ${ticket_id} assigned to staff ID ${staffs[index].id}
+                    `
+                )
+                return true // if true ticket has been automatically assigned
+            }
+            
+            // if false res.status(200).json({message: "Ticket sent to the ticket pool"})
+            return false
+        }
+    } catch(error) {
+        console.log(error.message)
+    }
+}
 
 // update ticket fields
 export const updateField = async (req, res) => {
     // get updated fields (only one will have a value at a time)
-    const {category_id, priority_id, status_id} = req.body
-    
+    // const {category_id, priority_id, status_id} = req.body
+    const {priority_id} = req.body
     // get the selected ticket by route params
     const ticket_id = req.params.id
+    const admin = req.user
     try {
         // update 
-        const ticket = await Ticket.update({
-            ...(category_id && {category_id: category_id}),
+        const [count, ticket] = await Ticket.update({
+            // ...(category_id && {category_id: category_id}),
             ...(priority_id && {priority_id: priority_id}),
-            ...(status_id && {status_id: status_id})
+            // ...(status_id && {status_id: status_id})
         }, {
             where: {
-                id: ticket_id
+                id: ticket_id,
+                priority_id: {[Op.or]: [{[Op.ne]: priority_id}, null]} // could be where priority_id: 1 instead will have to consult the rest
             },
-            raw: true
+            returning: true
         });
+        
+        if (count === 0) return res.status(400).json({message: "No row updated"});
+
+        // auto assign ticket
+
+        const robin = await roundRobinAssignment(ticket_id, ticket[0].category_id, admin.id)
 
         await logAudit(
             "Update",
             req.user.id,
-            `Ticket ID ${ticket_id} fields updated 
-            category_id: ${category_id ? category_id : "no change"} 
-            priority_id: ${priority_id ? priority_id: "no change"} 
-            status_id: ${status_id ? status_id: "no change"}`
+            `Ticket ID ${ticket_id} fields updated priority_id: ${priority_id} `
         );
 
-        return res.status(200).json(ticket);
+        const newTick = await Ticket.findByPk(ticket[0].id)
+
+        return res.status(200).json(newTick);
     } catch (error) {
         return res.status(500).json({message: error.message});
     }
@@ -206,7 +384,7 @@ export const searchStaff = async (req, res) => {
             "user" u INNER JOIN 
             "staff" s ON u.staff_id = s.id LEFT JOIN
             "ticket" t ON s.id = t.staff_id
-            WHERE (t.category_id = ${category_id})
+            WHERE (t.category_id = ${category_id} AND s.role_id != 2 AND u.id != t.user_id)
             GROUP BY s.id, u.username
             `
         );
@@ -223,6 +401,7 @@ export const assignStaff = async (req, res) => {
     const ticket_id = req.params.ticket_id
     // get selected staff info from the request body
     const {id} = req.body;
+    const admin = req.admin;
     try {
         // update the staff assigned to the ticket and the status
         const ticket = await Ticket.update({
@@ -239,7 +418,6 @@ export const assignStaff = async (req, res) => {
         await logAudit(
             "Update",
             req.user.id,
-
         )
         return res.status(200).json(ticket)
     } catch (error) {
@@ -247,4 +425,36 @@ export const assignStaff = async (req, res) => {
     };
 }
 
-// dashboard ends here
+export const createStaff = async (req, res) => {
+    const {email, category_id,  role_id} = req.body
+    const admin = req.user
+    try {
+        const staff = await Staff.findOne({
+            where: {
+                email: email
+            },
+            raw: true
+        })
+        if (staff) return res.status(400).json({message: "Email already exists"})
+        
+        const new_staff = await Staff.create({
+            email: email,
+            field_id: category_id,
+            role_id: role_id,
+            job_id: null
+        })
+
+        // audit here
+        await logAudit(
+            'Create',
+            admin.id,
+            `
+            Staff ${new_staff.id} created
+            `
+        )
+
+        return res.status(200).json({message: "Successfully created new staff"})
+    } catch (error) {
+        return res.status(500).json({message: error.message})
+    }
+}

@@ -136,26 +136,8 @@ export const signUp = async (req, res) => {
         };
         // create otp token with user info
         const otpToken = createOTPToken(newUser);
-        const actLink = `${process.env.FRONTEND_URL}/activate/${otpToken}`;
-        // Improved HTML email body
-        const emailBody = `
-          <div style="font-family: Arial, sans-serif; background: #f4f8fb; padding: 32px;">
-            <div style="max-width: 480px; margin: 0 auto; background: #fff; border-radius: 12px; box-shadow: 0 2px 8px #e3e9f1; padding: 32px 24px;">
-              <div style="text-align: center; margin-bottom: 24px;">
-                <h2 style="color: #2563eb; margin: 0; font-size: 1.5rem;">Verify Your Email</h2>
-              </div>
-              <p style="color: #222; font-size: 1.1rem; margin-bottom: 18px;">Hi,</p>
-              <p style="color: #222; font-size: 1.1rem; margin-bottom: 18px;">Thank you for signing up with <b>Bianca Aesthetic Helpdesk</b>! Please verify your email address to activate your account.</p>
-              <div style="text-align: center; margin: 32px 0;">
-                <a href="${actLink}" style="display: inline-block; background: #2563eb; color: #fff; text-decoration: none; font-weight: 600; padding: 14px 32px; border-radius: 6px; font-size: 1.1rem; letter-spacing: 0.5px;">Verify Email</a>
-              </div>
-              <p style="color: #666; font-size: 0.95rem;">If you did not create an account, you can safely ignore this email.</p>
-              <hr style="margin: 32px 0 16px 0; border: none; border-top: 1px solid #e3e9f1;" />
-              <p style="color: #b0b8c1; font-size: 0.9rem; text-align: center;">&copy; ${new Date().getFullYear()} Bianca Aesthetic Clinic</p>
-            </div>
-          </div>
-        `;
-        await sendOTP(email, "OTP Sign Up Verification", emailBody);
+        const actLink = `${process.env.BASE_URL}/api/user/activate/${otpToken}`;
+        await sendOTP(email, "OTP Sign Up Verification", actLink);
 
         // only for development
         console.log(otpToken);
@@ -179,10 +161,10 @@ export const activate = async (req, res) => {
     try {
         const decode = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
         const {username, password, email, staff_id} = decode;
-        console.log("ariel gigger");
+
         if(await emailExists(email)) {
             return res.status(400).json({message: "email already exists"})
-        }
+        }   
         // add to database
 
         const user = await User.create({
@@ -206,7 +188,7 @@ export const activate = async (req, res) => {
             email: email
         });
     } catch (error) {
-        return res.status(400).json({message: error.message});
+        return res.status(500).json({message: error.message});
     } 
 }
 
@@ -219,7 +201,8 @@ export const logIn = async (req, res) => {
             // storing the access token in session storage
             const user = await User.findOne({
                 where: {
-                    id: login
+                    id: login,
+                    is_guest: false
                 },
                 attributes: ['id', 'staff_id', 'email', 'username', 'is_guest'],
                 raw: true
@@ -277,35 +260,51 @@ export const signOut = async (req, res) => {
 };
 
 export const forgetPassword = async (req, res) => {
-    const {email, password} = req.body
+    const {email} = req.body
 
     try {
         // check for email validity
         if (!validateEmail(email)) return res.status(400).json({ message: "Invalid email" });
 
-        const user = await User.findOne({
-            where: {
-                email: email
-            },
-            raw: true,
-            attributes: ['id']
-        });
-
-        const user_id = user.id;
-
-        // if (!user) {
-        //     return res.status(400).json({message: "Not a user"})
-        // }
-        
-        const hashedPassword = await hashPassword(password);
-
         // create otp token with user info
-        const otpToken = createOTPToken({email: email, id: user_id, password: hashedPassword});
-        const actLink = `${process.env.BASE_URL}/api/user/confirm-password-reset/${otpToken}`;
+        const otpToken = createOTPToken({email: email});
+        const actLink = `${process.env.BASE_URL}/api/user/enter-new-password/${otpToken}`;
         await sendOTP(email, "Reset Password Link", actLink);
 
         return res.status(200).json({message: "Successfully sent password reset link"});
     } catch (error) {
+        return res.status(500).json({message: error.message})
+    }
+};
+
+export const enterNewPass = async (req, res) => {
+    const token = req.params.token
+    const {password} = req.body
+    try {
+        if (!token) return res.status(401).json({message: "Token missing"})
+        const decode = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
+        const {email} = decode;
+
+        const hashedPassword = await hashPassword(password)
+        const [count, user] = await User.update({
+            password: hashedPassword
+        }, {
+            where: {
+                email: email
+            },
+            returning: true
+        })
+
+        if (count === 0) return res.status(400).json({message: "User does not exist"})
+        // audit here
+        await logAudit(
+            'Update',
+            user[0].id,
+            `User ${user[0].id} updated passwords`
+            
+        )
+        return res.status(200).json({message: "Successfully updated like a heck!"})
+    } catch(error) {
         return res.status(500).json({message: error.message})
     }
 };
