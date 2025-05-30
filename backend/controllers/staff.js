@@ -116,6 +116,7 @@ export const claimTicket = async (req, res) => {
 }
 
 export const getSummary = async (req, res) => {
+    const staff = req.staff
     try {
         const [results] = await sequelize.query(
         `
@@ -124,6 +125,7 @@ export const getSummary = async (req, res) => {
             SUM (CASE WHEN t.status_id = 2 THEN 1 ELSE 0 END) AS in_progress,
             SUM (CASE WHEN t.status_id = 3 THEN 1 ELSE 0 END) AS resolved
         FROM "staff" s LEFT JOIN "ticket" t ON s.id = t.staff_id
+        WHERE (s.id = ${staff.id})
         `
         );
 

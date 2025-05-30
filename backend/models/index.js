@@ -9,6 +9,7 @@ import Ticket from "./Ticket.js";
 import Audit from "./Audit.js";
 import Conversation from "./Conversation.js";
 import Message from "./Message.js";
+import Assignment from './assignment.js';
 
 // Staff
 Staff.belongsTo(Role, {foreignKey: 'role_id'})
@@ -34,6 +35,10 @@ Conversation.belongsTo(Ticket, {foreignKey: 'ticket_id'});
 // Audit
 Audit.belongsTo(User, {foreignKey: 'user_id'});
 
+// Assignment
+Assignment.belongsTo(Staff, {foreignKey: 'last_staff'})
+Assignment.belongsTo(Category, {foreignKey: 'category_id'})
+
 export {
     Staff,
     User,
@@ -45,5 +50,6 @@ export {
     Priority,
     Role,
     Job,
-    Audit
+    Audit,
+    Assignment
 };
