@@ -187,21 +187,43 @@ export const activate = async (req, res) => {
         }   
         // add to database
 
-        const user = await User.create({
-            username: username,
-            password: password,
-            email: email,
-            staff_id: staff_id ? staff_id : null,
-            is_guest: false
-        });
+        const hasAcc = await User.findOne({
+            where: {
+                email: email,
+                is_guest: true
+            }
+        })
+        if (hasAcc) {
+            const [results] = await User.update({
+                username: username,
+                password: password,
+                staff_id: staff_id ? staff_id : null,
+                is_guest: false
+            }, {where: {
+                email: email
+            }})
+             // audit here 
+            await logAudit(
+                "Create", 
+                hasAcc.id, 
+                `${staff_id ? "Staff" : "User"} account created (email: ${email}, username: ${username}, id: ${hasAcc.id}${staff_id ? `, ${staff_id}` : ""})`
+            )
+        } else {
+            const user = await User.create({
+                username: username,
+                password: password,
+                email: email,
+                staff_id: staff_id ? staff_id : null,
+                is_guest: false
+            });
 
-        // audit here 
-        await logAudit(
-            "Create", 
-            user.id, 
-            `${staff_id ? "Staff" : "User"} account created (email: ${email}, username: ${username}, id: ${user.id}${staff_id ? `, ${staff_id}` : ""})`
-        )
-        console.log(`${staff_id ? "Staff" : "User"} account created (email: ${email}, username: ${username}, id: ${user.id}${staff_id ? `, ${staff_id}` : ""})`);
+             // audit here 
+            await logAudit(
+                "Create", 
+                user.id, 
+                `${staff_id ? "Staff" : "User"} account created (email: ${email}, username: ${username}, id: ${user.id}${staff_id ? `, ${staff_id}` : ""})`
+            )
+        }
         
         return res.status(200).json({message: 'Successfully signed up!',
             username: username,
