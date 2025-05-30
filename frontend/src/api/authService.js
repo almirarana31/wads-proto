@@ -57,8 +57,18 @@ export const authService = {
     async getStaffDetail() {
         const response = await api.get('/staff/details');
         return response.data;
-    },    async getStaffTickets(queryString = '') {
+    },    
+    
+    async getStaffTickets(queryString = '') {
         const response = await api.get(`/staff/tickets${queryString ? '?' + queryString : ''}`);
         return response.data;
+    },    async getTicketPool() {
+        const response = await api.get('/staff/tickets/pool');
+        return response.data;
     },
+
+    async claimTicket(ticketId) {
+        const response = await api.post(`/staff/tickets/claim/${ticketId}`);
+        return response.data;
+    }
 };
