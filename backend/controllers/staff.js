@@ -22,7 +22,7 @@ export const getTickets = async (req, res) => {
             }, {
                 model: Priority,
                 attributes: ['name'],
-                where: priority && priority.toLowerCase() !== 'all' ? {name: status} : null,
+                where: priority && priority.toLowerCase() !== 'all' ? {name: priority} : null,
                 required: true
             }, {
                 model: Status,
@@ -123,7 +123,8 @@ export const getSummary = async (req, res) => {
         SELECT 
             COUNT (t.id) AS assigned,
             SUM (CASE WHEN t.status_id = 2 THEN 1 ELSE 0 END) AS in_progress,
-            SUM (CASE WHEN t.status_id = 3 THEN 1 ELSE 0 END) AS resolved
+            SUM (CASE WHEN t.status_id = 3 THEN 1 ELSE 0 END) AS resolved,
+            SUM (CASE WHEN t.status_id = 4 THEN 1 ELSE 0 END) AS cancelled
         FROM "staff" s LEFT JOIN "ticket" t ON s.id = t.staff_id
         WHERE (s.id = ${staff.id})
         `

@@ -16,13 +16,13 @@ function StaffTicketView() {
   const navigate = useNavigate();
   const [sortOrder, setSortOrder] = useState('newest');
   const [isResolveModalOpen, setIsResolveModalOpen] = useState(false);
-  const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
-  // Mock ticket data - replace with API call in real app
+  const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);  // Mock ticket data - replace with API call in real app
+  // Note: Staff view only shows In Progress, Resolved, or Cancelled tickets (not Pending)
   const [ticket, setTicket] = useState({
     id: 'TKT-001',
     title: 'Payment Failure',
     description: 'I have already paid, yet my appointment was not made.',
-    status: 'In Progress',
+    status: 'In Progress', // Only In Progress, Resolved, or Cancelled are valid for staff view
     category: 'Billing',
     created: '2025-04-16T19:11:36.632Z',
     priority: 'High',
@@ -92,10 +92,9 @@ function StaffTicketView() {
     }));
     console.log('Resolving ticket:', ticketId);
     setIsResolveModalOpen(false);
-  };
-  const confirmCancelTicket = () => {
-    // Only allow cancellation of pending tickets
-    if (ticket.status !== 'Pending') {
+  };  const confirmCancelTicket = () => {
+    // Only allow cancellation of In Progress tickets, not Resolved tickets
+    if (ticket.status !== 'In Progress') {
       setIsCancelModalOpen(false);
       return;
     }
@@ -135,9 +134,7 @@ function StaffTicketView() {
           {/* Staff Actions */}          <div className="flex flex-col sm:flex-row justify-center sm:justify-end gap-3 mt-6">          
           {ticket.status !== 'Cancelled' && ticket.status !== 'Resolved' && (
             <>
-              {ticket.status === 'Pending' && (
-                <DangerButton onClick={handleCancelTicket} className="w-full sm:w-auto">Cancel Ticket</DangerButton>
-              )}
+              <DangerButton onClick={handleCancelTicket} className="w-full sm:w-auto">Cancel Ticket</DangerButton>
               <SuccessButton onClick={handleResolveTicket} className="w-full sm:w-auto">Resolve Ticket</SuccessButton>
             </>
           )}
@@ -255,8 +252,7 @@ function StaffTicketView() {
         <Text color="text-green-600" className="mt-2">
           This will mark the ticket as resolved and the customer will be notified.
         </Text>
-      </Modal>      {/* Cancel Ticket Modal */}
-      <Modal
+      </Modal>      {/* Cancel Ticket Modal */}      <Modal
         isOpen={isCancelModalOpen}
         onClose={() => setIsCancelModalOpen(false)}
         title="Cancel Ticket"
@@ -265,18 +261,31 @@ function StaffTicketView() {
             <SecondaryButton key="cancel" onClick={() => setIsCancelModalOpen(false)} className="w-full sm:w-auto">
               Keep Ticket
             </SecondaryButton>
-            <DangerButton key="confirm" onClick={confirmCancelTicket} className="w-full sm:w-auto">
+            <DangerButton 
+              key="confirm" 
+              onClick={confirmCancelTicket} 
+              className="w-full sm:w-auto"
+              disabled={ticket.status !== 'In Progress'}
+            >
               Cancel Ticket
             </DangerButton>
           </div>
         }
       >
-        <Text>
-          Are you sure you want to cancel ticket <strong>{ticket.id}</strong>: "{ticket.title}"?
-        </Text>
-        <Text color="text-red-600" className="mt-2">
-          This action cannot be undone. The ticket will be marked as cancelled and the customer will be notified.
-        </Text>
+        {ticket.status === 'In Progress' ? (
+          <>
+            <Text>
+              Are you sure you want to cancel ticket <strong>{ticket.id}</strong>: "{ticket.title}"?
+            </Text>
+            <Text color="text-red-600" className="mt-2">
+              This action cannot be undone. The ticket will be marked as cancelled and the customer will be notified.
+            </Text>
+          </>
+        ) : (
+          <Text color="text-red-600">
+            Only tickets with "In Progress" status can be cancelled. Resolved tickets cannot be cancelled.
+          </Text>
+        )}
       </Modal>
     </ContentContainer>
   );

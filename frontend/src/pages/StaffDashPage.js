@@ -1,83 +1,126 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { PageTitle, Text, Subheading, StatText } from '../components/text';
 import SecondaryButton from '../components/buttons/SecondaryButton';
 import StaffTicketQueuePage from './StaffTicketQueuePage';
 import PriorityPill from '../components/PriorityPill';
 import StatusPill from '../components/StatusPill';
+import { authService } from '../api/authService';
 
 function StaffDashPage() {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
-  const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' });
-  const [filters, setFilters] = useState({
+  const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' });    const [filters, setFilters] = useState({
     priority: 'All priority',
-    status: 'All status',
-    category: 'All category'
+    status: 'All status'
   });
-  const [stats] = useState({
-    total: 45,
-    pending: 15,
-    inProgress: 20,
-    resolved: 10
+  const [stats, setStats] = useState({
+    total: 0,
+    pending: 0, // This is used for cancelled tickets
+    inProgress: 0,
+    resolved: 0
   });
   const [activeTab, setActiveTab] = useState('my-tickets');
-  // Mock data - replace with API call in real app
-  const tickets = [
-    { 
-      id: 'TKT-001', 
-      title: 'Payment Failure',
-      name: 'User Name',
-      email: 'user@example.com',
-      createdAt: '2025-04-16T19:11:36.632Z',
-      lastUpdated: '2025-05-26T14:22:36.632Z', // New field
-      category: 'Billing',
-      priority: 'High',
-      status: 'Pending',
-      assignedTo: 'staff1'
-    },
-    { 
-      id: 'TKT-002',
-      title: 'Technical Issue',
-      name: 'Another User',
-      email: 'another@example.com',
-      createdAt: '2025-04-16T19:11:36.632Z',
-      lastUpdated: '2025-05-27T09:45:12.421Z', // New field
-      category: 'Technical',
-      priority: 'Medium',
-      status: 'In Progress',
-      assignedTo: 'staff1'
-    },
-    { 
-      id: 'TKT-003',
-      title: 'Service Request',
-      name: 'Third User',
-      email: 'third@example.com',
-      createdAt: '2025-04-16T19:11:36.632Z',
-      lastUpdated: '2025-05-28T08:15:36.789Z', // New field
-      category: 'Service',
-      priority: 'Low',
-      status: 'Resolved',
-      assignedTo: 'staff1'
+  const [tickets, setTickets] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [isRefreshing, setIsRefreshing] = useState(false);    const fetchStaffTickets = async (searchTerm = '', filterPriority = '', filterStatus = '') => {
+    try {
+      setIsLoading(true);
+        // Build query parameters for API search
+      const queryParams = new URLSearchParams();
+      if (searchTerm) queryParams.append('search', searchTerm);
+      if (filterPriority && filterPriority !== 'All priority') queryParams.append('priority', filterPriority);
+      if (filterStatus && filterStatus !== 'All status') queryParams.append('status', filterStatus);
+      
+      const response = await authService.getStaffTickets(queryParams.toString());
+        // Transform backend data to match frontend structure
+      const formattedTickets = response.map(ticket => {
+        // Map priority IDs to display names
+        let priorityName = 'Medium';
+        if (ticket.Priority) {
+          switch (ticket.Priority.name) {
+            case '1': priorityName = 'High'; break;
+            case '2': priorityName = 'Medium'; break;
+            case '3': priorityName = 'Low'; break;
+            default: priorityName = ticket.Priority.name; // Fall back to the name if it's already a string
+          }
+        }
+        
+        // Map category IDs to display names
+        let categoryName = 'General';
+        if (ticket.Category) {
+          switch (ticket.Category.name) {
+            case '1': categoryName = 'General'; break;
+            case '2': categoryName = 'Billing'; break;
+            case '3': categoryName = 'IT Support/Technical'; break;
+            default: categoryName = ticket.Category.name; // Fall back to the name if it's already a string
+          }
+        }
+        
+        return {
+          id: `TKT-${ticket.ticket_id.toString().padStart(3, '0')}`,
+          title: ticket.subject,
+          name: ticket.User?.username || 'Unknown',
+          email: ticket.User?.email || 'N/A',
+          createdAt: ticket.createdAt,
+          lastUpdated: ticket.updatedAt || ticket.createdAt, // Fallback to createdAt if updatedAt is not available
+          category: categoryName,
+          priority: priorityName,
+          status: ticket.Status?.name || 'In Progress',
+          assignedTo: 'staff1' // You may need to fetch this separately if needed
+        };
+      });
+      
+      setTickets(formattedTickets);
+      
+      // Calculate stats
+      const totalTickets = formattedTickets.length;
+      const cancelledTickets = formattedTickets.filter(t => t.status === 'Cancelled').length;
+      const inProgressTickets = formattedTickets.filter(t => t.status === 'In Progress').length;
+      const resolvedTickets = formattedTickets.filter(t => t.status === 'Resolved').length;
+      
+      setStats({
+        total: totalTickets,
+        pending: cancelledTickets, // Using 'pending' state variable for cancelled tickets
+        inProgress: inProgressTickets,
+        resolved: resolvedTickets
+      });
+      
+      setError(null);
+    } catch (err) {
+      console.error('Error fetching staff tickets:', err);
+      setError(`Failed to load tickets: ${err.response?.data?.message || err.message || 'Unknown error'}`);
+    } finally {
+      setIsLoading(false);
+      setIsRefreshing(false);
     }
-  ];  const handleViewTicket = (ticketId) => {
+  };
+
+  // Fetch tickets when component mounts or when active tab changes
+  useEffect(() => {
+    if (activeTab === 'my-tickets') {
+      fetchStaffTickets();
+    }
+  }, [activeTab]);
+
+  // Handle search with API
+  const handleSearch = () => {
+    fetchStaffTickets(searchQuery, filters.priority, filters.status);
+  };
+
+  // Handle refresh button click
+  const handleRefresh = () => {
+    setIsRefreshing(true);
+    fetchStaffTickets(searchQuery, filters.priority, filters.status);
+  };
+
+  const handleViewTicket = (ticketId) => {
     navigate(`/staff/ticket/${ticketId}`);
   };
 
-  // Filter tickets based on search and filters
-  const filteredTickets = tickets.filter(ticket => {
-    const searchLower = searchQuery.toLowerCase();
-    return (
-      (ticket.id.toLowerCase().includes(searchLower) ||
-       ticket.title.toLowerCase().includes(searchLower) ||
-       ticket.name.toLowerCase().includes(searchLower) ||
-       ticket.email.toLowerCase().includes(searchLower)) &&
-      (filters.priority === 'All priority' || ticket.priority === filters.priority) &&
-      (filters.status === 'All status' || ticket.status === filters.status) &&
-      (filters.category === 'All category' || ticket.category === filters.category)
-    );
-  });
-
+  // Filter tickets based on search and filters (client-side filtering as a backup)
+  const filteredTickets = tickets;
   // Sorting functionality
   const handleSort = (key) => {
     let direction = 'asc';
@@ -85,6 +128,10 @@ function StaffDashPage() {
       direction = 'desc';
     }
     setSortConfig({ key, direction });
+    
+    // When we have server-side sorting implemented, we can call the API with sort parameters
+    // For now, we'll let client-side sorting handle it
+    // fetchStaffTickets(searchQuery, filters.priority, filters.status, key, direction);
   };
 
   const getSortIcon = (columnKey) => {
@@ -114,11 +161,11 @@ function StaffDashPage() {
           const priorityOrder = { 'High': 3, 'Medium': 2, 'Low': 1 };
           aValue = priorityOrder[aValue] || 0;
           bValue = priorityOrder[bValue] || 0;
-        }
-
-        // Handle status sorting (Pending > In Progress > Resolved)
+        }        
+        
+        // Handle status sorting (Cancelled > In Progress > Resolved)
         if (sortConfig.key === 'status') {
-          const statusOrder = { 'Pending': 3, 'In Progress': 2, 'Resolved': 1 };
+          const statusOrder = { 'Cancelled': 3, 'In Progress': 2, 'Resolved': 1 };
           aValue = statusOrder[aValue] || 0;
           bValue = statusOrder[bValue] || 0;
         }
@@ -163,14 +210,14 @@ function StaffDashPage() {
         </div>
         {/* Tab Content */}
         {activeTab === 'my-tickets' ? (
-          <>
+          <>            
             {/* Stats Cards */}
             <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-8">
               <div className="bg-white p-4 rounded-lg shadow-md">
                 <StatText label="Total" value={stats.total} valueColor="gray-darker" labelColor="gray-dark" />
               </div>
-              <div className="bg-yellow-100 p-4 rounded-lg shadow-md">
-                <StatText label="Pending" value={stats.pending} valueColor="yellow" labelColor="yellow" />
+              <div className="bg-red-100 p-4 rounded-lg shadow-md">
+                <StatText label="Cancelled" value={stats.pending} valueColor="red" labelColor="red" />
               </div>
               <div className="bg-purple-100 p-4 rounded-lg shadow-md">
                 <StatText label="In Progress" value={stats.inProgress} valueColor="purple" labelColor="purple" />
@@ -178,97 +225,136 @@ function StaffDashPage() {
               <div className="bg-green-100 p-4 rounded-lg shadow-md">
                 <StatText label="Resolved" value={stats.resolved} valueColor="green" labelColor="green" />
               </div>
-            </div>        
+            </div>
             {/* Ticket Management Section */}
             <div className="bg-white p-6 rounded-lg shadow-md mb-8">
-              <Subheading size="2xl" color="blue" className="mb-4">Ticket Management</Subheading>
-              <div className="mb-4">
-                <input
-                  type="text"
-                  placeholder="Search ticket by ID, title, name, email..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-300"
-                />
+              <div className="flex justify-between items-center mb-4">
+                <Subheading size="2xl" color="blue">Ticket Management</Subheading>
+                <button 
+                  onClick={handleRefresh} 
+                  className="flex items-center px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors" 
+                  disabled={isRefreshing}
+                >
+                  {isRefreshing ? (
+                    <span className="inline-block h-4 w-4 mr-2 animate-spin rounded-full border-2 border-solid border-white border-r-transparent"></span>
+                  ) : (
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    </svg>
+                  )}
+                  Refresh
+                </button>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                <select
+              <div className="flex flex-col md:flex-row gap-4 mb-6">
+                <div className="flex-grow">
+                  <input
+                    type="text"
+                    placeholder="Search ticket by ID, title, name, email..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-300"
+                    onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+                  />
+                </div>
+                <button 
+                  onClick={handleSearch} 
+                  className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
+                >
+                  Search
+                </button>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">                <select
                   className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-300 bg-white"
                   value={filters.priority}
-                  onChange={(e) => setFilters({...filters, priority: e.target.value})}
+                  onChange={(e) => {
+                    setFilters({...filters, priority: e.target.value});
+                    fetchStaffTickets(searchQuery, e.target.value, filters.status);
+                  }}
                 >
                   <option value="All priority">All priority</option>
                   <option value="High">High</option>
                   <option value="Medium">Medium</option>
                   <option value="Low">Low</option>
-                </select>
-                <select
+                </select>                  <select
                   className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-300 bg-white"
                   value={filters.status}
-                  onChange={(e) => setFilters({...filters, status: e.target.value})}
+                  onChange={(e) => {
+                    setFilters({...filters, status: e.target.value});
+                    fetchStaffTickets(searchQuery, filters.priority, e.target.value);
+                  }}
                 >
                   <option value="All status">All status</option>
-                  <option value="Pending">Pending</option>
+                  <option value="Cancelled">Cancelled</option>
                   <option value="In Progress">In Progress</option>
                   <option value="Resolved">Resolved</option>
                 </select>
-                <select
-                  className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-300 bg-white"
-                  value={filters.category}
-                  onChange={(e) => setFilters({...filters, category: e.target.value})}
-                >
-                  <option value="All category">All category</option>
-                  <option value="Billing">Billing</option>
-                  <option value="Technical">Technical</option>
-                  <option value="General">General</option>
-                  <option value="Service">Service</option>
-                </select>
-              </div>
-
+              </div>              
               {/* Tickets Table */}
               <div className="overflow-x-auto">
-                <table className="min-w-full table-auto border-collapse border border-gray-200">
-                  <thead className="bg-gray-50">
-                    <tr>
-                      <th onClick={() => handleSort('id')} className="p-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider border-b border-gray-200 cursor-pointer hover:bg-gray-100">ID {getSortIcon('id')}</th>
-                      <th onClick={() => handleSort('title')} className="p-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider border-b border-gray-200 cursor-pointer hover:bg-gray-100">Title {getSortIcon('title')}</th>
-                      <th onClick={() => handleSort('name')} className="p-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider border-b border-gray-200 cursor-pointer hover:bg-gray-100">Name {getSortIcon('name')}</th>
-                      <th onClick={() => handleSort('email')} className="p-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider border-b border-gray-200 cursor-pointer hover:bg-gray-100">Email {getSortIcon('email')}</th>
-                      <th onClick={() => handleSort('createdAt')} className="p-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider border-b border-gray-200 cursor-pointer hover:bg-gray-100">Created At {getSortIcon('createdAt')}</th>
-                      <th onClick={() => handleSort('lastUpdated')} className="p-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider border-b border-gray-200 cursor-pointer hover:bg-gray-100">Last Updated {getSortIcon('lastUpdated')}</th>
-                      <th onClick={() => handleSort('category')} className="p-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider border-b border-gray-200 cursor-pointer hover:bg-gray-100">Category {getSortIcon('category')}</th>
-                      <th onClick={() => handleSort('priority')} className="p-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider border-b border-gray-200 cursor-pointer hover:bg-gray-100">Priority {getSortIcon('priority')}</th>
-                      <th onClick={() => handleSort('status')} className="p-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider border-b border-gray-200 cursor-pointer hover:bg-gray-100">Status {getSortIcon('status')}</th>
-                      <th className="p-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider border-b border-gray-200">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
-                    {sortedTickets.length > 0 ? sortedTickets.map((ticket) => (
-                      <tr key={ticket.id} className="hover:bg-gray-50">
-                        <td className="p-3 text-sm text-gray-700 whitespace-nowrap">{ticket.id}</td>
-                        <td className="p-3 text-sm text-gray-700 whitespace-nowrap">{ticket.title}</td>
-                        <td className="p-3 text-sm text-gray-700 whitespace-nowrap">{ticket.name}</td>
-                        <td className="p-3 text-sm text-gray-700 whitespace-nowrap">{ticket.email}</td>
-                        <td className="p-3 text-sm text-gray-700 whitespace-nowrap">{new Date(ticket.createdAt).toLocaleDateString()}</td>
-                        <td className="p-3 text-sm text-gray-700 whitespace-nowrap">{new Date(ticket.lastUpdated).toLocaleDateString()}</td>
-                        <td className="p-3 text-sm text-gray-700 whitespace-nowrap">{ticket.category}</td>
-                        <td className="p-3 text-sm text-gray-700 whitespace-nowrap">
-                          <PriorityPill priority={ticket.priority} />
-                        </td>
-                        <td className="p-3 text-sm text-gray-700 whitespace-nowrap">
-                          <StatusPill status={ticket.status} />
-                        </td>
-                        <td className="p-3 text-sm whitespace-nowrap">
-                          <SecondaryButton onClick={() => handleViewTicket(ticket.id)} className="mr-3">View</SecondaryButton>
-                        </td>
-                      </tr>
-                    )) : (
+                {isLoading ? (
+                  <div className="text-center p-6">
+                    <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-blue-500 border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite]"></div>
+                    <p className="mt-2 text-gray-600">Loading tickets...</p>
+                  </div>                ) : error ? (
+                  <div className="text-center p-6">
+                    <div className="flex items-center justify-center mb-4 text-red-600">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                    </div>
+                    <h3 className="text-lg font-semibold text-red-700 mb-2">Error Loading Tickets</h3>
+                    <p className="text-gray-700 mb-4">{error}</p>
+                    <button 
+                      onClick={handleRefresh} 
+                      className="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
+                    >
+                      Try Again
+                    </button>
+                  </div>
+                ) : (
+                  <table className="min-w-full table-auto border-collapse border border-gray-200">
+                    <thead className="bg-gray-50">
                       <tr>
-                        <td colSpan="10" className="p-3 text-sm text-gray-500 text-center">No tickets found.</td>
+                        <th onClick={() => handleSort('id')} className="p-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider border-b border-gray-200 cursor-pointer hover:bg-gray-100">ID {getSortIcon('id')}</th>
+                        <th onClick={() => handleSort('title')} className="p-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider border-b border-gray-200 cursor-pointer hover:bg-gray-100">Title {getSortIcon('title')}</th>
+                        <th onClick={() => handleSort('name')} className="p-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider border-b border-gray-200 cursor-pointer hover:bg-gray-100">Name {getSortIcon('name')}</th>
+                        <th onClick={() => handleSort('email')} className="p-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider border-b border-gray-200 cursor-pointer hover:bg-gray-100">Email {getSortIcon('email')}</th>
+                        <th onClick={() => handleSort('createdAt')} className="p-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider border-b border-gray-200 cursor-pointer hover:bg-gray-100">Created At {getSortIcon('createdAt')}</th>
+                        <th onClick={() => handleSort('lastUpdated')} className="p-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider border-b border-gray-200 cursor-pointer hover:bg-gray-100">Last Updated {getSortIcon('lastUpdated')}</th>
+                        <th onClick={() => handleSort('category')} className="p-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider border-b border-gray-200 cursor-pointer hover:bg-gray-100">Category {getSortIcon('category')}</th>
+                        <th onClick={() => handleSort('priority')} className="p-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider border-b border-gray-200 cursor-pointer hover:bg-gray-100">Priority {getSortIcon('priority')}</th>
+                        <th onClick={() => handleSort('status')} className="p-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider border-b border-gray-200 cursor-pointer hover:bg-gray-100">Status {getSortIcon('status')}</th>
+                        <th className="p-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider border-b border-gray-200">Actions</th>
                       </tr>
-                    )}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      {sortedTickets.length > 0 ? sortedTickets.map((ticket) => (
+                        <tr key={ticket.id} className="hover:bg-gray-50">
+                          <td className="p-3 text-sm text-gray-700 whitespace-nowrap">{ticket.id}</td>
+                          <td className="p-3 text-sm text-gray-700 whitespace-nowrap">{ticket.title}</td>
+                          <td className="p-3 text-sm text-gray-700 whitespace-nowrap">{ticket.name}</td>
+                          <td className="p-3 text-sm text-gray-700 whitespace-nowrap">{ticket.email}</td>
+                          <td className="p-3 text-sm text-gray-700 whitespace-nowrap">{new Date(ticket.createdAt).toLocaleDateString()}</td>
+                          <td className="p-3 text-sm text-gray-700 whitespace-nowrap">{new Date(ticket.lastUpdated).toLocaleDateString()}</td>
+                          <td className="p-3 text-sm text-gray-700 whitespace-nowrap">{ticket.category}</td>
+                          <td className="p-3 text-sm text-gray-700 whitespace-nowrap">
+                            <PriorityPill priority={ticket.priority} />
+                          </td>
+                          <td className="p-3 text-sm text-gray-700 whitespace-nowrap">
+                            <StatusPill status={ticket.status} />
+                          </td>
+                          <td className="p-3 text-sm whitespace-nowrap">
+                            <SecondaryButton onClick={() => handleViewTicket(ticket.id)} className="mr-3">View</SecondaryButton>
+                          </td>
+                        </tr>
+                      )) : (
+                        <tr>
+                          <td colSpan="10" className="p-3 text-sm text-gray-500 text-center">No tickets found.</td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                )}
               </div>
             </div>
           </>
@@ -283,8 +369,8 @@ function StaffDashPage() {
 // Utility functions for styling
 function getStatusStyle(status) {
   switch (status) {
-    case 'Pending':
-      return 'px-2 py-1 text-yellow-800 bg-yellow-200 rounded-full';
+    case 'Cancelled':
+      return 'px-2 py-1 text-red-800 bg-red-200 rounded-full';
     case 'In Progress':
       return 'px-2 py-1 text-purple-800 bg-purple-200 rounded-full';
     case 'Resolved':

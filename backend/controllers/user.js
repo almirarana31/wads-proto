@@ -31,7 +31,8 @@ async function emailExists(input_email) {
     // get from user table
     const user = await User.findOne({
         where: {
-            email: input_email
+            email: input_email,
+            is_guest: false
         }
     });
 
@@ -226,7 +227,9 @@ export const logIn = async (req, res) => {
                 attributes: ['id', 'staff_id', 'email', 'username', 'is_guest'],
                 raw: true
             });
-
+            if (!user) {
+                return res.status(400).json({message: "User is banned"})
+            }
             console.log(`Pre-Staff_id: ${user.staff_id}`)
 
             if (!user.staff_id) {
@@ -505,7 +508,8 @@ export const getUserTickets = async (req, res) => {
 
 // use userAuthZ
 export const getUserDetail = async (req, res) => {
-    const {email, username} = req.user
+    const source = req.user || req.staff || req.admin || {};
+    const { email, username } = source;
     try {
         return res.status(200).json({
             email: email,

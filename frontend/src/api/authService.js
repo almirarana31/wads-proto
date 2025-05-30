@@ -53,5 +53,12 @@ export const authService = {
     async getUserDetail() {
         const response = await api.get('/user/details');
         return response.data;
-    }
+    },
+    async getStaffDetail() {
+        const response = await api.get('/staff/details');
+        return response.data;
+    },    async getStaffTickets(queryString = '') {
+        const response = await api.get(`/staff/tickets${queryString ? '?' + queryString : ''}`);
+        return response.data;
+    },
 };
