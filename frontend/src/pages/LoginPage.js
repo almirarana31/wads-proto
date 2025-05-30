@@ -45,17 +45,17 @@ function LoginPage({ onLogin }) {
       }
       // Build user info for context
       const userInfo = {
-        email: formData.email,
+        email: res.email || formData.email,
         username: res.username || formData.email,
-        role_code: res.role_code || (res.staff_id ? (res.staff_id === 1 ? 'ADM' : 'STF') : 'USR'),
+        role_id: res.role_id, // use role_id from backend
         staff_id: res.staff_id,
         id: res.id
       };
       if (onLogin) onLogin(userInfo);
-      // Redirect based on role
-      if (userInfo.role_code === 'ADM') {
+      // Redirect based on role_id
+      if (userInfo.role_id === 1) {
         navigate('/admin-dashboard');
-      } else if (userInfo.role_code === 'STF') {
+      } else if (userInfo.role_id === 2) {
         navigate('/staff-dashboard');
       } else {
         navigate('/view-tickets');

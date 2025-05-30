@@ -78,6 +78,7 @@ function SignUpPage() {
             >
               Login
             </Link>
+            
           </div>
         </div>
       </div>

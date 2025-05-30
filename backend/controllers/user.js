@@ -223,10 +223,6 @@ export const logIn = async (req, res) => {
                     id: login,
                     is_guest: false
                 },
-                include: [{
-                    model: Staff,
-                    attributes: ['role_id']
-                }],
                 attributes: ['id', 'staff_id', 'email', 'username', 'is_guest'],
                 raw: true
             });
