@@ -8,8 +8,7 @@ import { PageTitle, Text, Label, Heading } from '../components/text';
 import { authService } from '../api/authService';
 
 function SubmitTicketPage() {
-  const navigate = useNavigate();
-  const [formData, setFormData] = useState({
+  const navigate = useNavigate();  const [formData, setFormData] = useState({
     email: '',
     title: '',
     category: 'General',
@@ -17,16 +16,36 @@ function SubmitTicketPage() {
   });
   const [ticket, setTicket] = useState(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [userEmail, setUserEmail] = useState('');
 
-  // Check authentication status when component mounts
+  // Check authentication status and get user email when component mounts
   useEffect(() => {
     const checkAuthStatus = () => {
       // Check multiple sources for authentication state
       const token = sessionStorage.getItem('token') || localStorage.getItem('token');
-      const currentUser = localStorage.getItem('currentUser');
+      const currentUser = localStorage.getItem('currentUser') || sessionStorage.getItem('user');
       
       // Consider user authenticated if either token exists or user is stored
-      setIsAuthenticated(!!(token || currentUser));
+      const isAuth = !!(token || currentUser);
+      setIsAuthenticated(isAuth);
+      
+      // If authenticated, get and set the user's email
+      if (isAuth) {
+        let email = '';
+        try {
+          // Try to get email from currentUser if it's available
+          if (currentUser) {
+            const userData = JSON.parse(currentUser);
+            email = userData.email;
+          }
+        } catch (error) {
+          console.error('Error parsing user data:', error);
+        }
+        
+        setUserEmail(email);
+        // Set the email in the form data
+        setFormData(prev => ({ ...prev, email }));
+      }
     };
 
     checkAuthStatus();
@@ -36,12 +55,11 @@ function SubmitTicketPage() {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
   };
-
   const handleSubmit = async () => {
     try {
-      // Call backend to submit ticket (for guests, no token is sent)
+      // Call backend to submit ticket
       const ticketData = {
-        email: formData.email,
+        email: isAuthenticated ? userEmail : formData.email, // Use stored email for authenticated users
         title: formData.title,
         category_id:
           formData.category === 'General' ? 1 :
@@ -149,8 +167,7 @@ function SubmitTicketPage() {
   return (    <div className="py-6 md:py-12 px-4 sm:px-6 flex-grow">
       <div className="bg-white p-5 sm:p-6 md:p-8 rounded shadow-md w-full max-w-2xl mx-auto">
         <PageTitle title="Submit a Ticket" subtitle="Submit your question or issue below" className="mb-4 sm:mb-6" />
-        <div className="space-y-6">
-          <div>
+        <div className="space-y-6">          <div>
             <Label htmlFor="email">Email Address:</Label>
             <input
               type="email"
@@ -158,8 +175,20 @@ function SubmitTicketPage() {
               name="email"
               value={formData.email}
               onChange={handleInputChange}
-              className="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-300"
-            />          </div>
+              readOnly={isAuthenticated}
+              disabled={isAuthenticated}
+              className={`w-full p-2 border border-gray-300 rounded ${
+                isAuthenticated 
+                  ? 'bg-gray-100 text-gray-600 cursor-not-allowed' 
+                  : 'focus:outline-none focus:ring-2 focus:ring-blue-300'
+              }`}
+            />
+            {isAuthenticated && (
+              <small className="text-gray-500 mt-1 block">
+                You are logged in. We'll use your account email.
+              </small>
+            )}
+          </div>
           <div>
             <Label htmlFor="title">Ticket Title:</Label>
             <input

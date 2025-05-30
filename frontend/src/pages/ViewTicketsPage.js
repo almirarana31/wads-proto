@@ -1,57 +1,47 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import TicketCard from '../components/TicketCard';
 import PrimaryButton from '../components/buttons/PrimaryButton';
-import DangerButton from '../components/buttons/DangerButton';
-import SecondaryButton from '../components/buttons/SecondaryButton';
-import Modal from '../components/Modal';
 import { PageTitle, Text, Label } from '../components/text';
+import { authService } from '../api/authService';
 
 function ViewTicketsPage() {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [filterStatus, setFilterStatus] = useState('All status');
-  const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
-  const [selectedTicket, setSelectedTicket] = useState(null);
+  const [tickets, setTickets] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
   
-  // Mock ticket data - in a real app, this would come from API
-  const [tickets, setTickets] = useState([
-    {
-      id: 'TKT-001',
-      title: 'Payment Failure',
-      description: 'I have already paid, yet my appointment was not made.',
-      status: 'Pending',
-      category: 'Billing',
-      created: '2025-04-16T19:11:36.632Z',
-      unreadResponses: 0
-    },
-    {
-      id: 'TKT-002',
-      title: 'Payment Failure',
-      description: 'I have already paid, yet my appointment was not made.',
-      status: 'In Progress',
-      category: 'Billing',
-      created: '2025-04-16T19:11:36.632Z',
-      unreadResponses: 1
-    },
-    {
-      id: 'TKT-003',
-      title: 'Payment Failure',
-      description: 'I have already paid, yet my appointment was not made.',
-      status: 'Resolved',
-      category: 'Billing',
-      created: '2025-04-16T19:11:36.632Z',
-      unreadResponses: 0
-    },
-    {
-      id: 'TKT-004',
-      title: 'Refund Request',
-      description: 'I would like to request a refund for my last appointment.',      status: 'Pending',
-      category: 'Service',
-      created: '2025-05-17T16:38:25.632Z',
-      unreadResponses: 2
-    }
-  ]);
+  // Fetch tickets from API when component mounts
+  useEffect(() => {
+    const fetchTickets = async () => {
+      try {
+        setIsLoading(true);
+        const response = await authService.getUserTickets();
+          // Transform backend data to match frontend structure if needed
+        const formattedTickets = response.tickets.map(ticket => ({
+          id: ticket.id || ticket.ticketId,
+          title: ticket.subject,
+          description: ticket.description,
+          status: ticket.Status ? ticket.Status.name : ticket.status,
+          category: ticket.Category ? ticket.Category.name : ticket.category,
+          created: ticket.createdAt || ticket.created,
+          unreadResponses: ticket.unreadResponses || 0
+        }));
+        
+        setTickets(formattedTickets);
+        setError(null);
+      } catch (err) {
+        console.error('Error fetching tickets:', err);
+        setError('Failed to load tickets. Please try again later.');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchTickets();
+  }, []);
 
   // Handle search input change
   const handleSearchChange = (e) => {
@@ -67,29 +57,10 @@ function ViewTicketsPage() {
   const handleSubmitNewTicket = () => {
     navigate('/submit-ticket');
   };
+  
   // View ticket details
   const handleViewDetails = (ticketId) => {
     navigate(`/ticket/${ticketId}`);
-  };
-  // Handle cancel ticket
-  const handleCancelTicket = (ticket) => {
-    setSelectedTicket(ticket);
-    setIsCancelModalOpen(true);
-  };
-
-  // Confirm cancel ticket
-  const confirmCancelTicket = () => {
-    // Update the ticket status to 'Cancelled'
-    setTickets(prevTickets => 
-      prevTickets.map(ticket => 
-        ticket.id === selectedTicket.id
-          ? { ...ticket, status: 'Cancelled' }
-          : ticket
-      )
-    );
-    console.log('Cancelling ticket:', selectedTicket.id);
-    setIsCancelModalOpen(false);
-    setSelectedTicket(null);
   };
 
   // Filter tickets based on search query and status filter
@@ -103,19 +74,21 @@ function ViewTicketsPage() {
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
       return (
-        ticket.id.toLowerCase().includes(query) ||
-        ticket.title.toLowerCase().includes(query) ||
-        ticket.description.toLowerCase().includes(query) ||
-        ticket.category.toLowerCase().includes(query)
+        (ticket.id && ticket.id.toString().toLowerCase().includes(query)) ||
+        (ticket.title && ticket.title.toLowerCase().includes(query)) ||
+        (ticket.description && ticket.description.toLowerCase().includes(query)) ||
+        (ticket.category && ticket.category.toLowerCase().includes(query))
       );
     }
     
     return true;
   });
+  
   return (
     <div className="min-h-screen">
       <div className="max-w-6xl mx-auto p-6">
-        <div className="bg-white rounded-md shadow-md p-8">          {/* Page Header */}
+        <div className="bg-white rounded-md shadow-md p-8">
+          {/* Page Header */}
           <PageTitle 
             title="Your Tickets"
             subtitle={
@@ -135,8 +108,9 @@ function ViewTicketsPage() {
                 onChange={handleSearchChange}
                 className="w-full md:w-80 p-2 border border-gray-300 rounded"
               />
-                <div className="flex items-center">
-                <Label className="mr-2">Filter by status:</Label>                <select
+              <div className="flex items-center">
+                <Label className="mr-2">Filter by status:</Label>
+                <select
                   value={filterStatus}
                   onChange={handleFilterChange}
                   className="p-2 border border-gray-300 rounded"
@@ -155,46 +129,48 @@ function ViewTicketsPage() {
             >
               Submit a Ticket
             </PrimaryButton>
-          </div>            {/* Ticket List */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {filteredTickets.length === 0 ? (
-              <div className="text-center py-10 col-span-full">
-                <Text color="text-gray-500">No tickets found matching your criteria.</Text>
-              </div>
-            ) : (              filteredTickets.map((ticket) => (
-                <TicketCard
-                  key={ticket.id}
-                  ticket={ticket}
-                  onViewDetails={handleViewDetails}
-                  onCancelTicket={handleCancelTicket}
-                />
-              ))
-            )}
           </div>
+          
+          {/* Loading State */}
+          {isLoading && (
+            <div className="text-center py-10">
+              <Text color="text-gray-500">Loading tickets...</Text>
+            </div>
+          )}
+          
+          {/* Error State */}
+          {error && !isLoading && (
+            <div className="text-center py-10">
+              <Text color="text-red-500">{error}</Text>
+              <button 
+                onClick={() => window.location.reload()}
+                className="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+              >
+                Try Again
+              </button>
+            </div>
+          )}
+          
+          {/* Ticket List */}
+          {!isLoading && !error && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {filteredTickets.length === 0 ? (
+                <div className="text-center py-10 col-span-full">
+                  <Text color="text-gray-500">No tickets found matching your criteria.</Text>
+                </div>
+              ) : (
+                filteredTickets.map((ticket) => (
+                  <TicketCard
+                    key={ticket.id}
+                    ticket={ticket}
+                    onViewDetails={handleViewDetails}
+                  />
+                ))
+              )}
+            </div>
+          )}
         </div>
-      </div>      
-
-      {/* Cancel Ticket Modal */}
-      <Modal
-        isOpen={isCancelModalOpen}
-        onClose={() => setIsCancelModalOpen(false)}
-        title="Cancel Ticket"
-        actions={[
-          <SecondaryButton key="cancel" onClick={() => setIsCancelModalOpen(false)}>
-            Keep Ticket
-          </SecondaryButton>,
-          <DangerButton key="confirm" onClick={confirmCancelTicket}>
-            Cancel Ticket
-          </DangerButton>
-        ]}
-      >
-        <Text>
-          Are you sure you want to cancel ticket <strong>{selectedTicket?.id}</strong>: "{selectedTicket?.title}"?
-        </Text>
-        <Text color="text-red-600" className="mt-2">
-          This action cannot be undone. The ticket will be marked as cancelled and no further actions can be taken.
-        </Text>
-      </Modal>
+      </div>
     </div>
   );
 }

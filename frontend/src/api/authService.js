@@ -31,5 +31,23 @@ export const authService = {
     async sendTicket(ticketData) {
         const response = await api.post('/user/tickets', ticketData);
         return response.data;
+    },    
+    
+    async getUserTickets() {
+        const response = await api.get('/user/tickets');
+        return response.data;
     },
+    async getTicketDetail(ticketId) {
+        const response = await api.get(`/ticket/${ticketId}`);
+        return response.data;
+    },
+
+    async editTicket(ticketId, ticketData) {
+        const response = await api.put(`/user/tickets/${ticketId}`, ticketData);
+        return response.data;
+    },
+    async cancelTicket(ticketId) {
+        const response = await api.patch(`/user/tickets/${ticketId}`);
+        return response.data;
+    }
 };

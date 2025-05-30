@@ -31,7 +31,7 @@ const getBorderStyle = (status) => {
   }
 };
 
-function TicketCard({ ticket, onViewDetails, onCancelTicket }) {
+function TicketCard({ ticket, onViewDetails }) {
   return (    
   <div className={`bg-gray-100 p-6 rounded-md ${getBorderStyle(ticket.status)}`}>
       <div className="flex flex-col md:flex-row justify-between mb-3 gap-2">
@@ -40,26 +40,15 @@ function TicketCard({ ticket, onViewDetails, onCancelTicket }) {
           {ticket.status}
         </span>
       </div>      
-      <Text className="mb-4" color="text-gray-700">{ticket.description}</Text>
-      <div className="text-gray-600 text-sm space-y-1">
+      <Text className="mb-4" color="text-gray-700">{ticket.description}</Text>      <div className="text-gray-600 text-sm space-y-1">
         <div><SmallText color="text-gray-600">Ticket ID: {ticket.id}</SmallText></div>
-        <div><SmallText color="text-gray-600">Category: {ticket.category}</SmallText></div>
-        <div><SmallText color="text-gray-600">Created at: {new Date(ticket.created).toLocaleString()}</SmallText></div>
+        <div><SmallText color="text-gray-600">Category: {ticket.category || 'N/A'}</SmallText></div>
+        <div><SmallText color="text-gray-600">Created at: {ticket.created ? new Date(ticket.created).toLocaleString() : 'N/A'}</SmallText></div>
       </div>
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mt-4 gap-3">
         <button onClick={() => onViewDetails(ticket.id)} className="bg-white hover:bg-gray-50 text-blue-700 border border-gray-300 py-2 px-4 rounded">
           View Details
         </button>
-        {ticket.status !== 'Resolved' && ticket.status !== 'Cancelled' && (
-          <div className="flex gap-2">
-            <button 
-              onClick={() => onCancelTicket(ticket)} 
-              className="bg-red-600 hover:bg-red-700 text-white py-2 px-4 rounded text-sm"
-            >
-              Cancel
-            </button>
-          </div>
-        )}
       </div>
     </div>
   );
