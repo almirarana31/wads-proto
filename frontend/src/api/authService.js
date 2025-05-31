@@ -65,8 +65,26 @@ export const authService = {
     },    async getTicketPool() {
         const response = await api.get('/staff/tickets/pool');
         return response.data;
-    },    async claimTicket(ticketId) {
+    },    
+    
+    async claimTicket(ticketId) {
         const response = await api.patch(`/staff/tickets`, { ticket_id: ticketId });
         return response.data;
+    },    async staffCancelTicket(ticketId) {
+        const response = await api.patch(`/staff/tickets/${ticketId}/cancel`);
+        return response.data;
+    },    async staffResolveTicket(ticketId) {
+        const response = await api.patch(`/staff/tickets/${ticketId}/resolve`);
+        return response.data;
+    },
+      async updateTicketNote(ticketId, note) {
+        const response = await api.patch(`/staff/tickets/${ticketId}/note`, { note });
+        return response.data;
+    },
+    
+    async getTicketConversations(ticketId) {
+        const response = await api.get(`/staff/tickets/${ticketId}/conversations`);
+        return response.data;
     }
+
 };

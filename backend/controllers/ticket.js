@@ -48,8 +48,9 @@ export const getTicketDetail = async (req, res) => {
             }] : []),
         {
             model: User,
+            as: 'User',
             attributes: ['username', 'email', 'is_guest'],
-            requred: true
+            required: true
         }],
             attributes: ['id', 'subject', 'description', 'createdAt', 'note']
         });
