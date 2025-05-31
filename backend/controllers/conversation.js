@@ -23,6 +23,10 @@ export const getConversation = async (req, res) => {
                 model: User,
                 attributes: ['username'],
                 required: true
+            }, {
+                include: Conversation,
+                attributes: ['closed'],
+                required: true
             }],
             order: [['sentAt', 'ASC']]
         });
