@@ -316,7 +316,7 @@ function StaffDashPage() {
                         <th onClick={() => handleSort('email')} className="p-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider border-b border-gray-200 cursor-pointer hover:bg-gray-100">Email {getSortIcon('email')}</th>
                         <th onClick={() => handleSort('createdAt')} className="p-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider border-b border-gray-200 cursor-pointer hover:bg-gray-100">Created At {getSortIcon('createdAt')}</th>
                         <th onClick={() => handleSort('lastUpdated')} className="p-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider border-b border-gray-200 cursor-pointer hover:bg-gray-100">Last Updated {getSortIcon('lastUpdated')}</th>
-                        <th onClick={() => handleSort('category')} className="p-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider border-b border-gray-200 cursor-pointer hover:bg-gray-100">Category {getSortIcon('category')}</th>
+                        <th className="p-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider border-b border-gray-200 cursor-pointer">Category</th>
                         <th onClick={() => handleSort('priority')} className="p-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider border-b border-gray-200 cursor-pointer hover:bg-gray-100">Priority {getSortIcon('priority')}</th>
                         <th onClick={() => handleSort('status')} className="p-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider border-b border-gray-200 cursor-pointer hover:bg-gray-100">Status {getSortIcon('status')}</th>
                         <th className="p-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider border-b border-gray-200">Actions</th>
@@ -367,30 +367,6 @@ function StaffDashPage() {
 }
 
 // Utility functions for styling
-function getStatusStyle(status) {
-  switch (status) {
-    case 'Cancelled':
-      return 'px-2 py-1 text-red-800 bg-red-200 rounded-full';
-    case 'In Progress':
-      return 'px-2 py-1 text-purple-800 bg-purple-200 rounded-full';
-    case 'Resolved':
-      return 'px-2 py-1 text-green-800 bg-green-400 rounded-full';
-    default:
-      return 'px-2 py-1 text-gray-800 bg-gray-200 rounded-full';
-  }
-}
 
-function getPriorityStyle(priority) {
-  switch (priority) {
-    case 'High':
-      return 'px-2 py-1 text-red-800 bg-red-200 rounded-full';
-    case 'Medium':
-      return 'px-2 py-1 text-orange-800 bg-orange-200 rounded-full';
-    case 'Low':
-      return 'px-2 py-1 text-green-800 bg-green-200 rounded-full';
-    default:
-      return 'px-2 py-1 text-gray-800 bg-gray-200 rounded-full';
-  }
-}
 
 export default StaffDashPage;

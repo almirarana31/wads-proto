@@ -7,7 +7,7 @@ import Modal from '../components/Modal';
 import { authService } from '../api/authService';
 
 // This page shows the shared pool of tickets for staff to claim
-function StaffTicketQueuePage({ staffCategory = 'Billing', onClaimTicket }) {
+function StaffTicketQueuePage({ onClaimTicket }) {
   const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' });
   // State for actual tickets from backend
   const [tickets, setTickets] = useState([]);
@@ -130,18 +130,6 @@ function StaffTicketQueuePage({ staffCategory = 'Billing', onClaimTicket }) {
     return sortableTickets;
   }, [filteredTickets, sortConfig]);
   // Utility function for priority pill styling
-  function getPriorityStyle(priority) {
-    switch (priority) {
-      case 'High':
-        return 'px-2 py-1 text-red-800 bg-red-200 rounded-full';
-      case 'Medium':
-        return 'px-2 py-1 text-orange-800 bg-orange-200 rounded-full';
-      case 'Low':
-        return 'px-2 py-1 text-green-800 bg-green-200 rounded-full';
-      default:
-        return 'px-2 py-1 text-gray-800 bg-gray-200 rounded-full';
-    }
-  }  // Claim handler (opens modal)
   const handleClaimClick = (ticket) => {
     setSelectedTicket(ticket);
     setModalOpen(true);
