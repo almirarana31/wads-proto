@@ -33,15 +33,27 @@ const ConversationCard = ({ number, startedDate, endedDate, onClick, isLoading =
       </div>
     );
   }
-
+  // Determine if conversation is closed
+  const isClosed = !!endedDate;
+  
   return (
     <div 
-      className="bg-white border border-gray-200 rounded-lg p-5 shadow-sm hover:shadow-md transition-shadow cursor-pointer"
+      className={`${isClosed ? 'bg-gray-50' : 'bg-white'} border ${
+        isClosed ? 'border-gray-300' : 'border-gray-200'
+      } rounded-lg p-5 shadow-sm hover:shadow-md transition-shadow cursor-pointer`}
       onClick={onClick}
     >
-      <h3 className="text-blue-800 font-semibold text-lg mb-2 text-left">
-        Conversation {number}
-      </h3>
+      <div className="flex justify-between items-start">
+        <h3 className={`${isClosed ? 'text-gray-700' : 'text-blue-800'} font-semibold text-lg mb-2 text-left`}>
+          Conversation {number}
+        </h3>
+        {isClosed && (
+          <span className="inline-flex items-center px-2 py-1 bg-gray-100 border border-gray-200 rounded-full text-xs">
+            <span className="h-1.5 w-1.5 bg-red-500 rounded-full mr-1.5"></span>
+            <span className="text-gray-600">Closed</span>
+          </span>
+        )}
+      </div>
       <div className="text-sm text-gray-600 space-y-1">
         <p>Started on: {formatDate(startedDate)}</p>
         <p>Ended on: {endedDate ? formatDate(endedDate) : 'Ongoing'}</p>
