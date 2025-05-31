@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { PageTitle, Subheading, Text } from '../components/text';
 import SecondaryButton from '../components/buttons/SecondaryButton';
+import PrimaryButton from '../components/buttons/PrimaryButton';
 import PriorityPill from '../components/PriorityPill';
 import Modal from '../components/Modal';
 import { authService } from '../api/authService';
@@ -120,34 +121,36 @@ function StaffTicketQueuePage({ staffCategory = 'Billing', onClaimTicket }) {
     setSelectedTicket(ticket);
     setModalOpen(true);
   };
-  
-  // Confirm claim
+    // Confirm claim
   const confirmClaim = async () => {
-    if (claimedTickets.length < 2 && selectedTicket) {
+    if (claimedTickets.length < 5 && selectedTicket) {
       try {
         // Call API to claim the ticket
-        await authService.claimTicket(selectedTicket.rawId);
+        const response = await authService.claimTicket(selectedTicket.rawId);
+        console.log('Claim response:', response);
         
-        // Update local state
+        // Add to claimed tickets and notify parent component
         setClaimedTickets([...claimedTickets, selectedTicket]);
         if (onClaimTicket) onClaimTicket(selectedTicket);
         
-        // Refresh the ticket pool
-        fetchTicketPool();
+        // Remove from ticket pool and refresh list
+        setTickets(tickets.filter(t => t.rawId !== selectedTicket.rawId));
+        
+        // Show success notification (could use a toast component instead of alert in a real app)
+        alert(`Successfully claimed ticket: ${selectedTicket.id}`);
       } catch (err) {
         console.error('Error claiming ticket:', err);
         alert(`Failed to claim ticket: ${err.response?.data?.message || err.message || 'Unknown error'}`);
       }
+    } else if (claimedTickets.length >= 5) {
+      alert('You have reached the maximum limit of 5 claimed tickets.');
     }
     setModalOpen(false);
     setSelectedTicket(null);
-  };  return (
-    <div className="bg-white p-6 md:p-10 rounded shadow-md max-w-[1200px] mx-auto mt-8">
-      <PageTitle title="Ticket Queue" subtitle={`Shared pool of unassigned tickets`} className="mb-8" />
-      
-      <div className="flex justify-between items-center mb-4">
-        <Text color="gray">You have claimed <span className="font-bold">{claimedTickets.length}</span> / 2 tickets.</Text>
-        
+  };return (
+    <div className="bg-white p-6 md:p-10 rounded shadow-md max-w-[1200px] mx-auto mt-8">      <PageTitle title="Ticket Queue" subtitle={`Shared pool of unassigned tickets`} className="mb-8" />
+        <div className="flex justify-between items-center mb-4">
+        <Text color="gray">You have claimed <span className="font-bold">{claimedTickets.length}</span> / 5 tickets</Text>
         <button 
           onClick={fetchTicketPool} 
           className="flex items-center px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
@@ -209,13 +212,13 @@ function StaffTicketQueuePage({ staffCategory = 'Billing', onClaimTicket }) {
                   <td className="p-3 text-sm text-gray-700 whitespace-nowrap">{new Date(ticket.createdAt).toLocaleDateString()}</td>
                   <td className="p-3 text-sm text-gray-700 whitespace-nowrap">
                     <PriorityPill priority={ticket.priority} />
-                  </td>
-                  <td className="p-3 text-sm whitespace-nowrap">
+                  </td>                  <td className="p-3 text-sm whitespace-nowrap">
                     <SecondaryButton
                       onClick={() => handleClaimClick(ticket)}
-                      disabled={claimedTickets.length >= 2}
+                      disabled={claimedTickets.length >= 5}
+                      className={claimedTickets.length >= 5 ? "opacity-50 cursor-not-allowed" : ""}
                     >
-                      Claim
+                      {claimedTickets.length >= 5 ? "Max Claimed" : "Claim"}
                     </SecondaryButton>
                   </td>
                 </tr>
@@ -229,8 +232,7 @@ function StaffTicketQueuePage({ staffCategory = 'Billing', onClaimTicket }) {
             </tbody>
           </table>
         )}
-      </div>
-      <Modal
+      </div>      <Modal
         isOpen={modalOpen}
         onClose={() => { setModalOpen(false); setSelectedTicket(null); }}
         title="Are you sure you want to claim this ticket?"
@@ -239,9 +241,13 @@ function StaffTicketQueuePage({ staffCategory = 'Billing', onClaimTicket }) {
             <SecondaryButton onClick={() => { setModalOpen(false); setSelectedTicket(null); }}>
               Cancel
             </SecondaryButton>
-            <SecondaryButton onClick={confirmClaim} disabled={claimedTickets.length >= 2}>
+            <PrimaryButton 
+              onClick={confirmClaim} 
+              disabled={claimedTickets.length >= 5}
+              className={claimedTickets.length >= 5 ? "opacity-50" : ""}
+            >
               Yes, Claim
-            </SecondaryButton>
+            </PrimaryButton>
           </div>
         }
       >
