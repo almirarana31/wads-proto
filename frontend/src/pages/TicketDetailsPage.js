@@ -208,10 +208,9 @@ function TicketDetailsPage() {
     return (
       <ContentContainer>
         <div className="text-center py-10">
-          <Text color="text-red-500">{error}</Text>
-          <button 
+          <Text color="text-red-500">{error}</Text>          <button 
             onClick={() => window.location.reload()}
-            className="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+            className="mt-4 px-4 py-2 bg-bianca-primary text-white rounded hover:bg-bianca-primary/80"
           >
             Try Again
           </button>
@@ -225,10 +224,9 @@ function TicketDetailsPage() {
     return (
       <ContentContainer>
         <div className="text-center py-10">
-          <Text color="text-red-500">Ticket not found</Text>
-          <button 
+          <Text color="text-red-500">Ticket not found</Text>          <button 
             onClick={() => navigate('/view-tickets')}
-            className="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+            className="mt-4 px-4 py-2 bg-bianca-primary text-white rounded hover:bg-bianca-primary/80"
           >
             Back to Tickets
           </button>
@@ -269,9 +267,8 @@ function TicketDetailsPage() {
               This ticket has been cancelled and can no longer be modified.
             </Text>
           </div>
-        ) : ticket.status !== 'Pending' && (
-          <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-md">
-            <Text color="text-blue-800" align="center">
+        ) : ticket.status !== 'Pending' && (          <div className="mt-4 p-4 bg-bianca-background/30 border border-bianca-primary/30 rounded-md">
+            <Text color="text-bianca-primary" align="center">
               This ticket is {ticket.status.toLowerCase()} and can no longer be modified.
             </Text>
           </div>

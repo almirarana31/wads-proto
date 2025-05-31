@@ -175,14 +175,13 @@ function StaffTicketQueuePage({ staffCategory = 'Billing', onClaimTicket }) {
         <div className="flex justify-between items-center mb-4">
         <Text color="gray">
           You have {isCountLoading ? (
-            <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-solid border-blue-600 border-r-transparent align-[-0.125em] ml-1 mr-1"></span>
+            <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-solid border-bianca-primary border-r-transparent align-[-0.125em] ml-1 mr-1"></span>
           ) : (
             <span className="font-bold">{assignedTicketCount}</span>
           )} / 5 active tickets assigned to you
-        </Text>
-        <button 
+        </Text>        <button 
           onClick={refreshData} 
-          className="flex items-center px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
+          className="flex items-center px-4 py-2 bg-bianca-primary text-white rounded hover:bg-bianca-primary/80 transition-colors"
           disabled={isLoading || isCountLoading}
         >
           {isLoading ? (
@@ -199,7 +198,7 @@ function StaffTicketQueuePage({ staffCategory = 'Billing', onClaimTicket }) {
       <div className="overflow-x-auto">
         {isLoading ? (
           <div className="text-center p-6">
-            <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-blue-500 border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite]"></div>
+            <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-bianca-primary border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite]"></div>
             <p className="mt-2 text-gray-600">Loading ticket pool...</p>
           </div>
         ) : error ? (
@@ -210,10 +209,9 @@ function StaffTicketQueuePage({ staffCategory = 'Billing', onClaimTicket }) {
               </svg>
             </div>
             <h3 className="text-lg font-semibold text-red-700 mb-2">Error Loading Ticket Pool</h3>
-            <p className="text-gray-700 mb-4">{error}</p>
-            <button 
+            <p className="text-gray-700 mb-4">{error}</p>            <button 
               onClick={fetchTicketPool} 
-              className="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
+              className="mt-4 px-4 py-2 bg-bianca-primary text-white rounded hover:bg-bianca-primary/80 transition-colors"
             >
               Try Again
             </button>
