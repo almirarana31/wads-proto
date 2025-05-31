@@ -24,7 +24,7 @@ export const getConversation = async (req, res) => {
                 attributes: ['username'],
                 required: true
             }, {
-                include: Conversation,
+                model: Conversation,
                 attributes: ['closed'],
                 required: true
             }],
