@@ -6,10 +6,9 @@ const SecondaryButton = ({ children, onClick, fullWidth, type = 'button', classN
     <button
       type={type}
       onClick={onClick}
-      disabled={disabled}
-      className={`
-        px-4 py-2 bg-gray-200 text-gray-800 rounded-md
-        hover:bg-gray-300 transition-colors
+      disabled={disabled}      className={`
+        px-4 py-2 bg-white border border-bianca-primary text-bianca-primary rounded-md
+        hover:bg-bianca-primary hover:text-white transition-colors
         disabled:opacity-50 disabled:cursor-not-allowed
         ${fullWidth ? 'w-full' : ''}
         ${className}

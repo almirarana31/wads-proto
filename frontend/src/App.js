@@ -99,10 +99,9 @@ function App() {
     }
     return children;
   };
-
   return (
     <Router>
-      <div className="min-h-screen bg-blue-100">
+      <div className="min-h-screen bg-bianca-background">
         <Header isAuthenticated={isAuthenticated} userRole={userRole} />
         <main>
           <Routes>

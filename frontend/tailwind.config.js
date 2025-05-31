@@ -7,12 +7,12 @@ module.exports = {
       fontFamily: {
         'playfair': ['"Playfair Display"', 'serif'],
         'montserrat': ['Montserrat', 'sans-serif'],
-      },
-      colors: {
+      },      colors: {
         bianca: {
-          'baby-blue': '#E3F2FD',
-          'blue': '#1D4ED8',
-          'dark-blue': '#1E40AF',
+          'primary': '#0053A1',  // Dark blue for buttons and text
+          'background': '#B1DFF9', // Light blue for backgrounds
+          'dark-blue': '#0053A1', // For backward compatibility
+          'blue': '#B1DFF9',      // For backward compatibility
         }
       },
     },
