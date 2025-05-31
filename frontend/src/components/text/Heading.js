@@ -1,6 +1,6 @@
 import React from 'react';
 function Heading({ level = 1, children, className = '', color = 'gray', center = false, ...props }) {
-  const baseClasses = 'font-bold';
+  const baseClasses = 'font-bold font-playfair';
   
   // size classes based on heading level
   const sizeClasses = {

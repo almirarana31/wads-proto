@@ -1,13 +1,13 @@
 import React from 'react';
 
 function Text({ children, className = '', color = 'gray', size = 'base', weight = 'normal', center = false, ...props }) {
-  // weight variants
+  // weight variants with montserrat font
   const weightClasses = {
-    light: 'font-light',
-    normal: 'font-normal',
-    medium: 'font-medium',
-    semibold: 'font-semibold',
-    bold: 'font-bold'
+    light: 'font-light font-montserrat',
+    normal: 'font-normal font-montserrat',
+    medium: 'font-medium font-montserrat',
+    semibold: 'font-semibold font-montserrat',
+    bold: 'font-bold font-montserrat'
   };
 
   // size variants
