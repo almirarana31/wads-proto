@@ -11,6 +11,7 @@ import PrimaryButton from '../components/buttons/PrimaryButton';
 import Modal from '../components/Modal';
 import { PageTitle, Text, Subheading, Label } from '../components/text';
 import { authService } from '../api/authService';
+import ChatBubble from '../components/ChatBubble';
 
 function StaffTicketView() {  const { ticketId } = useParams();
   const navigate = useNavigate();
@@ -132,11 +133,32 @@ function StaffTicketView() {  const { ticketId } = useParams();
     } else {
       navigate('/staff-dashboard');
     }
-  };
-  const handleStartConversation = () => {
-    // Navigate to the chat room with the current ticket ID and indicating it's a new conversation
-    console.log('Starting new conversation for ticket:', ticketId);
-    navigate(`/chatroom/${ticketId}/new`);
+  };  const [isCreatingConversation, setIsCreatingConversation] = useState(false);
+  const [createConversationError, setCreateConversationError] = useState(null);
+  
+  const handleStartConversation = async () => {
+    try {
+      setIsCreatingConversation(true);
+      setCreateConversationError(null);
+      
+      // Remove 'TKT-' prefix if present in the ticketId
+      const rawTicketId = ticketId.startsWith('TKT-') ? ticketId.replace('TKT-', '') : ticketId;
+      
+      // Create a new conversation
+      const response = await authService.createConversation(rawTicketId);
+      
+      if (response && response.id) {
+        // Navigate to the new conversation
+        navigate(`/chatroom/${ticketId}/${response.id}`);
+      } else {
+        throw new Error('Failed to create conversation');
+      }
+    } catch (err) {
+      console.error('Error creating conversation:', err);
+      setCreateConversationError('Failed to create conversation. Please try again.');
+    } finally {
+      setIsCreatingConversation(false);
+    }
   };
 
   const handleConversationClick = (conversationId) => {
@@ -447,9 +469,24 @@ function StaffTicketView() {  const { ticketId } = useParams();
               <div className="bg-gray-50 p-4 rounded-md border border-gray-200 mb-6">
                 <Text color="text-gray-600" align="center">No conversations found for this ticket.</Text>
               </div>
-            )}
-                <PrimaryButton onClick={handleStartConversation} fullWidth>
-                  Start a New Conversation
+            )}                {createConversationError && (
+                  <div className="bg-red-50 p-4 rounded-md border border-red-200 mb-4">
+                    <Text color="text-red-600" align="center">{createConversationError}</Text>
+                  </div>
+                )}
+                <PrimaryButton 
+                  onClick={handleStartConversation} 
+                  fullWidth
+                  disabled={isCreatingConversation}
+                >
+                  {isCreatingConversation ? (
+                    <span className="flex items-center justify-center gap-2">
+                      <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-solid border-white border-r-transparent"></span>
+                      Creating Conversation...
+                    </span>
+                  ) : (
+                    'Start a New Conversation'
+                  )}
                 </PrimaryButton>
               </div>
             ) : (

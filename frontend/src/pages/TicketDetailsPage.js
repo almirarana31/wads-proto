@@ -28,6 +28,10 @@ function TicketDetailsPage() {
     description: '',
     category: ''
   });
+  
+  // States for creating a new conversation
+  const [isCreatingConversation, setIsCreatingConversation] = useState(false);
+  const [createConversationError, setCreateConversationError] = useState(null);
 
   // Fetch ticket details when component mounts
   useEffect(() => {
@@ -234,6 +238,32 @@ function TicketDetailsPage() {
     fetchConversations();
   }, [ticket, sortOrder]);
 
+  // Handle starting a new conversation
+  const handleStartConversation = async () => {
+    try {
+      setIsCreatingConversation(true);
+      setCreateConversationError(null);
+      
+      // Get raw ticket ID without 'TKT-' prefix
+      const rawTicketId = ticket.rawId;
+      
+      // Create a new conversation
+      const response = await authService.createConversation(rawTicketId);
+      
+      if (response && response.id) {
+        // Navigate to the new conversation
+        navigate(`/chatroom/${rawTicketId}/${response.id}`);
+      } else {
+        throw new Error('Failed to create conversation');
+      }
+    } catch (err) {
+      console.error('Error creating conversation:', err);
+      setCreateConversationError('Failed to create conversation. Please try again.');
+    } finally {
+      setIsCreatingConversation(false);
+    }
+  };
+
   // Loading and error states
   if (isLoading && !ticket) {
     return (
@@ -363,12 +393,38 @@ function TicketDetailsPage() {
                     onClick={() => handleConversationClick(conversation.id)}
                   />
                 ))
-              ) : (
-                <div className="col-span-2 text-center py-8">
+              ) : (                <div className="col-span-2 text-center py-8">
                   <Text color="text-gray-500">No conversations found for this ticket.</Text>
                 </div>
               )}
             </div>
+          )}
+          
+          {/* Show button to start new conversation except for Cancelled/Resolved tickets */}
+          {ticket.status !== 'Cancelled' && ticket.status !== 'Resolved' && (
+            <>
+              {createConversationError && (
+                <div className="bg-red-50 p-4 rounded-md border border-red-200 mt-4">
+                  <Text color="text-red-600" align="center">{createConversationError}</Text>
+                </div>
+              )}
+              <div className="mt-4">
+                <PrimaryButton 
+                  onClick={handleStartConversation} 
+                  fullWidth
+                  disabled={isCreatingConversation}
+                >
+                  {isCreatingConversation ? (
+                    <span className="flex items-center justify-center gap-2">
+                      <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-solid border-white border-r-transparent"></span>
+                      Creating Conversation...
+                    </span>
+                  ) : (
+                    'Start a New Conversation'
+                  )}
+                </PrimaryButton>
+              </div>
+            </>
           )}
         </div>
       ) : (
