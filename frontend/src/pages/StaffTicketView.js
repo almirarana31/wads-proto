@@ -80,14 +80,11 @@ function StaffTicketView() {  const { ticketId } = useParams();
       try {
         setIsLoadingConversations(true);
         const rawTicketId = ticketId.startsWith('TKT-') ? ticketId.replace('TKT-', '') : ticketId;
-        const [conversationHistory] = await Promise.all([
-          authService.getConversationHistory(rawTicketId, sortOrder)
-        ]);
+        const conversationHistory = await authService.getConversationHistory(rawTicketId, sortOrder);
         
         // Format conversation data
-        const formattedConversations = conversationHistory.map((conv, index) => ({
+        const formattedConversations = conversationHistory.map(conv => ({
           id: conv.id,
-          number: index + 1,
           startedDate: conv.createdAt,
           endedDate: conv.endedAt || null,
           messages: conv.Messages?.map(msg => ({
@@ -99,7 +96,10 @@ function StaffTicketView() {  const { ticketId } = useParams();
           })) || []
         }));
         
-        setConversations(formattedConversations);
+        // Process and number conversations
+        const numberedConversations = processConversationsWithNumbers(formattedConversations);
+        
+        setConversations(numberedConversations);
         setConversationsError(null);
       } catch (err) {
         console.error('Error fetching conversations:', err);
@@ -165,9 +165,9 @@ function StaffTicketView() {  const { ticketId } = useParams();
     } finally {
       setIsCreatingConversation(false);
     }
-  };
-  const handleConversationClick = (conversationId, conversationNumber) => {
-    // Store the conversation number in sessionStorage so Chatroom can display it
+  };  const handleConversationClick = (conversationId, conversationNumber) => {
+    // We're already storing conversation numbers when fetching conversations
+    // But for extra safety, store it again here before navigating
     sessionStorage.setItem(`conversation_number_${conversationId}`, conversationNumber);
     navigate(`/chatroom/${ticketId}/${conversationId}`);
   };
@@ -319,6 +319,36 @@ function StaffTicketView() {  const { ticketId } = useParams();
       .finally(() => {
         setIsLoading(false);
       });
+  };
+  // A helper function to calculate and store conversation numbers correctly
+  const processConversationsWithNumbers = (conversations) => {
+    // First sort by created date to ensure consistent numbering
+    const sortedByDate = [...conversations].sort(
+      (a, b) => new Date(a.startedDate || a.createdAt) - new Date(b.startedDate || b.createdAt)
+    );
+    
+    // Add numbers to each conversation
+    const withNumbers = sortedByDate.map((conv, index) => {
+      // Use backend sequence number if available, otherwise use index+1
+      const number = conv.sequence || index + 1;
+      
+      // Store in sessionStorage for consistent reference
+      sessionStorage.setItem(`conversation_number_${conv.id}`, number);
+      
+      return {
+        ...conv,
+        number
+      };
+    });
+    
+    // Apply display sorting
+    return sortOrder === 'newest' 
+      ? [...withNumbers].sort((a, b) => {
+          const dateA = new Date(a.startedDate || a.createdAt);
+          const dateB = new Date(b.startedDate || b.createdAt);
+          return dateB - dateA;
+        })
+      : withNumbers;
   };
   return (
     <ContentContainer>

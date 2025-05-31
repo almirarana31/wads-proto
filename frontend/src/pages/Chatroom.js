@@ -22,20 +22,81 @@ function Chatroom() {
   const [actualConversationId, setActualConversationId] = useState(isNewConversation ? null : conversationId);
   const [lastMessageId, setLastMessageId] = useState(null);
   const [input, setInput] = useState('');
+  const [conversationNumber, setConversationNumber] = useState(null);
 
   // ref that scrolls the chat to the bottom after new message
   const chatContainerRef = useRef(null);
-  // We'll determine conversation status from the API response
-  // For now, we'll assume it's open unless set otherwise
+  
   // --- IMPORTANTES ---
   // Fetch conversation data when component mounts
   useEffect(() => {
     if (!isNewConversation) {
       // Fetch existing conversation
       fetchConversationData();
+      // Get the conversation number
+      getConversationNumber();
     }
   }, [conversationId]);
 
+  // When a new conversation is created, update conversation number
+  useEffect(() => {
+    if (actualConversationId && isNewConversation) {
+      // This happens after creating a new conversation
+      getConversationNumber();
+    }
+  }, [actualConversationId]);
+
+  // Track when new conversation has been converted to a real conversation
+  useEffect(() => {
+    if (isNewConversation && actualConversationId) {
+      // Update URL without page reload when a new conversation is created
+      window.history.replaceState(null, '', `/chatroom/${ticketId}/${actualConversationId}`);
+    }
+  }, [isNewConversation, actualConversationId, ticketId]);
+  // Function to get the conversation number for display
+  const getConversationNumber = async () => {
+    // Determine which conversation ID to use (the one from params or newly created)
+    const convId = isNewConversation ? actualConversationId : conversationId;
+    
+    // Skip if we don't have a valid conversation ID yet
+    if (!convId) return;
+    
+    // First try to get from sessionStorage
+    const storedNumber = sessionStorage.getItem(`conversation_number_${convId}`);
+    
+    if (storedNumber) {
+      setConversationNumber(storedNumber);
+      return;
+    }
+    
+    // If not in sessionStorage, fetch all conversations for the ticket to determine the number
+    try {
+      // Make sure we're using a raw numeric ID for the API call
+      const rawTicketId = ticketId.startsWith('TKT-') ? ticketId.replace('TKT-', '') : ticketId;
+      const conversationHistory = await authService.getConversationHistory(rawTicketId);
+      
+      if (Array.isArray(conversationHistory)) {
+        // Find the index of current conversation in the history
+        // Sort by creation date to ensure consistent numbering
+        const sortedConversations = [...conversationHistory].sort(
+          (a, b) => new Date(a.createdAt) - new Date(b.createdAt)
+        );
+        
+        const index = sortedConversations.findIndex(conv => conv.id.toString() === convId.toString());
+        
+        if (index !== -1) {
+          const number = index + 1; // Convert to 1-based index
+          setConversationNumber(number);
+          // Store for future use
+          sessionStorage.setItem(`conversation_number_${convId}`, number);
+        }
+      }
+    } catch (err) {
+      console.error('Error determining conversation number:', err);
+      // Fallback to using '#' if we can't determine the number
+      setConversationNumber('#');
+    }
+  };
   // Fetch conversation messages from API
   const fetchConversationData = async () => {
     try {
@@ -69,9 +130,24 @@ function Chatroom() {
           setLastMessageId(formattedMessages[formattedMessages.length - 1].id);
         }
         
-        // Update conversation status if needed
-        // This would come from the API in a real implementation
-        setConversationStatus('open'); // Default to open, API should provide actual status
+        // Check for metadata in the response 
+        if (response.metadata) {
+          // If backend provides sequence number, use it
+          if (response.metadata.sequenceNumber) {
+            setConversationNumber(response.metadata.sequenceNumber);
+            sessionStorage.setItem(`conversation_number_${conversationId}`, response.metadata.sequenceNumber);
+          }
+          
+          // Update conversation status if provided
+          if (response.metadata.isOpen !== undefined) {
+            setConversationStatus(response.metadata.isOpen ? 'open' : 'closed');
+          } else {
+            setConversationStatus('open'); // Default to open
+          }
+        } else {
+          // If no metadata, default to open status
+          setConversationStatus('open');
+        }
       }
     } catch (err) {
       console.error('Error fetching conversation data:', err);
@@ -124,19 +200,19 @@ function Chatroom() {
       };
       
       setChatMessages(prev => [...prev, optimisticMessage]);
-      
-      // Create conversation if it's a new one
+        // Create conversation if it's a new one
       if (isNewConversation) {
-        const newConvResponse = await authService.createConversation(ticketId);
+        // Make sure we're using a raw numeric ID for the API call
+        const rawTicketId = ticketId.startsWith('TKT-') ? ticketId.replace('TKT-', '') : ticketId;
+        const newConvResponse = await authService.createConversation(rawTicketId);
+        
         // Save the newly created conversation ID
         setActualConversationId(newConvResponse.id);
         
         // Send message to the new conversation
         await authService.sendMessage(newConvResponse.id, messageContent);
         
-        // Update URL without reloading the page
-        window.history.replaceState(null, '', `/chatroom/${ticketId}/${newConvResponse.id}`);
-          // No need to try to modify isNewConversation as it's from useParams
+        // We'll let the useEffect handle updating the URL and conversation number
       } else {
         // Send message to existing conversation
         await authService.sendMessage(conversationId, messageContent);
@@ -163,7 +239,6 @@ function Chatroom() {
   const handleKeyDown = (e) => {
     if (e.key === 'Enter') handleSend();
   };
-
   // Poll for new messages
   useEffect(() => {
     // Don't poll if this is a new conversation, no conversation ID, or conversation is closed
@@ -203,6 +278,23 @@ function Chatroom() {
               setLastMessageId(lastMessage.id);
             }
           }
+          
+          // Check for metadata in the response for potential updates
+          if (response.metadata) {
+            // If backend provides sequence number, use it
+            if (response.metadata.sequenceNumber && !conversationNumber) {
+              setConversationNumber(response.metadata.sequenceNumber);
+              sessionStorage.setItem(`conversation_number_${actualConversationId}`, response.metadata.sequenceNumber);
+            }
+            
+            // Update conversation status if provided and different from current
+            if (response.metadata.isOpen !== undefined) {
+              const newStatus = response.metadata.isOpen ? 'open' : 'closed';
+              if (newStatus !== conversationStatus) {
+                setConversationStatus(newStatus);
+              }
+            }
+          }
         }
       } catch (err) {
         console.error('Error polling for new messages:', err);
@@ -215,13 +307,38 @@ function Chatroom() {
     
     // Cleanup interval on unmount
     return () => clearInterval(intervalId);
-  }, [actualConversationId, isNewConversation, conversationStatus, lastMessageId]);
+  }, [actualConversationId, isNewConversation, conversationStatus, lastMessageId, conversationNumber]);
+
+  // Function to close a conversation
+  const handleCloseConversation = async () => {
+    try {
+      // Update local UI state immediately for better UX
+      setConversationStatus('closed');
+      
+      // Call the API to close the conversation
+      await authService.closeConversation(
+        isNewConversation ? actualConversationId : conversationId
+      );
+      
+      // Show a success message or notification
+      alert('Conversation has been closed');
+      
+      // Could navigate back to ticket details here if needed
+      // navigate(-1);
+    } catch (err) {
+      console.error('Error closing conversation:', err);
+      // Revert UI state on error
+      setConversationStatus('open');
+      alert('Failed to close conversation. Please try again.');
+    }
+  };
+
   return (
     <ContentContainer>      <div className="relative mb-5">
         <BackButton onClick={handleBack} className="absolute -top-2 -left-2" />
         <div className="text-center pt-8">
-          {/* Use the conversation number passed from ticket view instead of conversation ID */}
-          <PageTitle title={isNewConversation ? 'New Conversation' : `Conversation ${sessionStorage.getItem(`conversation_number_${conversationId}`) || '1'}`} />
+          {/* Use the conversation number we've determined */}
+          <PageTitle title={isNewConversation ? 'New Conversation' : `Conversation ${conversationNumber || '#'}`} />
         </div>
       </div>
       <div className="border-b border-gray-200 my-6"></div>
@@ -277,38 +394,53 @@ function Chatroom() {
           </div>
         )}
       </div>
-      
-      {/* Chat input */}
+        {/* Chat input */}
       <div className="max-w-2xl mx-auto w-full mt-4">
         {conversationStatus === 'open' || isNewConversation ? (
-          <div className="flex bg-white rounded-xl shadow-md border border-gray-200">
-            <input
-              type="text"
-              className="flex-1 px-4 py-3 rounded-l-xl outline-none"
-              placeholder="Type your message..."
-              value={input}
-              onChange={e => setInput(e.target.value)}
-              onKeyDown={handleKeyDown}
-              disabled={isSending}
-            />
-            <PrimaryButton
-              onClick={handleSend}
-              aria-label="Send"
-              type="button"
-              className="px-5 flex items-center justify-center"
-              disabled={isSending || input.trim() === ''}
-            >
-              {isSending ? (
-                <div className="inline-block h-5 w-5 animate-spin rounded-full border-2 border-solid border-white border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite]"></div>
-              ) : (
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none"
-                  viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round"
-                    d="M5 12l14-7-7 14-2-5-5-2z" />
-                </svg>
-              )}
-            </PrimaryButton>
-          </div>
+          <>
+            <div className="flex bg-white rounded-xl shadow-md border border-gray-200">
+              <input
+                type="text"
+                className="flex-1 px-4 py-3 rounded-l-xl outline-none"
+                placeholder="Type your message..."
+                value={input}
+                onChange={e => setInput(e.target.value)}
+                onKeyDown={handleKeyDown}
+                disabled={isSending}
+              />
+              <PrimaryButton
+                onClick={handleSend}
+                aria-label="Send"
+                type="button"
+                className="px-5 flex items-center justify-center"
+                disabled={isSending || input.trim() === ''}
+              >
+                {isSending ? (
+                  <div className="inline-block h-5 w-5 animate-spin rounded-full border-2 border-solid border-white border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite]"></div>
+                ) : (
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none"
+                    viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round"
+                      d="M5 12l14-7-7 14-2-5-5-2z" />
+                  </svg>
+                )}
+              </PrimaryButton>
+            </div>
+            {/* Close conversation button - only show if we have messages */}
+            {chatMessages.length > 0 && !isNewConversation && (
+              <div className="flex justify-end mt-3">
+                <button
+                  onClick={handleCloseConversation}
+                  className="text-sm text-red-600 hover:text-red-800 flex items-center"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                  Close Conversation
+                </button>
+              </div>
+            )}
+          </>
         ) : (
           <div className="text-center py-6">
             <Text color="text-gray-500" size="lg" weight="semibold">

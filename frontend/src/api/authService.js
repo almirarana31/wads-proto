@@ -106,6 +106,23 @@ export const authService = {
         return response.data;
     },    async getConversation(conversationId) {
         const response = await api.get(`/conversation/${conversationId}`);
+        // Check if the response contains array of messages but no metadata
+        if (Array.isArray(response.data) && !response.data.metadata) {
+            // Enhance the response with our own metadata structure
+            // This is a temporary solution until the backend is updated
+            const responseData = [...response.data];
+            
+            // Try to get sequence number from sessionStorage
+            const sequenceNumber = sessionStorage.getItem(`conversation_number_${conversationId}`);
+            
+            // Add metadata to the response array object
+            responseData.metadata = {
+                sequenceNumber: sequenceNumber ? parseInt(sequenceNumber) : null,
+                isOpen: true // Default to open if we don't have that info
+            };
+            
+            return responseData;
+        }
         return response.data;
     }
 

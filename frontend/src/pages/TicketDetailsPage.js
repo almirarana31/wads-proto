@@ -179,27 +179,24 @@ function TicketDetailsPage() {
       setIsLoading(false);
     }
   };
-
   // Sort conversations
   const sortedConversations = conversations.length > 0 
-    ? [...conversations].sort((a, b) => {
-        const dateA = new Date(a.startedDate);
-        const dateB = new Date(b.startedDate);
-        return sortOrder === 'newest' ? dateB - dateA : dateA - dateB;
-      })
+    ? (sortOrder === 'newest'
+        ? [...conversations].sort((a, b) => new Date(b.startedDate) - new Date(a.startedDate))
+        : [...conversations].sort((a, b) => new Date(a.startedDate) - new Date(b.startedDate)))
     : [];
 
   // Handle navigation
   const handleBack = () => {
     navigate(-1);
   };
-    // Handle conversation click
+  // Handle conversation click
   const handleConversationClick = (conversationId, conversationNumber) => {
-    // Store the conversation number in sessionStorage so Chatroom can display it
+    // We're already storing conversation numbers when fetching conversations
+    // But for extra safety, store it again here before navigating
     sessionStorage.setItem(`conversation_number_${conversationId}`, conversationNumber);
     navigate(`/chatroom/${ticketId}/${conversationId}`);
   };
-
   // Fetch conversations for the ticket
   const fetchConversations = async () => {
     if (!ticket) return;
@@ -210,9 +207,8 @@ function TicketDetailsPage() {
       const conversationHistory = await authService.getConversationHistory(rawTicketId, sortOrder);
       
       // Format conversation data
-      const formattedConversations = conversationHistory.map((conv, index) => ({
+      const formattedConversations = conversationHistory.map(conv => ({
         id: conv.id,
-        number: index + 1,
         startedDate: conv.createdAt,
         endedDate: conv.endedAt || null,
         messages: conv.Messages?.map(msg => ({
@@ -224,7 +220,10 @@ function TicketDetailsPage() {
         })) || []
       }));
       
-      setConversations(formattedConversations);
+      // Process and number conversations
+      const numberedConversations = processConversationsWithNumbers(formattedConversations);
+      
+      setConversations(numberedConversations);
       setConversationsError(null);
     } catch (err) {
       console.error('Error fetching conversations:', err);
@@ -232,6 +231,37 @@ function TicketDetailsPage() {
     } finally {
       setIsLoadingConversations(false);
     }
+  };
+
+  // A helper function to calculate and store conversation numbers correctly
+  const processConversationsWithNumbers = (conversations) => {
+    // First sort by created date to ensure consistent numbering
+    const sortedByDate = [...conversations].sort(
+      (a, b) => new Date(a.startedDate || a.createdAt) - new Date(b.startedDate || b.createdAt)
+    );
+    
+    // Add numbers to each conversation
+    const withNumbers = sortedByDate.map((conv, index) => {
+      // Use backend sequence number if available, otherwise use index+1
+      const number = conv.sequence || index + 1;
+      
+      // Store in sessionStorage for consistent reference
+      sessionStorage.setItem(`conversation_number_${conv.id}`, number);
+      
+      return {
+        ...conv,
+        number
+      };
+    });
+    
+    // Apply display sorting
+    return sortOrder === 'newest' 
+      ? [...withNumbers].sort((a, b) => {
+          const dateA = new Date(a.startedDate || a.createdAt);
+          const dateB = new Date(b.startedDate || b.createdAt);
+          return dateB - dateA;
+        })
+      : withNumbers;
   };
 
   // Fetch conversations when ticket loads or sort order changes
