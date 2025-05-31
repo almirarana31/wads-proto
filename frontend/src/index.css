@@ -4,13 +4,17 @@
 
 body {
   margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+  font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
     'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   background-color: #dbeafe; /* Blue-100 background for all pages */
   min-height: 100vh; /* Ensure full viewport height coverage */
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Playfair Display', serif;
 }
 
 code {
@@ -21,4 +25,13 @@ code {
 /* Custom styles for Bianca Aesthetic Helpdesk */
 .bg-blue-100 {
   background-color: #E3F2FD; /* Customize baby blue background if needed */
+}
+
+/* Font Class Helpers */
+.font-playfair {
+  font-family: 'Playfair Display', serif;
+}
+
+.font-montserrat {
+  font-family: 'Montserrat', sans-serif;
 }
