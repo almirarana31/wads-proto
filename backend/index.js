@@ -42,8 +42,8 @@ app.use('/api/audit', auditRoutes);
 // remove once ran ONCE
 app.use('/api', defaultQueries);
 
-// cron job
-cron.schedule("* * */24 * * *", escalatePriority)
+// // cron job
+// cron.schedule("* * */24 * * *", escalatePriority)
 
 app.get('/', (req, res) => {
     res.send("Hello from the backend!")
