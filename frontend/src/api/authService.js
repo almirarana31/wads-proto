@@ -1,3 +1,4 @@
+import { closeConversation, getConversationHistory } from '../../../backend/controllers/conversation';
 import api from './axios';
 
 export const authService = {
@@ -70,10 +71,14 @@ export const authService = {
     async claimTicket(ticketId) {
         const response = await api.patch(`/staff/tickets`, { ticket_id: ticketId });
         return response.data;
-    },    async staffCancelTicket(ticketId) {
+    },    
+    
+    async staffCancelTicket(ticketId) {
         const response = await api.patch(`/staff/tickets/${ticketId}/cancel`);
         return response.data;
-    },    async staffResolveTicket(ticketId) {
+    },    
+    
+    async staffResolveTicket(ticketId) {
         const response = await api.patch(`/staff/tickets/${ticketId}/resolve`);
         return response.data;
     },
@@ -82,8 +87,28 @@ export const authService = {
         return response.data;
     },
     
-    async getTicketConversations(ticketId) {
-        const response = await api.get(`/staff/tickets/${ticketId}/conversations`);
+    async getConversationHistory(ticketId) {
+        const response = await api.get(`/conversation/${ticketId}/history${queryString ? '?' + queryString : ''}`, {sortBy: 'newest'});
+        return response.data;
+    },
+
+    async closeConversation(conversationId) {
+        const response = await api.patch(`/conversation/${conversationId}`);
+        return response.data;
+    },
+
+    async createConversation(ticketId) {
+        const response = await api.post(`/conversation/${ticketId}`);
+        return response.data;
+    },
+
+    async sendMessage(conversationId, message) {
+        const response = await api.post(`/conversation/${conversationId}/message`, { content: message });
+        return response.data;
+    },
+
+    async getConversation(conversationId) {
+        const response = await api.get(`/staff/conversation/${conversationId}`);
         return response.data;
     }
 
