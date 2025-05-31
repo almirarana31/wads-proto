@@ -205,20 +205,25 @@ function TicketDetailsPage() {
       setIsLoadingConversations(true);
       const rawTicketId = ticket.rawId;
       const conversationHistory = await authService.getConversationHistory(rawTicketId, sortOrder);
-      
-      // Format conversation data
-      const formattedConversations = conversationHistory.map(conv => ({
-        id: conv.id,
-        startedDate: conv.createdAt,
-        endedDate: conv.endedAt || null,
-        messages: conv.Messages?.map(msg => ({
-          id: msg.id,
-          content: msg.content,
-          sender: msg.sender_type,
-          senderName: msg.sender_name,
-          timestamp: new Date(msg.createdAt).toLocaleString()
-        })) || []
-      }));
+        // Format conversation data
+      const formattedConversations = conversationHistory.map(conv => {
+        // Handle conversations with a closed attribute
+        if (conv.closed !== undefined) {
+          return {
+            id: conv.id,
+            startedDate: conv.createdAt,
+            endedDate: new Date(), // Use current date since it's marked as closed
+            isClosed: true
+          };
+        }
+        
+        return {
+          id: conv.id,
+          startedDate: conv.createdAt,
+          endedDate: conv.endedAt || null,
+          isClosed: !!conv.endedAt
+        };
+      });
       
       // Process and number conversations
       const numberedConversations = processConversationsWithNumbers(formattedConversations);
@@ -430,38 +435,12 @@ function TicketDetailsPage() {
                     onClick={() => handleConversationClick(conversation.id, conversation.number)}
                   />
                 ))
-              ) : (                <div className="col-span-2 text-center py-8">
-                  <Text color="text-gray-500">No conversations found for this ticket.</Text>
+              ) : (
+                <div className="col-span-2 text-center py-8 bg-gray-50 rounded-lg border border-gray-200">
+                  <Text color="text-gray-500">No conversations available. Please wait for staff to initiate a conversation.</Text>
                 </div>
               )}
             </div>
-          )}
-          
-          {/* Show button to start new conversation except for Cancelled/Resolved tickets */}
-          {ticket.status !== 'Cancelled' && ticket.status !== 'Resolved' && (
-            <>
-              {createConversationError && (
-                <div className="bg-red-50 p-4 rounded-md border border-red-200 mt-4">
-                  <Text color="text-red-600" align="center">{createConversationError}</Text>
-                </div>
-              )}
-              <div className="mt-4">
-                <PrimaryButton 
-                  onClick={handleStartConversation} 
-                  fullWidth
-                  disabled={isCreatingConversation}
-                >
-                  {isCreatingConversation ? (
-                    <span className="flex items-center justify-center gap-2">
-                      <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-solid border-white border-r-transparent"></span>
-                      Creating Conversation...
-                    </span>
-                  ) : (
-                    'Start a New Conversation'
-                  )}
-                </PrimaryButton>
-              </div>
-            </>
           )}
         </div>
       ) : (

@@ -1,6 +1,8 @@
 import jwt from 'jsonwebtoken';
 import {Staff, User, Conversation, Ticket} from '../models/index.js';
 import { logAudit } from '../controllers/audit.js';
+import sequelize from '../config/sequelize.js';
+import { Op } from 'sequelize';
 
 export const authN = (req, res, next) => {
     try {

@@ -125,12 +125,7 @@ function ViewTicketsPage() {
             title="Your Tickets"
             subtitle={
               <>
-                Welcome <span className={`underline ${isLoadingUsername ? 'opacity-70' : ''}`}>
-                  {isLoadingUsername ? 'User' : username}
-                  {isLoadingUsername && (
-                    <span className="inline-block w-4 h-4 ml-1 border-t-2 border-blue-500 border-r-2 rounded-full animate-spin"></span>
-                  )}
-                </span>, here are your submitted tickets
+                Welcome <span className="font-medium text-bianca-primary">{isLoadingUsername ? 'User' : username}</span>, here are your submitted tickets
               </>
             }
           />
