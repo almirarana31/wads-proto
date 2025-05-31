@@ -9,8 +9,9 @@ import { authService } from '../api/authService';
 
 function StaffDashPage() {
   const navigate = useNavigate();
+  const [staffDetails, setStaffDetails] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
-  const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' });    const [filters, setFilters] = useState({
+  const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' });const [filters, setFilters] = useState({
     priority: 'All priority',
     status: 'All status'
   });
@@ -96,9 +97,19 @@ function StaffDashPage() {
       setIsRefreshing(false);
     }
   };
+  // Fetch staff details
+  const fetchStaffDetails = async () => {
+    try {
+      const response = await authService.getStaffDetail();
+      setStaffDetails(response);
+    } catch (err) {
+      console.error('Error fetching staff details:', err);
+    }
+  };
 
-  // Fetch tickets when component mounts or when active tab changes
+  // Fetch tickets and staff details when component mounts or when active tab changes
   useEffect(() => {
+    fetchStaffDetails();
     if (activeTab === 'my-tickets') {
       fetchStaffTickets();
     }
@@ -184,10 +195,9 @@ function StaffDashPage() {
     <div className="min-h-screen py-6 sm:py-12 px-4">
       <div className="bg-white p-6 md:p-10 rounded shadow-md max-w-[1200px] mx-auto">
         <PageTitle 
-          title="Staff Dashboard" 
-          subtitle={
+          title="Staff Dashboard"          subtitle={
             <>
-              Welcome <span className="font-medium text-bianca-primary">Staff</span>, manage your assigned tickets here
+              Welcome <span className="font-medium text-bianca-primary">{staffDetails?.username || 'Staff'}</span>, manage your assigned tickets here
             </>
           }
           className="mb-8"

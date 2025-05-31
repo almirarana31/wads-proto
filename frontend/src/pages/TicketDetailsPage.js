@@ -435,38 +435,12 @@ function TicketDetailsPage() {
                     onClick={() => handleConversationClick(conversation.id, conversation.number)}
                   />
                 ))
-              ) : (                <div className="col-span-2 text-center py-8">
-                  <Text color="text-gray-500">No conversations found for this ticket.</Text>
+              ) : (
+                <div className="col-span-2 text-center py-8 bg-gray-50 rounded-lg border border-gray-200">
+                  <Text color="text-gray-500">No conversations available. Please wait for staff to initiate a conversation.</Text>
                 </div>
               )}
             </div>
-          )}
-          
-          {/* Show button to start new conversation except for Cancelled/Resolved tickets */}
-          {ticket.status !== 'Cancelled' && ticket.status !== 'Resolved' && (
-            <>
-              {createConversationError && (
-                <div className="bg-red-50 p-4 rounded-md border border-red-200 mt-4">
-                  <Text color="text-red-600" align="center">{createConversationError}</Text>
-                </div>
-              )}
-              <div className="mt-4">
-                <PrimaryButton 
-                  onClick={handleStartConversation} 
-                  fullWidth
-                  disabled={isCreatingConversation}
-                >
-                  {isCreatingConversation ? (
-                    <span className="flex items-center justify-center gap-2">
-                      <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-solid border-white border-r-transparent"></span>
-                      Creating Conversation...
-                    </span>
-                  ) : (
-                    'Start a New Conversation'
-                  )}
-                </PrimaryButton>
-              </div>
-            </>
           )}
         </div>
       ) : (

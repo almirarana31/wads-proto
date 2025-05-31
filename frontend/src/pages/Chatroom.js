@@ -23,6 +23,8 @@ function Chatroom() {
   const [lastMessageId, setLastMessageId] = useState(null);
   const [input, setInput] = useState('');
   const [conversationNumber, setConversationNumber] = useState(null);
+  // First, add a state to track if user is staff/admin
+  const [isStaff, setIsStaff] = useState(false);
 
   // ref that scrolls the chat to the bottom after new message
   const chatContainerRef = useRef(null);
@@ -363,6 +365,22 @@ function Chatroom() {
     }
   };
 
+  // Add a function to check user role when component mounts
+  useEffect(() => {
+    const checkUserRole = async () => {
+      try {
+        const userDetails = await authService.getUserDetails();
+        // Assuming the user details include a role or isStaff property
+        setIsStaff(userDetails.role === 'staff' || userDetails.role === 'admin');
+      } catch (err) {
+        console.error('Error checking user role:', err);
+        setIsStaff(false);
+      }
+    };
+
+    checkUserRole();
+  }, []);
+
   return (
     <ContentContainer>      <div className="relative mb-5">
         <BackButton onClick={handleBack} className="absolute -top-2 -left-2" />        <div className="text-center pt-8">
@@ -463,29 +481,30 @@ function Chatroom() {
                 )}
               </PrimaryButton>
             </div>            {/* Close conversation button - only show if we have messages */}
-            {chatMessages.length > 0 && !isNewConversation && conversationStatus === 'open' && (
-              <div className="flex justify-end mt-3">
-                <button
-                  onClick={handleCloseConversation}
-                  className="text-sm text-red-600 hover:text-red-800 flex items-center px-3 py-1 border border-red-200 rounded-md hover:bg-red-50 transition-colors"
-                  disabled={isClosing || conversationStatus !== 'open'}
-                >
-                  {isClosing ? (
-                    <>
-                      <div className="inline-block h-4 w-4 mr-2 animate-spin rounded-full border-2 border-solid border-red-600 border-r-transparent"></div>
-                      Closing...
-                    </>
-                  ) : (
-                    <>
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                      </svg>
-                      Close Conversation
-                    </>
-                  )}
-                </button>
-              </div>
-            )}
+            {chatMessages.length > 0 && !isNewConversation && 
+ conversationStatus === 'open' && isStaff && (
+  <div className="flex justify-end mt-3">
+    <button
+      onClick={handleCloseConversation}
+      className="text-sm text-red-600 hover:text-red-800 flex items-center px-3 py-1 border border-red-200 rounded-md hover:bg-red-50 transition-colors"
+      disabled={isClosing || conversationStatus !== 'open'}
+    >
+      {isClosing ? (
+        <>
+          <div className="inline-block h-4 w-4 mr-2 animate-spin rounded-full border-2 border-solid border-red-600 border-r-transparent"></div>
+          Closing...
+        </>
+      ) : (
+        <>
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+          </svg>
+          Close Conversation
+        </>
+      )}
+    </button>
+  </div>
+)}
           </>        ) : (
           <div className="bg-gray-50 border border-gray-200 rounded-lg p-5 text-center">
             <div className="flex items-center justify-center mb-2">
