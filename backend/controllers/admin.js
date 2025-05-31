@@ -188,7 +188,7 @@ export const getStaff = async (req, res) => {
                 "user" u 
                 LEFT JOIN "staff" s ON u.staff_id = s.id
                 LEFT JOIN "ticket" t ON s.id = t.staff_id
-                LEFT JOIN "category" c ON t.category_id = c.id
+                LEFT JOIN "category" c ON s.field_id = c.id
             WHERE (s.id = ${staff_id})
             GROUP BY u.username, c.name, s."createdAt"
             `
@@ -205,21 +205,22 @@ export const editStaff = async (req, res) => {
     const {category_id, is_guest} = req.body
     try {
         const staff = await Staff.update({
-            ...(category_id ? {category_id: category_id} : {})
+            ...(category_id ? {field_id: category_id} : {})
         }, {
             where: {
                 id: staff_id
             }
         })
 
-        const user = await User.update({
-            ...(is_guest ? {is_guest: true} : {})
-        }, {
-            where: {
-                staff_id: staff_id
-            },
-            returning: true
-        }) 
+        const user = await User.update({ 
+            // ...(is_guest ? {is_guest: true} : {is_guest:false})
+            is_guest: is_guest 
+        },
+            {
+                where: { staff_id: staff_id },
+                returning: true
+            }
+        ) 
 
         // audit here
         await logAudit(
@@ -361,37 +362,53 @@ export const updateField = async (req, res) => {
 
 // get staff (used for assigning)
 export const searchStaff = async (req, res) => {
-    const id = req.params.ticket_id
-    const search = req.query.search
+    const ticket_id = req.params.ticket_id;
     try {
-        // get ticket
-        const ticket = await Ticket.findByPk(id, {raw: true});
-        
-        // get ticket category
-        const category_id = ticket.category_id;
-        const [stats] = await sequelize.query(
-            `
+        // First get the ticket's category
+        const ticket = await Ticket.findByPk(ticket_id, {
+            include: [{
+                model: Category,
+                attributes: ['id']
+            }]
+        });
+
+        if (!ticket) {
+            return res.status(404).json({ message: 'Ticket not found' });
+        }
+
+        // Get staff with matching field_id and their performance metrics
+        const [staffList] = await sequelize.query(`
             SELECT 
-                s.id AS staff_id,
-                u.username AS staff_name,
-                SUM (CASE WHEN t.status_id = 2 THEN 1 ELSE 0 END) AS in_progress,
+                s.id as staff_id,
+                u.username as staff_name,
+                s.field_id,
+                u.is_guest,
+                COUNT(t.id) as assigned,
+                SUM(CASE WHEN t.status_id = 2 THEN 1 ELSE 0 END) as in_progress,
+                SUM(CASE WHEN t.status_id = 3 THEN 1 ELSE 0 END) as resolved,
                 ROUND(
                     CASE 
-                        WHEN COUNT (t.id) = 0 THEN 0
-                        ELSE SUM (CASE WHEN t.status_id = 3 THEN 1 ELSE 0 END) * 100.0/COUNT (t.id)
-                    END, 2) AS resolution_rate
-            FROM 
-            "user" u INNER JOIN 
-            "staff" s ON u.staff_id = s.id LEFT JOIN
-            "ticket" t ON s.id = t.staff_id
-            WHERE (t.category_id = ${category_id} AND s.role_id != 2 AND u.id != t.user_id)
-            GROUP BY s.id, u.username
-            `
-        );
+                        WHEN COUNT(t.id) = 0 THEN 0
+                        ELSE SUM(CASE WHEN t.status_id = 3 THEN 1 ELSE 0 END) * 100.0/COUNT(t.id)
+                    END, 2
+                ) as resolution_rate
+            FROM staff s
+            INNER JOIN "user" u ON u.staff_id = s.id
+            LEFT JOIN ticket t ON t.staff_id = s.id
+            WHERE s.field_id = :category_id
+            GROUP BY s.id, u.username, s.field_id, u.is_guest
+        `, {
+            replacements: { category_id: ticket.Category.id },
+            type: sequelize.QueryTypes.SELECT
+        });
 
-        return res.status(200).json(stats)
+        console.log('Ticket category:', ticket.Category.id);
+        console.log('Found staff:', staffList);
+
+        res.json(staffList);
     } catch (error) {
-        return res.status(500).json({message: error.message})
+        console.error('Error in searchStaff:', error);
+        res.status(500).json({ message: 'Server error' });
     }
 }
 
@@ -426,7 +443,7 @@ export const assignStaff = async (req, res) => {
 }
 
 export const createStaff = async (req, res) => {
-    const {email, category_id,  role_id} = req.body
+    const {email, field_id,  role_id} = req.body
     const admin = req.user
     try {
         const staff = await Staff.findOne({
@@ -439,7 +456,7 @@ export const createStaff = async (req, res) => {
         
         const new_staff = await Staff.create({
             email: email,
-            field_id: category_id,
+            field_id: field_id,
             role_id: role_id,
             job_id: null
         })
@@ -457,4 +474,23 @@ export const createStaff = async (req, res) => {
     } catch (error) {
         return res.status(500).json({message: error.message})
     }
+}
+
+export const getAccStatus = async (req, res) => {
+    
+    const staff_id = req.params.id
+  
+    try {
+        const user = await User.findOne({
+            where: {
+                staff_id: staff_id
+            }, 
+            attributes:['is_guest'],
+            raw: true
+        })
+        
+        return res.status(200).json(user) 
+    } catch(error) {
+        return res.status(500).json({message: error.message})
+    }
 }
