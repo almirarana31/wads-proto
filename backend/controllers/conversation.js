@@ -31,6 +31,12 @@ export const getConversation = async (req, res) => {
             order: [['sentAt', 'ASC']]
         });
 
+        const isClosed = await Conversation.findByPk(conversation_id,
+            {
+                attributes: ['closed']
+            }
+        )
+
         const result = messages.map(msg => ({
             id: msg.id,
             content: msg.content,
@@ -39,6 +45,7 @@ export const getConversation = async (req, res) => {
             sender_username: msg.User.username,
             isSender: msg.sender_id === user.id
         }));
+        result[result.length] = isClosed
 
         return res.status(200).json(result)
     } catch (error) {
