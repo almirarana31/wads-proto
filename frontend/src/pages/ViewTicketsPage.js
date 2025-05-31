@@ -120,7 +120,8 @@ function ViewTicketsPage() {
     <div className="min-h-screen">
       <div className="max-w-6xl mx-auto p-6">
         <div className="bg-white rounded-md shadow-md p-8">
-          {/* Page Header */}          <PageTitle 
+          {/* Page Header */}          
+          <PageTitle 
             title="Your Tickets"
             subtitle={
               <>

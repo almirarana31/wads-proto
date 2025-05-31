@@ -65,10 +65,8 @@ export const authService = {
     },    async getTicketPool() {
         const response = await api.get('/staff/tickets/pool');
         return response.data;
-    },
-
-    async claimTicket(ticketId) {
-        const response = await api.post(`/staff/tickets/claim/${ticketId}`);
+    },    async claimTicket(ticketId) {
+        const response = await api.patch(`/staff/tickets`, { ticket_id: ticketId });
         return response.data;
     }
 };

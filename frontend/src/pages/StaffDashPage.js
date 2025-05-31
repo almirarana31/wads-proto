@@ -357,9 +357,14 @@ function StaffDashPage() {
                 )}
               </div>
             </div>
-          </>
-        ) : (
-          <StaffTicketQueuePage staffCategory="Billing" />
+          </>        ) : (
+          <StaffTicketQueuePage 
+            staffCategory="Billing" 
+            onClaimTicket={() => {
+              // When a ticket is claimed, refresh the staff's assigned tickets
+              fetchStaffTickets(searchQuery, filters.priority, filters.status);
+            }} 
+          />
         )}
       </div>
     </div>

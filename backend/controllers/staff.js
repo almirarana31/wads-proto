@@ -96,7 +96,19 @@ export const claimTicket = async (req, res) => {
     const {ticket_id} = req.body
     const staff = req.staff
     try {
-        // update
+         // update
+        const count = await Ticket.count({
+            where: {
+                staff_id: staff.staff_id,
+                status_id: 2
+            }
+        })
+
+        if (count === 5) {
+            return res.status(400).json({message: "Staff is already assigned to 5 tickets!"})
+        };
+        
+       
         const ticket = await Ticket.update({
             staff_id: staff.staff_id,
             status_id: 2
