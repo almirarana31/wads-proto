@@ -166,8 +166,9 @@ function StaffTicketView() {  const { ticketId } = useParams();
       setIsCreatingConversation(false);
     }
   };
-
-  const handleConversationClick = (conversationId) => {
+  const handleConversationClick = (conversationId, conversationNumber) => {
+    // Store the conversation number in sessionStorage so Chatroom can display it
+    sessionStorage.setItem(`conversation_number_${conversationId}`, conversationNumber);
     navigate(`/chatroom/${ticketId}/${conversationId}`);
   };
   const handleResolveTicket = () => {
@@ -467,7 +468,7 @@ function StaffTicketView() {  const { ticketId } = useParams();
                     number={conversation.number}
                     startedDate={conversation.startedDate}
                     endedDate={conversation.endedDate}
-                    onClick={() => handleConversationClick(conversation.id)}
+                    onClick={() => handleConversationClick(conversation.id, conversation.number)}
                   />
                 ))}
               </div>

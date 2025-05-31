@@ -217,11 +217,11 @@ function Chatroom() {
     return () => clearInterval(intervalId);
   }, [actualConversationId, isNewConversation, conversationStatus, lastMessageId]);
   return (
-    <ContentContainer>
-      <div className="relative mb-5">
+    <ContentContainer>      <div className="relative mb-5">
         <BackButton onClick={handleBack} className="absolute -top-2 -left-2" />
         <div className="text-center pt-8">
-          <PageTitle title={isNewConversation ? 'New Conversation' : `Conversation ${conversationId}`} />
+          {/* Use the conversation number passed from ticket view instead of conversation ID */}
+          <PageTitle title={isNewConversation ? 'New Conversation' : `Conversation ${sessionStorage.getItem(`conversation_number_${conversationId}`) || '1'}`} />
         </div>
       </div>
       <div className="border-b border-gray-200 my-6"></div>

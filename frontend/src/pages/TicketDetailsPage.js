@@ -193,9 +193,10 @@ function TicketDetailsPage() {
   const handleBack = () => {
     navigate(-1);
   };
-  
-  // Handle conversation click
-  const handleConversationClick = (conversationId) => {
+    // Handle conversation click
+  const handleConversationClick = (conversationId, conversationNumber) => {
+    // Store the conversation number in sessionStorage so Chatroom can display it
+    sessionStorage.setItem(`conversation_number_${conversationId}`, conversationNumber);
     navigate(`/chatroom/${ticketId}/${conversationId}`);
   };
 
@@ -396,7 +397,7 @@ function TicketDetailsPage() {
                     number={conversation.number}
                     startedDate={conversation.startedDate}
                     endedDate={conversation.endedDate}
-                    onClick={() => handleConversationClick(conversation.id)}
+                    onClick={() => handleConversationClick(conversation.id, conversation.number)}
                   />
                 ))
               ) : (                <div className="col-span-2 text-center py-8">
