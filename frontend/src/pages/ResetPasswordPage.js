@@ -159,7 +159,7 @@ function ResetPasswordPage() {
             </div>
             
             <div className="text-center">
-              <Link to="/login" className="text-blue-600 hover:underline">
+              <Link to="/login" className="text-bianca-primary hover:underline">
                 Back to Login
               </Link>
             </div>

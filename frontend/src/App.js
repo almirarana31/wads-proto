@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { authService } from './api/authService';
 import Header from './components/Header';
 import HomePage from './pages/HomePage';
 import SubmitTicketPage from './pages/SubmitTicketPage';
@@ -27,14 +28,38 @@ function App() {
   
   // Check for existing authentication on app load
   useEffect(() => {
-    const checkAuthStatus = () => {
-      const token = sessionStorage.getItem('token') || localStorage.getItem('token') || sessionStorage.getItem('mockToken');
-      const currentUser = localStorage.getItem('currentUser');
-      
-      if (token && currentUser) {
-        const user = JSON.parse(currentUser);
-        setIsAuthenticated(true);
-        setUserRole(user.role_code);
+    const checkAuthStatus = async () => {
+      const token = sessionStorage.getItem('token') || localStorage.getItem('token');
+      if (token) {
+        try {
+          const roles = await authService.getUserRoles();
+          console.log("giggaa")
+          setIsAuthenticated(true);
+          if (roles.isAdmin) {
+            setUserRole('ADM'); 
+            console.log("giggaa2")
+          }
+          else if (roles.isStaff) {
+            setUserRole('STF')
+            console.log("giggaa3")
+          }
+          else if (roles.isUser) {
+            setUserRole('USR') 
+            console.log("giggaa4")
+          }
+          else setUserRole(null);
+        } catch (err) {
+          // Only clear auth if error is 401/403 (token invalid/expired)
+          if (err?.response?.status === 401 || err?.response?.status === 403) {
+            setIsAuthenticated(false);
+            setUserRole(null);
+            sessionStorage.removeItem('token');
+            localStorage.removeItem('token');
+          }
+        }
+      } else {
+        setIsAuthenticated(false);
+        setUserRole(null);
       }
     };
 
@@ -42,22 +67,13 @@ function App() {
   }, []);
 
   // Login function
-  const handleLogin = (user) => { // Modified to accept user
-    // If a user object is provided (even a mock one), consider login successful
-    if (user) {
-      setIsAuthenticated(true);
-      setUserRole(user.role_code); // Store the user's role
-      // Store user data in localStorage for other components to access
-      localStorage.setItem('currentUser', JSON.stringify(user));
-      // For mock purposes, you might want to set a mock token if other parts rely on it
-      sessionStorage.setItem('mockToken', 'authenticated'); 
-    } else {
-      // Fallback to token check if no user object is passed directly
-      const token = sessionStorage.getItem('token') || localStorage.getItem('token') || sessionStorage.getItem('mockToken');
-      if (token) {
-        setIsAuthenticated(true);
-      }
-    }
+  const handleLogin = (user) => {
+    setIsAuthenticated(true);
+    // Set userRole based on isAdmin/isStaff/isUser flags
+    if (user && user.isAdmin) setUserRole('ADM');
+    else if (user && user.isStaff) setUserRole('STF');
+    else setUserRole('USR');
+    localStorage.setItem('currentUser', JSON.stringify(user));
   };
     // Logout function
   const handleLogout = () => {
@@ -74,21 +90,18 @@ function App() {
   // Protected Route component
   const ProtectedRoute = ({ children, allowedRoles = [] }) => {
     if (!isAuthenticated) {
-      // Redirect to login if not authenticated
-      return <Navigate to="/login" replace />;
+      // Show nothing while checking auth (prevents flicker)
+      return null;
     }
-    
     // If roles are specified and user's role doesn't match, redirect to home
     if (allowedRoles.length > 0 && !allowedRoles.includes(userRole)) {
       return <Navigate to="/" replace />;
     }
-    
     return children;
   };
-
   return (
     <Router>
-      <div className="min-h-screen bg-blue-100">
+      <div className="min-h-screen bg-bianca-background">
         <Header isAuthenticated={isAuthenticated} userRole={userRole} />
         <main>
           <Routes>
@@ -97,13 +110,15 @@ function App() {
             <Route 
               path="/login" 
               element={<LoginPage onLogin={handleLogin} />} 
-            />            <Route path="/signup" element={<SignUpPage />} />            <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+            />            
+            <Route path="/signup" element={<SignUpPage />} />            
+            <Route path="/forgot-password" element={<ForgotPasswordPage />} />
             <Route path="/reset-password-verify" element={<ResetPasswordVerifyPage />} />
             <Route path="/reset-password" element={<ResetPasswordPage />} />
             <Route 
               path="/view-tickets" 
               element={
-                <ProtectedRoute>
+            <ProtectedRoute>
                   <ViewTicketsPage />
                 </ProtectedRoute>
               } 

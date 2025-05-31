@@ -70,7 +70,7 @@ function SignUpPage() {
               <img src={checkIcon} alt="Success" className="w-16 h-16" />
             </div>
             <Text size="lg" center className="mb-8">
-              Verification link sent to <span className="text-blue-600">{successEmail || 'user@example.com'}</span>
+              Verification link sent to <span className="text-bianca-primary">{successEmail || 'user@example.com'}</span>
             </Text>
             <Link 
               to="/login" 
@@ -78,6 +78,7 @@ function SignUpPage() {
             >
               Login
             </Link>
+            
           </div>
         </div>
       </div>
@@ -162,7 +163,7 @@ function SignUpPage() {
             </div>
             <Text center color="gray">
                 Already have an account? 
-                <Link to="/login" className="text-blue-600 hover:underline ml-1">
+                <Link to="/login" className="text-bianca-primary hover:underline ml-1">
                 Login
                 </Link>
             </Text>

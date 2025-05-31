@@ -10,7 +10,7 @@ function getStatusStyle(status) {
     case 'Resolved':
       return 'px-2 py-1 text-green-800 bg-green-400 rounded-full';
     case 'Cancelled':
-      return 'px-2 py-1 text-gray-800 bg-gray-300 rounded-full';
+      return 'px-2 py-1 text-red-800 bg-red-200 rounded-full';
     default:
       return 'px-2 py-1 text-gray-800 bg-gray-200 rounded-full';
   }

@@ -22,7 +22,7 @@ export const getTickets = async (req, res) => {
             }, {
                 model: Priority,
                 attributes: ['name'],
-                where: priority && priority.toLowerCase() !== 'all' ? {name: status} : null,
+                where: priority && priority.toLowerCase() !== 'all' ? {name: priority} : null,
                 required: true
             }, {
                 model: Status,
@@ -71,6 +71,12 @@ export const getTicketPool = async (req, res) => {
                 model: Priority,
                 attributes: ['name'],
                 required: true
+            },
+            {
+                model: User,
+                as: 'User',
+                attributes: ['username', 'email'],
+                required: true
             }],
             order: [
                 ['priority_id', 'ASC'], // order by highest priority/lowest number (1 > 2 > 3)
@@ -90,7 +96,19 @@ export const claimTicket = async (req, res) => {
     const {ticket_id} = req.body
     const staff = req.staff
     try {
-        // update
+         // update
+        const count = await Ticket.count({
+            where: {
+                staff_id: staff.staff_id,
+                status_id: 2
+            }
+        })
+
+        if (count === 5) {
+            return res.status(400).json({message: "Staff is already assigned to 5 tickets!"})
+        };
+        
+       
         const ticket = await Ticket.update({
             staff_id: staff.staff_id,
             status_id: 2
@@ -123,7 +141,8 @@ export const getSummary = async (req, res) => {
         SELECT 
             COUNT (t.id) AS assigned,
             SUM (CASE WHEN t.status_id = 2 THEN 1 ELSE 0 END) AS in_progress,
-            SUM (CASE WHEN t.status_id = 3 THEN 1 ELSE 0 END) AS resolved
+            SUM (CASE WHEN t.status_id = 3 THEN 1 ELSE 0 END) AS resolved,
+            SUM (CASE WHEN t.status_id = 4 THEN 1 ELSE 0 END) AS cancelled
         FROM "staff" s LEFT JOIN "ticket" t ON s.id = t.staff_id
         WHERE (s.id = ${staff.id})
         `
@@ -153,7 +172,7 @@ export const resolveTicket = async (req, res) => {
         await ticket.update({
             status_id: 3, // sets status to resolved
             resolved_at: new Date(),
-            staff_id: req.staff.id 
+            staff_id: req.staff.staff_id
         });
 
         return res.status(200).json({ 
@@ -188,7 +207,7 @@ export const cancelTicket = async (req, res) => {
         // Update the ticket
         await ticket.update({
             status_id: 4, // set status to cancelled
-            staff_id: req.staff.id 
+            staff_id: req.staff.staff_id
         });
 
         res.status(200).json({ 

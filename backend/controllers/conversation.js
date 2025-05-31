@@ -23,9 +23,19 @@ export const getConversation = async (req, res) => {
                 model: User,
                 attributes: ['username'],
                 required: true
+            }, {
+                model: Conversation,
+                attributes: ['closed'],
+                required: true
             }],
             order: [['sentAt', 'ASC']]
         });
+
+        const isClosed = await Conversation.findByPk(conversation_id,
+            {
+                attributes: ['closed']
+            }
+        )
 
         const result = messages.map(msg => ({
             id: msg.id,
@@ -35,6 +45,7 @@ export const getConversation = async (req, res) => {
             sender_username: msg.User.username,
             isSender: msg.sender_id === user.id
         }));
+        result[result.length] = isClosed
 
         return res.status(200).json(result)
     } catch (error) {
@@ -64,7 +75,7 @@ export const getConversationHistory = async (req, res) => {
             attributes: ['id', 'createdAt', 'endedAt'],
             order: [['createdAt', sortBy?.toLowerCase() === 'newest' ? 'DESC' : 'ASC']]
         });
-
+        
         return res.status(200).json(conversation);
     } catch (error) {
         return res.status(500).json({message: error.message});

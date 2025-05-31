@@ -31,6 +31,7 @@ Ticket.belongsTo(Status, {foreignKey: 'status_id'})
 Message.belongsTo(Conversation, {foreignKey: 'conversation_id'})
 Message.belongsTo(User, {foreignKey: 'sender_id'})
 Conversation.belongsTo(Ticket, {foreignKey: 'ticket_id'});
+Conversation.hasMany(Message, {foreignKey: 'conversation_id'});
 
 // Audit
 Audit.belongsTo(User, {foreignKey: 'user_id'});

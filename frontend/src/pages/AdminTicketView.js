@@ -13,12 +13,12 @@ function AdminTicketView() {
   // State for ticket data - in real app, would fetch from API
   const [ticket, setTicket] = useState(null);
   const [sortOrder, setSortOrder] = useState('newest');
-
   // Mock fetch ticket data - in real app, fetch from API based on ticketId
   useEffect(() => {
     // Simulating API call to get ticket details
     const mockTicket = {
-      id: ticketId,
+      id: `TKT-${ticketId.toString().padStart(3, '0')}`,
+      rawId: ticketId, // Keep the original ID for API calls
       title: 'Payment Failure',
       description: 'I have already paid, yet my appointment was not made.',
       status: 'In Progress',
@@ -108,7 +108,6 @@ function AdminTicketView() {
                 <Text className="text-gray-600 mb-2">Email: <span className="font-medium text-gray-800">{ticket.customer.email}</span></Text>
               </div>
               <div>
-                <Text className="text-gray-600 mb-2">Phone: <span className="font-medium text-gray-800">{ticket.customer.phone}</span></Text>
                 <Text className="text-gray-600 mb-2">Created: <span className="font-medium text-gray-800">{new Date(ticket.created).toLocaleString()}</span></Text>
               </div>
             </div>

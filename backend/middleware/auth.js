@@ -1,6 +1,8 @@
 import jwt from 'jsonwebtoken';
 import {Staff, User, Conversation, Ticket} from '../models/index.js';
 import { logAudit } from '../controllers/audit.js';
+import sequelize from '../config/sequelize.js';
+import { Op } from 'sequelize';
 
 export const authN = (req, res, next) => {
     try {
@@ -166,11 +168,12 @@ export const userAuthZ = async (req, res, next) => {
 
     try {
         const token = req.headers.authorization?.split(" ")[1];
-        const user = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
-
+        
         if (!token) {
             return res.status(403).json({message: "Forbidden Access"})
         }
+        
+        const user = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
 
         const {is_guest} = user;
 
@@ -213,6 +216,82 @@ export const conversationAuthZ = async (req, res, next) => {
         req.user_id = conversation.Ticket.user_id
 
         return next();
+    } catch (error) {
+        return res.status(500).json({message: error.message})
+    } 
+}
+export const getUserRoles = async (req, res) => {
+
+    try {
+        // decode jwt
+        const token = req.headers.authorization?.split(" ")[1];
+        const decode = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
+        const {id, staff_id} = decode
+        console.log(`This is staff_id: ${staff_id}`)
+        // if no staff_id, then is a user
+        const staff = await Staff.findOne({
+            where: {
+                ...(staff_id != 0 ? {id: staff_id} : {id: 273198213982163})
+            },
+            attributes: ['role_id']
+        })
+
+        console.log(`Oh wow it works, role id is: ${staff?.role_id}`)
+
+        if (!staff) {
+            console.log("user")
+            return res.status(200).json({
+                isUser: true,
+                isStaff: false,
+                isAdmin: false
+            })
+        }
+        if (staff.role_id === 1) {
+            console.log("staff")
+            return res.status(200).json({
+                isUser: false,
+                isStaff: true,
+                isAdmin: false
+            })
+        }
+        if (staff.role_id === 2) {
+            console.log("admin")
+            return res.status(200).json({
+                isUser: false,
+                isStaff: false,
+                isAdmin: true
+            })
+        }
+
+        return res.status(400).json({message: "Invalid token"})
+    } catch(error) {
+        return res.status(500).json({message: error.message})
+    }
+}
+export const ticketAuthZ = async (req,res,next) => {
+    const ticket_id = req.params.id /// ticket id
+    const user = req.user
+    try {   
+        const ticket = await Ticket.findOne({
+            where: {
+                [Op.or]: [
+                   {user_id: user.id},
+                ...(user.staff_id ? [{staff_id: user.staff_id}] : []) 
+                ],
+                id: ticket_id 
+            }
+        })
+
+        if (!ticket) {
+            return res.status(403).json({message: "Forbidden access"})
+        }
+
+        if (user.staff_id) {
+            req.staff = req.user
+            console.log(req.staff)
+        }
+
+        return next()
     } catch (error) {
         return res.status(500).json({message: error.message})
     }

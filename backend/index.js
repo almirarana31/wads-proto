@@ -12,12 +12,19 @@ import conversationRoutes from './routes/conversation_routes.js';
 import { User, Ticket, Role, Category, Priority, Status } from './models/index.js'
 import { escalatePriority } from './controllers/ticket.js';
 // import { addFK } from './queries.js';
+import cors from 'cors';
 
 dotenv.config();
 
 await sequelize.sync();
 
 const app = express();
+
+app.use(cors({
+  origin: 'http://localhost:3000', // or '*' for all origins (not recommended for production)
+  credentials: true
+}));
+
 app.use(express.json());
 
 app.use('/api/user', userRoutes);
@@ -35,8 +42,8 @@ app.use('/api/audit', auditRoutes);
 // remove once ran ONCE
 app.use('/api', defaultQueries);
 
-// cron job
-cron.schedule("* * */24 * * *", escalatePriority)
+// // cron job
+// cron.schedule("* * */24 * * *", escalatePriority)
 
 app.get('/', (req, res) => {
     res.send("Hello from the backend!")

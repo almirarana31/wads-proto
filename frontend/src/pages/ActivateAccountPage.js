@@ -29,7 +29,7 @@ const ActivateAccountPage = () => {
   }, [token, navigate]);
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50">
+    <div className="flex justify-center items-center min-h-screen">
       <div className="bg-white p-8 rounded shadow-md max-w-md w-full text-center">
         <h1 className="text-2xl font-bold mb-4">Account Activation</h1>
         <p className={status === 'success' ? 'text-green-600' : status === 'error' ? 'text-red-600' : 'text-gray-700'}>

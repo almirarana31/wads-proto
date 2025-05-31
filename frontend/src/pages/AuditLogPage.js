@@ -1,38 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { authService } from '../api/authService';
 import SecondaryButton from '../components/buttons/SecondaryButton';
-import { PageTitle, Text, Label } from '../components/text';
+import { PageTitle, Label } from '../components/text';
 
 function AuditLogPage() {
-  // Mock audit log data - replace with API call later
-  const [auditLogs] = useState([
-    {
-      id: 'LOG-001',
-      timestamp: '2025-05-27T10:30:00Z',
-      action: 'Ticket Status Updated',
-      user: 'admin@example.com',
-      details: 'Changed ticket TKT-001 status from Pending to In Progress',
-      ipAddress: '192.168.1.1',
-      userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'
-    },
-    {
-      id: 'LOG-002',
-      timestamp: '2025-05-27T10:15:00Z',
-      action: 'User Login',
-      user: 'staff@example.com',
-      details: 'Successful login attempt',
-      ipAddress: '192.168.1.2',
-      userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'
-    },
-    {
-      id: 'LOG-003',
-      timestamp: '2025-05-27T10:00:00Z',
-      action: 'Ticket Created',
-      user: 'user@example.com',
-      details: 'New ticket TKT-003 created',
-      ipAddress: '192.168.1.3',
-      userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 14_7_1)'
-    }
-  ]);
+  const [auditLogs, setAuditLogs] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   const [filters, setFilters] = useState({
     startDate: '',
@@ -40,6 +14,25 @@ function AuditLogPage() {
     action: '',
     user: ''
   });
+
+  // Fetch audit logs
+  useEffect(() => {
+    const fetchAuditLogs = async () => {
+      try {
+        setLoading(true);
+        const data = await authService.showAudit();
+        setAuditLogs(data);
+        setError(null);
+      } catch (err) {
+        setError('Failed to load audit logs');
+        console.error('Error fetching audit logs:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchAuditLogs();
+  }, []); // Fetch on component mount
 
   const handleFilterChange = (e, field) => {
     setFilters(prev => ({
@@ -53,12 +46,14 @@ function AuditLogPage() {
     if (filters.startDate && new Date(log.timestamp) < new Date(filters.startDate)) return false;
     if (filters.endDate && new Date(log.timestamp) > new Date(filters.endDate)) return false;
     if (filters.action && log.action !== filters.action) return false;
-    if (filters.user && !log.user.toLowerCase().includes(filters.user.toLowerCase())) return false;
+    if (filters.user && !log['User.email'].toLowerCase().includes(filters.user.toLowerCase())) return false;
     return true;
   });
+
   return (
     <div className="min-h-screen py-6 sm:py-12 px-4">
-      <div className="max-w-7xl mx-auto"><div className="bg-white p-6 rounded-lg shadow-md">
+      <div className="max-w-7xl mx-auto">
+        <div className="bg-white p-6 rounded-lg shadow-md">
           <PageTitle 
             title="System Audit Log"
             subtitle="Track and monitor system activities"
@@ -70,6 +65,7 @@ function AuditLogPage() {
               Export Log
             </SecondaryButton>
           </div>          
+
           {/* Filters */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
             <div>
@@ -98,12 +94,11 @@ function AuditLogPage() {
                 className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-300"
               >
                 <option value="">All Actions</option>
-                <option>User Login</option>
-                <option>Ticket Created</option>
-                <option>Ticket Updated</option>
-                <option>Ticket Status Changed</option>
-                <option>User Created</option>
-              </select>            </div>
+                <option>Create</option>
+                <option>Update</option>
+                <option>Delete</option>
+              </select>
+            </div>
             <div>
               <Label>User</Label>
               <input
@@ -116,41 +111,74 @@ function AuditLogPage() {
             </div>
           </div>
 
+          {/* Loading and Error States */}
+          {loading && (
+            <div className="text-center py-4">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto"></div>
+              <p className="mt-2 text-gray-600">Loading audit logs...</p>
+            </div>
+          )}
+
+          {error && (
+            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
+              <span className="block sm:inline">{error}</span>
+            </div>
+          )}
+
           {/* Audit Log Table */}
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  {['Timestamp', 'Action', 'User', 'Details'].map(header => (
-                    <th
-                      key={header}
-                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                    >
-                      {header}
+          {!loading && !error && (
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      ID
                     </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {filteredLogs.map((log) => (
-                  <tr key={log.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                      {new Date(log.timestamp).toLocaleString()}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                      {log.action}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                      {log.user}
-                    </td>
-                    <td className="px-6 py-4 text-sm text-gray-700">
-                      {log.details}
-                    </td>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Timestamp
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Action
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      User Email
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Detail
+                    </th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {filteredLogs.map((log) => (
+                    <tr key={log.id} className="hover:bg-gray-50">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                        {log.id}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                        {new Date(log.timestamp).toLocaleString()}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                        {log.action}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                        {log["User.email"]}
+                      </td>
+                      <td className="px-6 py-4 text-sm text-gray-700">
+                        {log.detail}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+
+          {/* No Results Message */}
+          {!loading && !error && filteredLogs.length === 0 && (
+            <div className="text-center py-4 text-gray-500">
+              No audit logs found matching the current filters.
+            </div>
+          )}
         </div>
       </div>
     </div>

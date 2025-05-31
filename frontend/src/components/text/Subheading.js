@@ -1,7 +1,7 @@
 import React from 'react';
 
 function Subheading({ children, className = '', color = 'blue', size = 'xl', center = false, ...props }) {
-  const baseClasses = 'font-semibold';
+  const baseClasses = 'font-semibold font-playfair';
   
   // size variants
   const sizeClasses = {
@@ -11,10 +11,9 @@ function Subheading({ children, className = '', color = 'blue', size = 'xl', cen
     'xl': 'text-xl',
     '2xl': 'text-2xl'
   };
-
   // color variants
   const colorClasses = {
-    blue: 'text-blue-800',
+    blue: 'text-bianca-primary',
     gray: 'text-gray-700',
     yellow: 'text-yellow-800',
     purple: 'text-purple-800',

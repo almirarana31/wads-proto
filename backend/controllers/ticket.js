@@ -45,8 +45,14 @@ export const getTicketDetail = async (req, res) => {
                     attributes: [['username', 'staff_name']]
                 }],
                 attributes: ['id']
-            }] : [])],
-            attributes: ['id', 'subject', 'description', 'createdAt']
+            }] : []),
+        {
+            model: User,
+            as: 'User',
+            attributes: ['username', 'email', 'is_guest'],
+            required: true
+        }],
+            attributes: ['id', 'subject', 'description', 'createdAt', 'note']
         });
 
         if (!ticket) {

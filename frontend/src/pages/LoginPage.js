@@ -43,22 +43,13 @@ function LoginPage({ onLogin }) {
       if (formData.rememberMe && res.localToken) {
         localStorage.setItem('token', res.localToken);
       }
-      // Build user info for context
-      const userInfo = {
-        email: formData.email,
-        username: res.username || formData.email,
-        role_code: res.role_code || (res.staff_id ? (res.staff_id === 1 ? 'ADM' : 'STF') : 'USR'),
-        staff_id: res.staff_id,
-        id: res.id
-      };
-      if (onLogin) onLogin(userInfo);
-      // Redirect based on role
-      if (userInfo.role_code === 'ADM') {
-        navigate('/admin-dashboard');
-      } else if (userInfo.role_code === 'STF') {
-        navigate('/staff-dashboard');
-      } else {
-        navigate('/view-tickets');
+      const role = await authService.getUserRoles();
+      if (role.isAdmin) {
+        window.location.href = '/admin-dashboard';
+      } else if (role.isStaff) {
+        window.location.href = '/staff-dashboard';
+      } else if (role.isUser) {
+        window.location.href = '/view-tickets';
       }
     } catch (error) {
       setError(
@@ -73,7 +64,8 @@ function LoginPage({ onLogin }) {
   };
 
   return (
-    <div className="min-h-screen pt-8 pb-12">      <div className="max-w-md mx-auto p-6">
+    <div className="min-h-screen pt-8 pb-12">      
+    <div className="max-w-md mx-auto p-6">
         <div className="bg-white rounded-md shadow-md p-8">
           <PageTitle title="Login" subtitle="Login to your account below" className="mb-8" />
           
@@ -142,7 +134,7 @@ function LoginPage({ onLogin }) {
               
               <Text color="gray" center>
                 Don't have an account? 
-                <Link to="/signup" className="text-blue-600 hover:underline ml-1">
+                <Link to="/signup" className="text-bianca-primary hover:underline ml-1">
                   Sign up
                 </Link>
               </Text>

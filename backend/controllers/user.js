@@ -31,7 +31,8 @@ async function emailExists(input_email) {
     // get from user table
     const user = await User.findOne({
         where: {
-            email: input_email
+            email: input_email,
+            is_guest: false
         }
     });
 
@@ -136,8 +137,26 @@ export const signUp = async (req, res) => {
         };
         // create otp token with user info
         const otpToken = createOTPToken(newUser);
-        const actLink = `${process.env.BASE_URL}/api/user/activate/${otpToken}`;
-        await sendOTP(email, "OTP Sign Up Verification", actLink);
+        const actLink = `${process.env.FRONTEND_URL}/activate/${otpToken}`;
+        // Improved HTML email body
+        const emailBody = `
+          <div style="font-family: Arial, sans-serif; background: #f4f8fb; padding: 32px;">
+            <div style="max-width: 480px; margin: 0 auto; background: #fff; border-radius: 12px; box-shadow: 0 2px 8px #e3e9f1; padding: 32px 24px;">
+              <div style="text-align: center; margin-bottom: 24px;">
+                <h2 style="color: #2563eb; margin: 0; font-size: 1.5rem;">Verify Your Email</h2>
+              </div>
+              <p style="color: #222; font-size: 1.1rem; margin-bottom: 18px;">Hi,</p>
+              <p style="color: #222; font-size: 1.1rem; margin-bottom: 18px;">Thank you for signing up with <b>Bianca Aesthetic Helpdesk</b>! Please verify your email address to activate your account.</p>
+              <div style="text-align: center; margin: 32px 0;">
+                <a href="${actLink}" style="display: inline-block; background: #2563eb; color: #fff; text-decoration: none; font-weight: 600; padding: 14px 32px; border-radius: 6px; font-size: 1.1rem; letter-spacing: 0.5px;">Verify Email</a>
+              </div>
+              <p style="color: #666; font-size: 0.95rem;">If you did not create an account, you can safely ignore this email.</p>
+              <hr style="margin: 32px 0 16px 0; border: none; border-top: 1px solid #e3e9f1;" />
+              <p style="color: #b0b8c1; font-size: 0.9rem; text-align: center;">&copy; ${new Date().getFullYear()} Bianca Aesthetic Clinic</p>
+            </div>
+          </div>
+        `;
+        await sendOTP(email, "OTP Sign Up Verification", emailBody);
 
         // only for development
         console.log(otpToken);
@@ -162,26 +181,49 @@ export const activate = async (req, res) => {
         const decode = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
         const {username, password, email, staff_id} = decode;
 
+        console.log("ariel giggers");
         if(await emailExists(email)) {
             return res.status(400).json({message: "email already exists"})
         }   
         // add to database
 
-        const user = await User.create({
-            username: username,
-            password: password,
-            email: email,
-            staff_id: staff_id ? staff_id : null,
-            is_guest: false
-        });
+        const hasAcc = await User.findOne({
+            where: {
+                email: email,
+                is_guest: true
+            }
+        })
+        if (hasAcc) {
+            const [results] = await User.update({
+                username: username,
+                password: password,
+                staff_id: staff_id ? staff_id : null,
+                is_guest: false
+            }, {where: {
+                email: email
+            }})
+             // audit here 
+            await logAudit(
+                "Create", 
+                hasAcc.id, 
+                `${staff_id ? "Staff" : "User"} account created (email: ${email}, username: ${username}, id: ${hasAcc.id}${staff_id ? `, ${staff_id}` : ""})`
+            )
+        } else {
+            const user = await User.create({
+                username: username,
+                password: password,
+                email: email,
+                staff_id: staff_id ? staff_id : null,
+                is_guest: false
+            });
 
-        // audit here 
-        await logAudit(
-            "Create", 
-            user.id, 
-            `${staff_id ? "Staff" : "User"} account created (email: ${email}, username: ${username}, id: ${user.id}${staff_id ? `, ${staff_id}` : ""})`
-        )
-        console.log(`${staff_id ? "Staff" : "User"} account created (email: ${email}, username: ${username}, id: ${user.id}${staff_id ? `, ${staff_id}` : ""})`);
+             // audit here 
+            await logAudit(
+                "Create", 
+                user.id, 
+                `${staff_id ? "Staff" : "User"} account created (email: ${email}, username: ${username}, id: ${user.id}${staff_id ? `, ${staff_id}` : ""})`
+            )
+        }
         
         return res.status(200).json({message: 'Successfully signed up!',
             username: username,
@@ -207,7 +249,9 @@ export const logIn = async (req, res) => {
                 attributes: ['id', 'staff_id', 'email', 'username', 'is_guest'],
                 raw: true
             });
-
+            if (!user) {
+                return res.status(400).json({message: "User is banned"})
+            }
             console.log(`Pre-Staff_id: ${user.staff_id}`)
 
             if (!user.staff_id) {
@@ -482,4 +526,18 @@ export const getUserTickets = async (req, res) => {
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
+};
+
+// use userAuthZ
+export const getUserDetail = async (req, res) => {
+    const source = req.user || req.staff || req.admin || {};
+    const { email, username } = source;
+    try {
+        return res.status(200).json({
+            email: email,
+            username: username
+        })
+    } catch(error) {
+        return res.status(500).json({message: error.message})
+    }
 };

@@ -1,11 +1,38 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import PrimaryButton from '../components/buttons/PrimaryButton';
 import SecondaryButton from '../components/buttons/SecondaryButton';
 import { PageTitle, Text } from '../components/text';
+import { authService } from '../api/authService';
 
 function HomePage() {
   const navigate = useNavigate();
+
+  useEffect(() => {
+    // Check for localToken (remember me)
+    const localToken = localStorage.getItem('token');
+    if (localToken) {
+      // Set token in sessionStorage for axios interceptor
+      sessionStorage.setItem('token', localToken);
+      // Call backend to get user roles
+      authService.getUserRoles
+        .then((roles) => {
+          if (roles.isAdmin) {
+            navigate('/admin-dashboard');
+          } else if (roles.isStaff) {
+            navigate('/staff-dashboard');
+          } else if (roles.isUser) {
+            navigate('/view-tickets');
+          }
+        })
+        .catch(() => {
+          // If token is invalid, clear it and let user login
+          localStorage.removeItem('token');
+          sessionStorage.removeItem('token');
+        });
+    }
+    // If no localToken, do nothing (let user login or use as guest)
+  }, [navigate]);
 
   const handleNavigateToTicketPage = () => {
     navigate('/submit-ticket');
@@ -27,7 +54,7 @@ function HomePage() {
         
         <Text size="base" color="gray" center className="mb-6 md:mb-8">
           Registered users can log in to view responses in-app, while
-          guests will receive replies via email or phone.
+          guests will receive replies via email.
         </Text>
         
         <div className="flex flex-col sm:flex-row flex-wrap gap-4 justify-center">
