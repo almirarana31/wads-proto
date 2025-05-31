@@ -126,6 +126,11 @@ export const authService = {
             return responseData;
         }
         return response.data;
+    },
+
+    async showAudit() {
+        const response = await api.get('/audit/log');
+        return response.data;
     }
 
 };
