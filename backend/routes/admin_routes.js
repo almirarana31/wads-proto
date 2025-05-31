@@ -2,7 +2,8 @@ import express from 'express';
 import { getStatusSummary, getTickets, getAdminUsername, 
     getStaffPerformance, searchStaff, assignStaff, 
      createStaff,updateField, getStaff, 
-     editStaff} from '../controllers/admin.js';
+     editStaff,
+     getAccStatus} from '../controllers/admin.js';
 import { authN, adminAuthZ } from '../middleware/auth.js';
 
 const router = express.Router();
@@ -36,10 +37,8 @@ router.patch('/tickets/:ticket_id/staff', assignStaff)
 // create new staff
 router.post('/staff', createStaff)
 
-// admin dashboard ends here
-
-// view action
-// get details of a specific ticket
+// check staff account status
+router.get('/:id/activation-status', getAccStatus)
 
 
 

@@ -1,103 +1,112 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FaStickyNote } from 'react-icons/fa';
 
 import PrimaryButton from '../components/buttons/PrimaryButton';
 import SecondaryButton from '../components/buttons/SecondaryButton';
 import AssignStaffModal from '../components/AssignStaffModal';
-import ConfirmationModal from '../components/ConfirmationModal';
 import { PageTitle, Text, Subheading, StatText } from '../components/text';
 import StaffCard from '../components/StaffCard';
 import StaffEditModal from '../components/StaffEditModal';
+import { authService } from '../api/authService';
 
 function AdminDashboard() {
-  const navigate = useNavigate();  const [tickets, setTickets] = useState([
-    {
-      id: 'TKT-001',
-      title: 'Payment Failure',
-      name: 'John Doe',
-      email: 'john@example.com',
-      createdAt: '2025-05-27T10:30:00Z',
-      lastUpdated: '2025-05-27T15:45:22.123Z',
-      category: 'Billing',
-      priority: 'High',
-      status: 'Pending',
-      assignedStaff: null,
-      note: 'Follow up with billing team about payment confirmation.' // <-- Example note for tooltip
-    },
-    {
-      id: 'TKT-002',
-      title: 'Technical Issue',
-      name: 'Jane Smith',
-      email: 'jane@example.com',
-      createdAt: '2025-05-26T14:20:00Z',
-      lastUpdated: '2025-05-28T09:12:34.456Z',
-      category: 'Technical',
-      priority: 'Medium',
-      status: 'In Progress',
-      assignedStaff: null
-    },
-    {      id: 'TKT-003',
-      title: 'Service Request',
-      name: 'Bob Wilson',
-      email: 'bob@example.com',
-      createdAt: '2025-05-25T09:15:00Z',
-      lastUpdated: '2025-05-27T11:30:15.789Z',
-      category: 'Service',
-      priority: 'Low',
-      status: 'Resolved',
-      assignedStaff: { id: 'STF001', name: 'John Smith' }
-    }
-  ]);
+  const navigate = useNavigate();
+  const [tickets, setTickets] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  const [stats] = useState({
-    total: 10,
-    pending: 2,
-    inProgress: 5,
-    resolved: 2,
-    cancelled: 1
-  });  const [staffPerformance] = useState([
-    {
-      id: 'STF001',
-      name: 'John Smith',
-      assigned: 45,
-      resolved: 38,
-      activelyAssigned: true,
-      resolutionRate: '84%'
-    },
-    {
-      id: 'STF002',
-      name: 'Sarah Johnson',
-      assigned: 52,
-      resolved: 45,
-      activelyAssigned: true,
-      resolutionRate: '87%'
-    },
-    {
-      id: 'STF003',
-      name: 'Mike Wilson',
-      assigned: 38,
-      resolved: 35,
-      activelyAssigned: false,
-      resolutionRate: '92%'
-    },
-    {
-      id: 'STF004',
-      name: 'Emily Chen',
-      assigned: 28,
-      resolved: 26,
-      activelyAssigned: true,
-      resolutionRate: '93%'
-    },
-    {
-      id: 'STF005',
-      name: 'David Rodriguez',
-      assigned: 33,
-      resolved: 31,
-      activelyAssigned: false,
-      resolutionRate: '94%'
+  useEffect(() => {
+    async function fetchTickets() {
+      try {
+        setLoading(true);
+        const data = await authService.getAdminTickets();
+        
+        // Map and check staff assignment for each ticket
+        const ticketsWithStaff = await Promise.all(data.map(async ticket => {
+          let assignedStaff = null;
+          try {
+            const staffData = await authService.getStaffForTicket(ticket.ticket_id);
+            if (staffData && staffData.length > 0) {
+              assignedStaff = {
+                id: staffData[0].staff_id,
+                name: staffData[0].staff_name
+              };
+            }
+          } catch (err) {
+            console.error(`Error fetching staff for ticket ${ticket.ticket_id}:`, err);
+          }
+
+          return {
+            id: ticket.ticket_id,
+            subject: ticket.subject,
+            createdAt: ticket.createdAt,
+            lastUpdated: ticket.updatedAt || ticket.createdAt,
+            note: ticket.note,
+            category: ticket.Category?.name || '',
+            status: ticket.Status?.name || '',
+            priority: ticket.Priority || null,
+            name: ticket.User?.username || '',
+            email: ticket.User?.email || '',
+            assignedStaff: assignedStaff
+          };
+        }));
+
+        setTickets(ticketsWithStaff);
+      } catch (err) {
+        setError('Failed to fetch tickets');
+      } finally {
+        setLoading(false);
+      }
     }
-  ]);
+    fetchTickets();
+  }, []);
+
+  const [stats, setStats] = useState({
+    total: 0,
+    pending: 0,
+    inProgress: 0,
+    resolved: 0,
+    cancelled: 0
+  });
+  const [statsLoading, setStatsLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchStats() {
+      try {
+        setStatsLoading(true);
+        const data = await authService.getAdminStatusSummary();
+        setStats(data);
+      } catch (err) {
+        console.error('Failed to fetch status summary:', err);
+        // Set default values in case of error
+        setStats({
+          total: 0,
+          pending: 0,
+          inProgress: 0,
+          resolved: 0,
+          cancelled: 0
+        });
+      } finally {
+        setStatsLoading(false);
+      }
+    }
+    fetchStats();
+  }, []);
+
+  const [staffPerformance, setStaffPerformance] = useState([]);
+
+  useEffect(() => {
+    async function fetchStaffPerformance() {
+      try {
+        const data = await authService.getAdminStaffPerformance();
+        setStaffPerformance(data);
+      } catch (err) {
+        // Optionally handle error
+      }
+    }
+    fetchStaffPerformance();
+  }, []);
 
   const [filters, setFilters] = useState({
     search: '',
@@ -113,6 +122,32 @@ function AdminDashboard() {
   const [isDeactivateModalOpen, setIsDeactivateModalOpen] = useState(false);
   const [selectedStaffId, setSelectedStaffId] = useState(null);
   const [selectedStaff, setSelectedStaff] = useState(null);
+  const [priorities, setPriorities] = useState([]);
+  const [categories, setCategories] = useState([]);
+
+  useEffect(() => {
+    async function fetchPriorities() {
+      try {
+        const data = await authService.getPriorities();
+        setPriorities(data);
+      } catch (err) {
+        setPriorities([]);
+      }
+    }
+    fetchPriorities();
+  }, []);
+
+  useEffect(() => {
+    async function fetchCategories() {
+      try {
+        const data = await authService.getCategories();
+        setCategories(data);
+      } catch (err) {
+        console.error('Failed to fetch categories:', err);
+      }
+    }
+    fetchCategories();
+  }, []);
 
   const handleViewTicket = (ticketId) => {
     navigate(`/admin/ticket/${ticketId}`);
@@ -121,18 +156,24 @@ function AdminDashboard() {
     setSelectedTicketId(ticketId);
     setIsAssignModalOpen(true);
   };
-  const handleStaffAssignment = (ticketId, staffId, staffName) => {
-    // Update the tickets state with the assigned staff
-    setTickets(prevTickets => 
-      prevTickets.map(ticket => 
-        ticket.id === ticketId 
-          ? { ...ticket, assignedStaff: { id: staffId, name: staffName } }
-          : ticket
-      )
-    );
-    
-    console.log(`Assigned ticket ${ticketId} to staff ${staffName} (ID: ${staffId})`);
-    alert(`Ticket ${ticketId} has been assigned to ${staffName}!`);
+  const handleStaffAssignment = async (ticketId, staffId, staffName) => {
+    try {
+      await authService.assignTicketToStaff(ticketId, staffId);
+      
+      // Update UI
+      setTickets(prevTickets => 
+        prevTickets.map(ticket => 
+          ticket.id === ticketId 
+            ? { ...ticket, assignedStaff: { id: staffId, name: staffName }, status: 'In Progress' }
+            : ticket
+        )
+      );
+      
+      alert(`Ticket ${ticketId} has been assigned to ${staffName}!`);
+    } catch (error) {
+      console.error('Failed to assign ticket:', error);
+      alert('Failed to assign ticket. Please try again.');
+    }
   };
   const handleCloseAssignModal = () => {
     setIsAssignModalOpen(false);
@@ -143,32 +184,41 @@ function AdminDashboard() {
     setIsAddStaffModalOpen(true);
   };
   const handleEditStaff = (staff) => {
-    setSelectedStaff(staff); // Store selected staff data
+    setSelectedStaff(staff); // staff.staff_id is used
     setIsAddStaffModalOpen(true);
   };
-  const handleSaveStaff = (formData) => {
-    // TODO: When implementing backend:
-    // 1. Determine if this is an add or edit operation
-    // 2. Make appropriate API call (POST for new, PUT for edit)
-    // 3. Update local state accordingly
-    if (selectedStaff) {
-      // Edit existing staff
-      console.log('Editing staff:', formData);
-    } else {
-      // Add new staff
-      console.log('Adding new staff:', formData);
+  const handleSaveStaff = async (updatedStaffData) => {
+    try {
+      if (selectedStaff) {
+        console.log('Editing staff:', updatedStaffData);
+        
+        // Only update is_guest status
+        setStaffPerformance(prevStaff => 
+          prevStaff.map(staff => 
+            staff.staff_id === updatedStaffData.staff_id
+              ? {
+                  ...staff,
+                  is_guest: updatedStaffData.is_guest
+                }
+              : staff
+          )
+        );
+        
+        setIsAddStaffModalOpen(false);
+        setSelectedStaff(null);
+      }
+    } catch (error) {
+      console.error('Error updating staff:', error);
     }
-    setIsAddStaffModalOpen(false);
-    setSelectedStaff(null);
   };
   const handleDeactivateClick = (staffId) => {
-    setSelectedStaffId(staffId);
-    setIsDeactivateModalOpen(true);
+    if (window.confirm("Are you sure you want to deactivate this staff member? This action cannot be undone.")) {
+      handleConfirmDeactivate(staffId);
+    }
   };
-  const handleConfirmDeactivate = () => {
+  const handleConfirmDeactivate = (staffId) => {
     // Add your deactivation logic here
-    console.log(`Deactivating staff member ${selectedStaffId}`);
-    setIsDeactivateModalOpen(false);
+    console.log(`Deactivating staff member ${staffId}`);
     setSelectedStaffId(null);
   };
 
@@ -193,14 +243,15 @@ function AdminDashboard() {
   const filteredTickets = tickets.filter(ticket => {
     const searchLower = searchQuery.toLowerCase();
     return (
-      (ticket.id.toLowerCase().includes(searchLower) ||
-       ticket.title.toLowerCase().includes(searchLower) ||
-       ticket.name.toLowerCase().includes(searchLower) ||
-       ticket.email.toLowerCase().includes(searchLower)) &&
-      (filters.priority === 'All priority' || ticket.priority === filters.priority) &&
-      (filters.status === 'All status' || ticket.status === filters.status) &&
-      (filters.category === 'All category' || ticket.category === filters.category)
-    );
+      // Search by ticket ID (as string), subject, username, or email
+      ticket.id.toString().includes(searchLower) ||
+      (ticket.subject || '').toLowerCase().includes(searchLower) ||
+      (ticket.name || '').toLowerCase().includes(searchLower) ||
+      (ticket.email || '').toLowerCase().includes(searchLower)
+    ) &&
+    (filters.priority === 'All priority' || (ticket.priority || '') === filters.priority) &&
+    (filters.status === 'All status' || (ticket.status || '') === filters.status) &&
+    (filters.category === 'All category' || (ticket.category || '') === filters.category)
   });
 
   const sortedTickets = useMemo(() => {
@@ -285,21 +336,50 @@ function AdminDashboard() {
             <>
               {/* Stats Cards */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
-                <div className="bg-white p-4 rounded-lg shadow-md text-center">
-                  <StatText value={stats.total} label="Total" />
-                </div>
-                <div className="bg-yellow-100 p-4 rounded-lg shadow-md">
-                  <StatText label="Pending" value={stats.pending} valueColor="yellow" labelColor="yellow" />
-                </div>
-                <div className="bg-purple-100 p-4 rounded-lg shadow-md">
-                  <StatText label="In Progress" value={stats.inProgress} valueColor="purple" labelColor="purple" />
-                </div>
-                <div className="bg-green-100 p-4 rounded-lg shadow-md">
-                  <StatText label="Resolved" value={stats.resolved} valueColor="green" labelColor="green" />
-                </div>
-                <div className="bg-red-100 p-4 rounded-lg shadow-md">
-                  <StatText value={stats.cancelled} label="Cancelled" valueColor="red" labelColor="red" />
-                </div>
+                {statsLoading ? (
+                  // Loading state
+                  Array(5).fill(0).map((_, index) => (
+                    <div key={index} className="bg-gray-100 p-4 rounded-lg shadow-md animate-pulse h-24"></div>
+                  ))
+                ) : (
+                  <>
+                    <div className="bg-white p-4 rounded-lg shadow-md text-center">
+                      <StatText value={stats.total} label="Total" />
+                    </div>
+                    <div className="bg-yellow-100 p-4 rounded-lg shadow-md">
+                      <StatText 
+                        label="Pending" 
+                        value={stats.pending} 
+                        valueColor="yellow" 
+                        labelColor="yellow" 
+                      />
+                    </div>
+                    <div className="bg-purple-100 p-4 rounded-lg shadow-md">
+                      <StatText 
+                        label="In Progress" 
+                        value={stats.inProgress} 
+                        valueColor="purple" 
+                        labelColor="purple" 
+                      />
+                    </div>
+                    <div className="bg-green-100 p-4 rounded-lg shadow-md">
+                      <StatText 
+                        label="Resolved" 
+                        value={stats.resolved} 
+                        valueColor="green" 
+                        labelColor="green" 
+                      />
+                    </div>
+                    <div className="bg-red-100 p-4 rounded-lg shadow-md">
+                      <StatText 
+                        value={stats.cancelled} 
+                        label="Cancelled" 
+                        valueColor="red" 
+                        labelColor="red" 
+                      />
+                    </div>
+                  </>
+                )}
               </div>              
               
               {/* Ticket Management Section */}
@@ -343,9 +423,8 @@ function AdminDashboard() {
                   >
                     <option value="All category">All category</option>
                     <option value="Billing">Billing</option>
-                    <option value="Technical">Technical</option>
+                    <option value="Technical">IT Support</option>
                     <option value="General">General</option>
-                    <option value="Service">Service</option>
                   </select>
                 </div>               
                 {/* Tickets Table */}
@@ -431,22 +510,49 @@ function AdminDashboard() {
                               </span>
                             )}
                           </td>
-                          <td className="p-3 text-sm text-gray-700 whitespace-nowrap">{ticket.title}</td>
+                          <td className="p-3 text-sm text-gray-700 whitespace-nowrap">{ticket.subject}</td>
                           <td className="p-3 text-sm text-gray-700 whitespace-nowrap">{ticket.name}</td>
                           <td className="p-3 text-sm text-gray-700 whitespace-nowrap">{ticket.email}</td>
                           <td className="p-3 text-sm text-gray-700 whitespace-nowrap">{new Date(ticket.createdAt).toLocaleDateString()}</td>
                           <td className="p-3 text-sm text-gray-700 whitespace-nowrap">{new Date(ticket.lastUpdated).toLocaleDateString()}</td>
                           <td className="p-3 text-sm text-gray-700 whitespace-nowrap">{ticket.category}</td>
                           <td className="p-3 text-sm text-gray-700 whitespace-nowrap">
-                            <select defaultValue={ticket.priority} className="p-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-blue-300 bg-white">
-                              <option>High</option>
-                              <option>Medium</option>
-                              <option>Low</option>
+                            <select
+                              value={ticket.priority?.name || ''}
+                              onChange={async (e) => {
+                                // Map priority name to id
+                                const priorityMap = { High: 1, Medium: 2, Low: 3 };
+                                const selectedName = e.target.value;
+                                const newPriorityId = priorityMap[selectedName] || null;
+                                try {
+                                  if (newPriorityId) {
+                                    await authService.updateAdminTicketPriority(ticket.id, newPriorityId);
+                                    // Update local state to reflect the new priority
+                                    setTickets(prev =>
+                                      prev.map(t =>
+                                        t.id === ticket.id
+                                          ? { ...t, priority: { name: selectedName } }
+                                          : t
+                                      )
+                                    );
+                                  }
+                                } catch (err) {
+                                  alert('Failed to update priority');
+                                }
+                              }}
+                              className="p-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-blue-300 bg-white"
+                            >
+                              <option value="">None</option>
+                              <option value="High">High</option>
+                              <option value="Medium">Medium</option>
+                              <option value="Low">Low</option>
                             </select>
                           </td>
                           <td className="p-3 text-sm text-gray-700 whitespace-nowrap">{ticket.status}</td>
                           <td className="p-3 text-sm text-gray-700 whitespace-nowrap">
-                            {ticket.assignedStaff ? (
+                            {loading ? (
+                              <div className="animate-pulse bg-gray-200 h-6 w-24 rounded"></div>
+                            ) : ticket.assignedStaff ? (
                               <div className="flex flex-col">
                                 <Text weight="medium" size="sm">{ticket.assignedStaff.name}</Text>
                                 <Text color="text-gray-500" size="xs">ID: {ticket.assignedStaff.id}</Text>
@@ -508,9 +614,9 @@ function AdminDashboard() {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   {staffPerformance.map((staff) => (
                     <StaffCard 
-                      key={staff.id} 
+                      key={staff.staff_id} 
                       staff={staff} 
-                      onDeactivate={handleDeactivateClick}
+                      onDeactivate={() => handleDeactivateClick(staff.staff_id)}
                       onEdit={handleEditStaff}
                     />
                   ))}
@@ -540,18 +646,10 @@ function AdminDashboard() {
         ticketId={selectedTicketId}
       />
 
-      {/* Confirmation Modal for Deactivation */}
-      <ConfirmationModal
-        isOpen={isDeactivateModalOpen}
-        onClose={() => setIsDeactivateModalOpen(false)}
-        onConfirm={handleConfirmDeactivate}
-        title="Deactivate Staff Member"
-        message="Are you sure you want to deactivate this staff member? This action cannot be undone."
-      />
-
       {/* Staff Edit Modal */}
       <StaffEditModal
         isOpen={isAddStaffModalOpen}
+        mode={selectedStaff ? "edit" : "add"}
         onClose={() => {
           setIsAddStaffModalOpen(false);
           setSelectedStaff(null);
@@ -564,5 +662,3 @@ function AdminDashboard() {
 }
 
 export default AdminDashboard;
-
-

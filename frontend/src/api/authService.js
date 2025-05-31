@@ -123,6 +123,132 @@ export const authService = {
             return responseData;
         }
         return response.data;
-    }
+    }, 
+    async getAdminTickets() {
+        // GET /admin/all-tickets
+        const response = await api.get('/admin/all-tickets');
+        return response.data;
+    },
 
+    async getAdminStatusSummary() {
+        const response = await api.get('/admin/status-summary');
+        // Transform the response data to match the expected format
+        const summary = {
+            total: 0,
+            pending: 0,
+            inProgress: 0,
+            resolved: 0,
+            cancelled: 0
+        };
+        
+        // Map the backend response to our frontend structure
+        response.data.forEach(item => {
+            switch(item.name?.toLowerCase()) {
+                case 'pending':
+                    summary.pending = parseInt(item.count);
+                    break;
+                case 'in progress':
+                    summary.inProgress = parseInt(item.count);
+                    break;
+                case 'resolved':
+                    summary.resolved = parseInt(item.count);
+                    break;
+                case 'cancelled':
+                    summary.cancelled = parseInt(item.count);
+                    break;
+            }
+        });
+        
+        // Calculate total
+        summary.total = summary.pending + summary.inProgress + summary.resolved + summary.cancelled;
+        
+        return summary;
+    },
+
+    async getAdminStaffPerformance() {
+        // GET /admin/staff-performance
+        const response = await api.get('/admin/staff-performance');
+        return response.data;
+    },
+
+    async getAdminStaffDetail(staffId) {
+        // GET /admin/staff-detail/:id
+        const response = await api.get(`/admin/staff-detail/${staffId}`);
+        return response.data;
+    },
+
+    async createAdminStaff(staffData) {
+        // POST /admin/staff
+        const response = await api.post('/admin/staff', staffData);
+        return response.data;
+    },
+
+    async editAdminStaff(staffId, staffData) {
+        // PATCH /admin/staff-detail/:id
+        const response = await api.patch(`/admin/staff-detail/${staffId}`, staffData);
+        return response.data;
+    },
+
+    async updateAdminTicketPriority(ticketId, priority_id) {
+        const response = await api.patch(`/admin/tickets/${ticketId}`, { priority_id });
+        return response.data;
+    },
+
+    async getPriorities() {
+        // Adjust the endpoint as per your backend route
+        const response = await api.get('/ticket/priorities');
+        return response.data;
+    },
+
+    async getCategories() {
+        const response = await api.get('/ticket/categories');
+        return response.data;
+    },
+
+    async getStaffForTicket(ticketId) {
+        try {
+            // Add error checking for ticketId
+            if (!ticketId) {
+                throw new Error('Ticket ID is required');
+            }
+
+            const response = await api.get(`/admin/staff/${ticketId}`);
+            console.log('Raw API Response:', response);
+            console.log('API Response data:', response.data);
+
+            // Ensure we have an array response
+            if (!response.data) {
+                throw new Error('No data received from server');
+            }
+
+            // If response.data is not an array, wrap it in an array
+            const staffData = Array.isArray(response.data) ? response.data : [response.data];
+            return staffData;
+
+        } catch (error) {
+            console.error('Staff fetch error:', {
+                message: error.message,
+                response: error.response?.data,
+                status: error.response?.status
+            });
+            throw new Error(`Failed to fetch staff: ${error.message}`);
+        }
+    },
+
+    async assignTicketToStaff(ticketId, staffId) {
+        const response = await api.patch(`/admin/tickets/${ticketId}/staff`, {
+            id: staffId
+        });
+        return response.data;
+    },
+
+    async getAdminStaffActivationStatus(staffId) {
+        try {
+            const response = await api.get(`/admin/${staffId}/activation-status`);
+            return response.data;
+        } catch (error) {
+            console.error('Error fetching staff activation status:', error);
+            throw error;
+        }
+    }
 };
