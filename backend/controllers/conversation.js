@@ -117,8 +117,7 @@ export const createConversation = async (req, res) => {
             endedAt: null  
         })
 
-        // audit here
-        await logAudit(
+        // audit here        await logAudit(
             "Create",
             staff.id,
             `
@@ -126,7 +125,10 @@ export const createConversation = async (req, res) => {
             `
         )
 
-        return res.status(200).json({messager: "Successfully created conversation"})
+        return res.status(200).json({
+            message: "Successfully created conversation",
+            id: newConvo.id
+        })
     } catch (error) {
         return res.status(500).json({message: error.message})
     }

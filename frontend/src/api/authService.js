@@ -104,10 +104,8 @@ export const authService = {
     async sendMessage(conversationId, message) {
         const response = await api.post(`/conversation/${conversationId}/message`, { content: message });
         return response.data;
-    },
-
-    async getConversation(conversationId) {
-        const response = await api.get(`/staff/conversation/${conversationId}`);
+    },    async getConversation(conversationId) {
+        const response = await api.get(`/conversation/${conversationId}`);
         return response.data;
     }
 

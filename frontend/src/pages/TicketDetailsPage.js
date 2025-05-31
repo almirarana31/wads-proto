@@ -246,15 +246,21 @@ function TicketDetailsPage() {
       
       // Get raw ticket ID without 'TKT-' prefix
       const rawTicketId = ticket.rawId;
-      
-      // Create a new conversation
+        // Create a new conversation
       const response = await authService.createConversation(rawTicketId);
+      
+      console.log('Create conversation response:', response); // Debug log
       
       if (response && response.id) {
         // Navigate to the new conversation
         navigate(`/chatroom/${rawTicketId}/${response.id}`);
       } else {
-        throw new Error('Failed to create conversation');
+        // Provide more specific error based on response
+        if (response && response.message) {
+          throw new Error(`Server message: ${response.message}`);
+        } else {
+          throw new Error('Failed to create conversation: missing conversation ID in response');
+        }
       }
     } catch (err) {
       console.error('Error creating conversation:', err);

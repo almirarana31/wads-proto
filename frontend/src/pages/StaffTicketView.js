@@ -135,23 +135,29 @@ function StaffTicketView() {  const { ticketId } = useParams();
     }
   };  const [isCreatingConversation, setIsCreatingConversation] = useState(false);
   const [createConversationError, setCreateConversationError] = useState(null);
-  
-  const handleStartConversation = async () => {
+    const handleStartConversation = async () => {
     try {
       setIsCreatingConversation(true);
       setCreateConversationError(null);
       
       // Remove 'TKT-' prefix if present in the ticketId
       const rawTicketId = ticketId.startsWith('TKT-') ? ticketId.replace('TKT-', '') : ticketId;
-      
-      // Create a new conversation
+        // Create a new conversation
       const response = await authService.createConversation(rawTicketId);
       
+      console.log('Create conversation response:', response); // Debug log
+      
       if (response && response.id) {
-        // Navigate to the new conversation
+        // Navigate to the new conversation - use raw ticket ID for consistency
+        // We're using the original ticketId from URL params for the navigation to maintain URL format
         navigate(`/chatroom/${ticketId}/${response.id}`);
       } else {
-        throw new Error('Failed to create conversation');
+        // Provide more specific error based on response
+        if (response && response.message) {
+          throw new Error(`Server message: ${response.message}`);
+        } else {
+          throw new Error('Failed to create conversation: missing conversation ID in response');
+        }
       }
     } catch (err) {
       console.error('Error creating conversation:', err);
