@@ -166,10 +166,10 @@ function Chatroom() {
 
   const handleBack = () => {
     navigate(-1);
-  };
-  // Send message state
+  };  // Send message state
   const [isSending, setIsSending] = useState(false);
   const [sendError, setSendError] = useState(null);
+  const [isClosing, setIsClosing] = useState(false);
   
   // Send message to backend with optimistic update
   const handleSend = async () => {
@@ -307,29 +307,41 @@ function Chatroom() {
     
     // Cleanup interval on unmount
     return () => clearInterval(intervalId);
-  }, [actualConversationId, isNewConversation, conversationStatus, lastMessageId, conversationNumber]);
-
-  // Function to close a conversation
+  }, [actualConversationId, isNewConversation, conversationStatus, lastMessageId, conversationNumber]);  // Function to close a conversation
   const handleCloseConversation = async () => {
     try {
-      // Update local UI state immediately for better UX
-      setConversationStatus('closed');
+      // Make sure we have a valid conversation ID
+      const currentConversationId = isNewConversation ? actualConversationId : conversationId;
+      
+      if (!currentConversationId) {
+        throw new Error('No valid conversation ID found');
+      }
+      
+      // Set closing state for UI feedback
+      setIsClosing(true);
+      
+      console.log(`Closing conversation with ID: ${currentConversationId}`);
       
       // Call the API to close the conversation
-      await authService.closeConversation(
-        isNewConversation ? actualConversationId : conversationId
-      );
+      const response = await authService.closeConversation(currentConversationId);
+      
+      console.log('API response:', response);
+      
+      // Update local UI state after successful API call
+      setConversationStatus('closed');
       
       // Show a success message or notification
-      alert('Conversation has been closed');
+      alert('Conversation has been closed successfully.');
       
-      // Could navigate back to ticket details here if needed
-      // navigate(-1);
+      // Refresh conversation data to ensure UI is up to date
+      if (!isNewConversation) {
+        fetchConversationData();
+      }
     } catch (err) {
       console.error('Error closing conversation:', err);
-      // Revert UI state on error
-      setConversationStatus('open');
       alert('Failed to close conversation. Please try again.');
+    } finally {
+      setIsClosing(false);
     }
   };
 
@@ -425,18 +437,27 @@ function Chatroom() {
                   </svg>
                 )}
               </PrimaryButton>
-            </div>
-            {/* Close conversation button - only show if we have messages */}
-            {chatMessages.length > 0 && !isNewConversation && (
+            </div>            {/* Close conversation button - only show if we have messages */}
+            {chatMessages.length > 0 && !isNewConversation && conversationStatus === 'open' && (
               <div className="flex justify-end mt-3">
                 <button
                   onClick={handleCloseConversation}
-                  className="text-sm text-red-600 hover:text-red-800 flex items-center"
+                  className="text-sm text-red-600 hover:text-red-800 flex items-center px-3 py-1 border border-red-200 rounded-md hover:bg-red-50 transition-colors"
+                  disabled={isClosing || conversationStatus !== 'open'}
                 >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                  Close Conversation
+                  {isClosing ? (
+                    <>
+                      <div className="inline-block h-4 w-4 mr-2 animate-spin rounded-full border-2 border-solid border-red-600 border-r-transparent"></div>
+                      Closing...
+                    </>
+                  ) : (
+                    <>
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                      Close Conversation
+                    </>
+                  )}
                 </button>
               </div>
             )}
