@@ -32,7 +32,9 @@ export const showAudit = async (req, res) => {
                 timestamp: {[Op.and]:
                     [{[Op.lt]: endDate ? endDate : new Date('2500-01-01')}, 
                     {[Op.gt]: startDate ? startDate : new Date('2000-01-01')}]
-                }
+                },
+                ...(search ? {'$User.email$': {[Op.substring]: search}} : {}),
+                ...(action ? {action: action}: {})
             },
             raw: true
         })
