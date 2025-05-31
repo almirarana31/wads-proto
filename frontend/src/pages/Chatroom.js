@@ -104,12 +104,20 @@ function Chatroom() {
       setError(null);
       
       const response = await authService.getConversation(conversationId);
-      
-      // Process the response data
+        // Process the response data
       if (response && Array.isArray(response)) {
+        // Filter out the closed status object from the messages
+        const messages = response.filter(item => !('closed' in item));
+        
+        // Check if conversation is closed using the new attribute
+        const closedItem = response.find(item => item.closed !== undefined);
+        if (closedItem && closedItem.closed === true) {
+          setConversationStatus('closed');
+        }
+        
         // Format messages for display
-        const formattedMessages = response.map((msg, index) => {
-          const prevMsg = index > 0 ? response[index - 1] : null;
+        const formattedMessages = messages.map((msg, index) => {
+          const prevMsg = index > 0 ? messages[index - 1] : null;
           const showSender = !prevMsg || prevMsg.sender_id !== msg.sender_id;
           
           return {
@@ -250,13 +258,23 @@ function Chatroom() {
         // For now, we're refetching all messages but would only append new ones
         const response = await authService.getConversation(actualConversationId);
         
-        if (response && Array.isArray(response)) {
+        if (response && Array.isArray(response)) {          // Check for closed status in the response
+          const closedItem = response.find(item => item.closed !== undefined);
+          if (closedItem && closedItem.closed === true) {
+            setConversationStatus('closed');
+            // Don't continue processing messages if conversation is now closed
+            return;
+          }
+          
+          // Filter out any items that are not actual messages
+          const messages = response.filter(item => !('closed' in item));
+          
           // Check if we have new messages by comparing with lastMessageId
-          const lastMessage = response[response.length - 1];
+          const lastMessage = messages[messages.length - 1];
           
           if (lastMessage && (!lastMessageId || lastMessage.id > lastMessageId)) {
             // Format and add only new messages
-            const newMessages = response
+            const newMessages = messages
               .filter(msg => !lastMessageId || msg.id > lastMessageId)
               .map((msg, index, filteredArray) => {
                 const prevMsg = index > 0 ? filteredArray[index - 1] : null;
@@ -347,10 +365,17 @@ function Chatroom() {
 
   return (
     <ContentContainer>      <div className="relative mb-5">
-        <BackButton onClick={handleBack} className="absolute -top-2 -left-2" />
-        <div className="text-center pt-8">
+        <BackButton onClick={handleBack} className="absolute -top-2 -left-2" />        <div className="text-center pt-8">
           {/* Use the conversation number we've determined */}
           <PageTitle title={isNewConversation ? 'New Conversation' : `Conversation ${conversationNumber || '#'}`} />
+          
+          {/* Display status indicator for closed conversations */}
+          {conversationStatus === 'closed' && (
+            <div className="inline-flex items-center px-3 py-1 mt-2 bg-gray-100 border border-gray-200 rounded-full text-sm">
+              <span className="h-2 w-2 bg-red-500 rounded-full mr-2"></span>
+              <span className="text-gray-700">Closed</span>
+            </div>
+          )}
         </div>
       </div>
       <div className="border-b border-gray-200 my-6"></div>
@@ -380,8 +405,7 @@ function Chatroom() {
               Try Again
             </PrimaryButton>
           </div>
-        ) : chatMessages.length > 0 ? (
-          chatMessages.map((msg) => (
+        ) : chatMessages.length > 0 ? (          chatMessages.map((msg) => (
             <ChatBubble
               key={msg.id}
               message={msg.content}
@@ -389,6 +413,7 @@ function Chatroom() {
               senderName={msg.senderName}
               timestamp={msg.timestamp}
               showSender={msg.showSender}
+              isClosedConversation={conversationStatus === 'closed'}
             />
           ))
         ) : (
@@ -461,12 +486,20 @@ function Chatroom() {
                 </button>
               </div>
             )}
-          </>
-        ) : (
-          <div className="text-center py-6">
-            <Text color="text-gray-500" size="lg" weight="semibold">
-              This conversation has ended.
-            </Text>
+          </>        ) : (
+          <div className="bg-gray-50 border border-gray-200 rounded-lg p-5 text-center">
+            <div className="flex items-center justify-center mb-2">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+              </svg>
+              <Text color="text-gray-700" weight="semibold" size="lg">
+                This conversation is closed
+              </Text>
+            </div>
+            <Text color="text-gray-500" size="sm" className="max-w-md mx-auto mb-2">
+              This conversation has been marked as completed and can no longer be modified.
+              To continue the discussion, please start a new conversation.
+            </Text>        
           </div>
         )}
       </div>

@@ -105,8 +105,7 @@ export const authService = {
         const response = await api.post(`/conversation/${conversationId}/message`, { content: message });
         return response.data;
     },    
-    
-    async getConversation(conversationId) {
+      async getConversation(conversationId) {
         const response = await api.get(`/conversation/${conversationId}`);
        
         if (Array.isArray(response.data) && !response.data.metadata) {
@@ -114,10 +113,14 @@ export const authService = {
             const responseData = [...response.data];
             
             const sequenceNumber = sessionStorage.getItem(`conversation_number_${conversationId}`);
+            
+            // Check for the new closed attribute in the API response
+            const closedItem = responseData.find(item => item.closed !== undefined);
+            const isClosed = closedItem ? closedItem.closed : false;
 
             responseData.metadata = {
                 sequenceNumber: sequenceNumber ? parseInt(sequenceNumber) : null,
-                isOpen: true
+                isOpen: !isClosed
             };
             
             return responseData;

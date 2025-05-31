@@ -205,20 +205,25 @@ function TicketDetailsPage() {
       setIsLoadingConversations(true);
       const rawTicketId = ticket.rawId;
       const conversationHistory = await authService.getConversationHistory(rawTicketId, sortOrder);
-      
-      // Format conversation data
-      const formattedConversations = conversationHistory.map(conv => ({
-        id: conv.id,
-        startedDate: conv.createdAt,
-        endedDate: conv.endedAt || null,
-        messages: conv.Messages?.map(msg => ({
-          id: msg.id,
-          content: msg.content,
-          sender: msg.sender_type,
-          senderName: msg.sender_name,
-          timestamp: new Date(msg.createdAt).toLocaleString()
-        })) || []
-      }));
+        // Format conversation data
+      const formattedConversations = conversationHistory.map(conv => {
+        // Handle conversations with a closed attribute
+        if (conv.closed !== undefined) {
+          return {
+            id: conv.id,
+            startedDate: conv.createdAt,
+            endedDate: new Date(), // Use current date since it's marked as closed
+            isClosed: true
+          };
+        }
+        
+        return {
+          id: conv.id,
+          startedDate: conv.createdAt,
+          endedDate: conv.endedAt || null,
+          isClosed: !!conv.endedAt
+        };
+      });
       
       // Process and number conversations
       const numberedConversations = processConversationsWithNumbers(formattedConversations);
