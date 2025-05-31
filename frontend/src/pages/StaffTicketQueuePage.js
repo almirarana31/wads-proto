@@ -174,11 +174,11 @@ function StaffTicketQueuePage({ staffCategory = 'Billing', onClaimTicket }) {
     <div className="bg-white p-6 md:p-10 rounded shadow-md max-w-[1200px] mx-auto mt-8">      <PageTitle title="Ticket Queue" subtitle={`Shared pool of unassigned tickets`} className="mb-8" />
         <div className="flex justify-between items-center mb-4">
         <Text color="gray">
-          You have claimed {isCountLoading ? (
+          You have {isCountLoading ? (
             <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-solid border-blue-600 border-r-transparent align-[-0.125em] ml-1 mr-1"></span>
           ) : (
             <span className="font-bold">{assignedTicketCount}</span>
-          )} / 5 tickets
+          )} / 5 active tickets assigned to you
         </Text>
         <button 
           onClick={refreshData} 
