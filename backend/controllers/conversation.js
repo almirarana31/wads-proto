@@ -64,7 +64,7 @@ export const getConversationHistory = async (req, res) => {
             attributes: ['id', 'createdAt', 'endedAt'],
             order: [['createdAt', sortBy?.toLowerCase() === 'newest' ? 'DESC' : 'ASC']]
         });
-
+        
         return res.status(200).json(conversation);
     } catch (error) {
         return res.status(500).json({message: error.message});
