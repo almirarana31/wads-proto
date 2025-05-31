@@ -1,3 +1,4 @@
+/* filepath: c:\Users\almir\wads-proto\wads-proto-1\frontend\src\index.css */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -9,7 +10,7 @@ body {
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background-color: #dbeafe; /* Blue-100 background for all pages */
+  background-color: #B1DFF9 !important; /* Use important to override any conflicting styles */
   min-height: 100vh; /* Ensure full viewport height coverage */
 }
 
@@ -23,8 +24,12 @@ code {
 }
 
 /* Custom styles for Bianca Aesthetic Helpdesk */
+.bg-bianca-background {
+  background-color: #B1DFF9 !important; 
+}
+
 .bg-blue-100 {
-  background-color: #E3F2FD; /* Customize baby blue background if needed */
+  background-color: #B1DFF9 !important; /* Updated to match new background color */
 }
 
 /* Font Class Helpers */

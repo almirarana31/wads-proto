@@ -266,3 +266,31 @@ export const getUserRoles = async (req, res) => {
         return res.status(500).json({message: error.message})
     }
 }
+export const ticketAuthZ = async (req,res,next) => {
+    const ticket_id = req.params.id /// ticket id
+    const user = req.user
+    try {   
+        const ticket = await Ticket.findOne({
+            where: {
+                [Op.or]: [
+                   {user_id: user.id},
+                ...(user.staff_id ? [{staff_id: user.staff_id}] : []) 
+                ],
+                id: ticket_id 
+            }
+        })
+
+        if (!ticket) {
+            return res.status(403).json({message: "Forbidden access"})
+        }
+
+        if (user.staff_id) {
+            req.staff = req.user
+            console.log(req.staff)
+        }
+
+        return next()
+    } catch (error) {
+        return res.status(500).json({message: error.message})
+    }
+}

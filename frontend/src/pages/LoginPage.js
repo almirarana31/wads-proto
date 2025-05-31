@@ -134,7 +134,7 @@ function LoginPage({ onLogin }) {
               
               <Text color="gray" center>
                 Don't have an account? 
-                <Link to="/signup" className="text-blue-600 hover:underline ml-1">
+                <Link to="/signup" className="text-bianca-primary hover:underline ml-1">
                   Sign up
                 </Link>
               </Text>

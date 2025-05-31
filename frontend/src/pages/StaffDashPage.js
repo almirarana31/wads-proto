@@ -137,10 +137,9 @@ function StaffDashPage() {
   const getSortIcon = (columnKey) => {
     if (sortConfig.key !== columnKey) {
       return <span className="text-gray-400">↕</span>;
-    }
-    return sortConfig.direction === 'asc' ? 
-      <span className="text-blue-600">↑</span> : 
-      <span className="text-blue-600">↓</span>;
+    }      return sortConfig.direction === 'asc' ? 
+      <span className="text-bianca-primary">↑</span> : 
+      <span className="text-bianca-primary">↓</span>;
   };
 
   const sortedTickets = useMemo(() => {
@@ -188,7 +187,7 @@ function StaffDashPage() {
           title="Staff Dashboard" 
           subtitle={
             <>
-              Welcome <span className="font-medium text-blue-600">Staff</span>, manage your assigned tickets here
+              Welcome <span className="font-medium text-bianca-primary">Staff</span>, manage your assigned tickets here
             </>
           }
           className="mb-8"
@@ -196,13 +195,12 @@ function StaffDashPage() {
         {/* Tab Navigation */}
         <div className="flex gap-4 mb-8 border-b border-gray-200">
           <button
-            className={`px-4 py-2 font-semibold border-b-2 transition-colors ${activeTab === 'my-tickets' ? 'border-blue-600 text-blue-700' : 'border-transparent text-gray-500 hover:text-blue-600'}`}
+            className={`px-4 py-2 font-semibold border-b-2 transition-colors ${activeTab === 'my-tickets' ? 'border-bianca-primary text-bianca-primary' : 'border-transparent text-gray-500 hover:text-bianca-primary'}`}
             onClick={() => setActiveTab('my-tickets')}
           >
             My Tickets
-          </button>
-          <button
-            className={`px-4 py-2 font-semibold border-b-2 transition-colors ${activeTab === 'queue' ? 'border-blue-600 text-blue-700' : 'border-transparent text-gray-500 hover:text-blue-600'}`}
+          </button>          <button
+            className={`px-4 py-2 font-semibold border-b-2 transition-colors ${activeTab === 'queue' ? 'border-bianca-primary text-bianca-primary' : 'border-transparent text-gray-500 hover:text-bianca-primary'}`}
             onClick={() => setActiveTab('queue')}
           >
             Ticket Queue
@@ -229,10 +227,9 @@ function StaffDashPage() {
             {/* Ticket Management Section */}
             <div className="bg-white p-6 rounded-lg shadow-md mb-8">
               <div className="flex justify-between items-center mb-4">
-                <Subheading size="2xl" color="blue">Ticket Management</Subheading>
-                <button 
+                <Subheading size="2xl" color="blue">Ticket Management</Subheading>                <button 
                   onClick={handleRefresh} 
-                  className="flex items-center px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors" 
+                  className="flex items-center px-4 py-2 bg-bianca-primary text-white rounded hover:bg-bianca-primary/80 transition-colors" 
                   disabled={isRefreshing}
                 >
                   {isRefreshing ? (
@@ -252,19 +249,18 @@ function StaffDashPage() {
                     placeholder="Search ticket by ID, title, name, email..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-300"
+                    className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-bianca-primary/30"
                     onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
                   />
-                </div>
-                <button 
+                </div>                <button 
                   onClick={handleSearch} 
-                  className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
+                  className="px-4 py-2 bg-bianca-primary text-white rounded hover:bg-bianca-primary/80 transition-colors"
                 >
                   Search
                 </button>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">                <select
-                  className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-300 bg-white"
+                  className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-bianca-primary/30 bg-white"
                   value={filters.priority}
                   onChange={(e) => {
                     setFilters({...filters, priority: e.target.value});
@@ -275,8 +271,8 @@ function StaffDashPage() {
                   <option value="High">High</option>
                   <option value="Medium">Medium</option>
                   <option value="Low">Low</option>
-                </select>                  <select
-                  className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-300 bg-white"
+                </select>                <select
+                  className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-bianca-primary/30 bg-white"
                   value={filters.status}
                   onChange={(e) => {
                     setFilters({...filters, status: e.target.value});
@@ -293,7 +289,7 @@ function StaffDashPage() {
               <div className="overflow-x-auto">
                 {isLoading ? (
                   <div className="text-center p-6">
-                    <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-blue-500 border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite]"></div>
+                    <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-bianca-primary border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite]"></div>
                     <p className="mt-2 text-gray-600">Loading tickets...</p>
                   </div>                ) : error ? (
                   <div className="text-center p-6">
@@ -303,10 +299,9 @@ function StaffDashPage() {
                       </svg>
                     </div>
                     <h3 className="text-lg font-semibold text-red-700 mb-2">Error Loading Tickets</h3>
-                    <p className="text-gray-700 mb-4">{error}</p>
-                    <button 
+                    <p className="text-gray-700 mb-4">{error}</p>                    <button 
                       onClick={handleRefresh} 
-                      className="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
+                      className="mt-4 px-4 py-2 bg-bianca-primary text-white rounded hover:bg-bianca-primary/80 transition-colors"
                     >
                       Try Again
                     </button>
@@ -321,7 +316,7 @@ function StaffDashPage() {
                         <th onClick={() => handleSort('email')} className="p-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider border-b border-gray-200 cursor-pointer hover:bg-gray-100">Email {getSortIcon('email')}</th>
                         <th onClick={() => handleSort('createdAt')} className="p-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider border-b border-gray-200 cursor-pointer hover:bg-gray-100">Created At {getSortIcon('createdAt')}</th>
                         <th onClick={() => handleSort('lastUpdated')} className="p-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider border-b border-gray-200 cursor-pointer hover:bg-gray-100">Last Updated {getSortIcon('lastUpdated')}</th>
-                        <th onClick={() => handleSort('category')} className="p-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider border-b border-gray-200 cursor-pointer hover:bg-gray-100">Category {getSortIcon('category')}</th>
+                        <th className="p-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider border-b border-gray-200 cursor-pointer">Category</th>
                         <th onClick={() => handleSort('priority')} className="p-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider border-b border-gray-200 cursor-pointer hover:bg-gray-100">Priority {getSortIcon('priority')}</th>
                         <th onClick={() => handleSort('status')} className="p-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider border-b border-gray-200 cursor-pointer hover:bg-gray-100">Status {getSortIcon('status')}</th>
                         <th className="p-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider border-b border-gray-200">Actions</th>
@@ -372,30 +367,6 @@ function StaffDashPage() {
 }
 
 // Utility functions for styling
-function getStatusStyle(status) {
-  switch (status) {
-    case 'Cancelled':
-      return 'px-2 py-1 text-red-800 bg-red-200 rounded-full';
-    case 'In Progress':
-      return 'px-2 py-1 text-purple-800 bg-purple-200 rounded-full';
-    case 'Resolved':
-      return 'px-2 py-1 text-green-800 bg-green-400 rounded-full';
-    default:
-      return 'px-2 py-1 text-gray-800 bg-gray-200 rounded-full';
-  }
-}
 
-function getPriorityStyle(priority) {
-  switch (priority) {
-    case 'High':
-      return 'px-2 py-1 text-red-800 bg-red-200 rounded-full';
-    case 'Medium':
-      return 'px-2 py-1 text-orange-800 bg-orange-200 rounded-full';
-    case 'Low':
-      return 'px-2 py-1 text-green-800 bg-green-200 rounded-full';
-    default:
-      return 'px-2 py-1 text-gray-800 bg-gray-200 rounded-full';
-  }
-}
 
 export default StaffDashPage;

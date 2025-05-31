@@ -21,11 +21,17 @@ function TicketDetailsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [conversations, setConversations] = useState([]);
+  const [isLoadingConversations, setIsLoadingConversations] = useState(false);
+  const [conversationsError, setConversationsError] = useState(null);
   const [editForm, setEditForm] = useState({
     title: '',
     description: '',
     category: ''
   });
+  
+  // States for creating a new conversation
+  const [isCreatingConversation, setIsCreatingConversation] = useState(false);
+  const [createConversationError, setCreateConversationError] = useState(null);
 
   // Fetch ticket details when component mounts
   useEffect(() => {
@@ -173,24 +179,126 @@ function TicketDetailsPage() {
       setIsLoading(false);
     }
   };
-
   // Sort conversations
   const sortedConversations = conversations.length > 0 
-    ? [...conversations].sort((a, b) => {
-        const dateA = new Date(a.startedDate);
-        const dateB = new Date(b.startedDate);
-        return sortOrder === 'newest' ? dateB - dateA : dateA - dateB;
-      })
+    ? (sortOrder === 'newest'
+        ? [...conversations].sort((a, b) => new Date(b.startedDate) - new Date(a.startedDate))
+        : [...conversations].sort((a, b) => new Date(a.startedDate) - new Date(b.startedDate)))
     : [];
 
   // Handle navigation
   const handleBack = () => {
     navigate(-1);
   };
-  
   // Handle conversation click
-  const handleConversationClick = (conversationId) => {
+  const handleConversationClick = (conversationId, conversationNumber) => {
+    // We're already storing conversation numbers when fetching conversations
+    // But for extra safety, store it again here before navigating
+    sessionStorage.setItem(`conversation_number_${conversationId}`, conversationNumber);
     navigate(`/chatroom/${ticketId}/${conversationId}`);
+  };
+  // Fetch conversations for the ticket
+  const fetchConversations = async () => {
+    if (!ticket) return;
+    
+    try {
+      setIsLoadingConversations(true);
+      const rawTicketId = ticket.rawId;
+      const conversationHistory = await authService.getConversationHistory(rawTicketId, sortOrder);
+      
+      // Format conversation data
+      const formattedConversations = conversationHistory.map(conv => ({
+        id: conv.id,
+        startedDate: conv.createdAt,
+        endedDate: conv.endedAt || null,
+        messages: conv.Messages?.map(msg => ({
+          id: msg.id,
+          content: msg.content,
+          sender: msg.sender_type,
+          senderName: msg.sender_name,
+          timestamp: new Date(msg.createdAt).toLocaleString()
+        })) || []
+      }));
+      
+      // Process and number conversations
+      const numberedConversations = processConversationsWithNumbers(formattedConversations);
+      
+      setConversations(numberedConversations);
+      setConversationsError(null);
+    } catch (err) {
+      console.error('Error fetching conversations:', err);
+      setConversationsError('Failed to load conversations. Please try again.');
+    } finally {
+      setIsLoadingConversations(false);
+    }
+  };
+
+  // A helper function to calculate and store conversation numbers correctly
+  const processConversationsWithNumbers = (conversations) => {
+    // First sort by created date to ensure consistent numbering
+    const sortedByDate = [...conversations].sort(
+      (a, b) => new Date(a.startedDate || a.createdAt) - new Date(b.startedDate || b.createdAt)
+    );
+    
+    // Add numbers to each conversation
+    const withNumbers = sortedByDate.map((conv, index) => {
+      // Use backend sequence number if available, otherwise use index+1
+      const number = conv.sequence || index + 1;
+      
+      // Store in sessionStorage for consistent reference
+      sessionStorage.setItem(`conversation_number_${conv.id}`, number);
+      
+      return {
+        ...conv,
+        number
+      };
+    });
+    
+    // Apply display sorting
+    return sortOrder === 'newest' 
+      ? [...withNumbers].sort((a, b) => {
+          const dateA = new Date(a.startedDate || a.createdAt);
+          const dateB = new Date(b.startedDate || b.createdAt);
+          return dateB - dateA;
+        })
+      : withNumbers;
+  };
+
+  // Fetch conversations when ticket loads or sort order changes
+  useEffect(() => {
+    fetchConversations();
+  }, [ticket, sortOrder]);
+
+  // Handle starting a new conversation
+  const handleStartConversation = async () => {
+    try {
+      setIsCreatingConversation(true);
+      setCreateConversationError(null);
+      
+      // Get raw ticket ID without 'TKT-' prefix
+      const rawTicketId = ticket.rawId;
+        // Create a new conversation
+      const response = await authService.createConversation(rawTicketId);
+      
+      console.log('Create conversation response:', response); // Debug log
+      
+      if (response && response.id) {
+        // Navigate to the new conversation
+        navigate(`/chatroom/${rawTicketId}/${response.id}`);
+      } else {
+        // Provide more specific error based on response
+        if (response && response.message) {
+          throw new Error(`Server message: ${response.message}`);
+        } else {
+          throw new Error('Failed to create conversation: missing conversation ID in response');
+        }
+      }
+    } catch (err) {
+      console.error('Error creating conversation:', err);
+      setCreateConversationError('Failed to create conversation. Please try again.');
+    } finally {
+      setIsCreatingConversation(false);
+    }
   };
 
   // Loading and error states
@@ -208,10 +316,9 @@ function TicketDetailsPage() {
     return (
       <ContentContainer>
         <div className="text-center py-10">
-          <Text color="text-red-500">{error}</Text>
-          <button 
+          <Text color="text-red-500">{error}</Text>          <button 
             onClick={() => window.location.reload()}
-            className="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+            className="mt-4 px-4 py-2 bg-bianca-primary text-white rounded hover:bg-bianca-primary/80"
           >
             Try Again
           </button>
@@ -225,10 +332,9 @@ function TicketDetailsPage() {
     return (
       <ContentContainer>
         <div className="text-center py-10">
-          <Text color="text-red-500">Ticket not found</Text>
-          <button 
+          <Text color="text-red-500">Ticket not found</Text>          <button 
             onClick={() => navigate('/view-tickets')}
-            className="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+            className="mt-4 px-4 py-2 bg-bianca-primary text-white rounded hover:bg-bianca-primary/80"
           >
             Back to Tickets
           </button>
@@ -269,9 +375,8 @@ function TicketDetailsPage() {
               This ticket has been cancelled and can no longer be modified.
             </Text>
           </div>
-        ) : ticket.status !== 'Pending' && (
-          <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-md">
-            <Text color="text-blue-800" align="center">
+        ) : ticket.status !== 'Pending' && (          <div className="mt-4 p-4 bg-bianca-background/30 border border-bianca-primary/30 rounded-md">
+            <Text color="text-bianca-primary" align="center">
               This ticket is {ticket.status.toLowerCase()} and can no longer be modified.
             </Text>
           </div>
@@ -299,23 +404,65 @@ function TicketDetailsPage() {
             </div>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {sortedConversations.length > 0 ? (
-              sortedConversations.map((conversation) => (
-                <ConversationCard
-                  key={conversation.id}
-                  number={conversation.number}
-                  startedDate={conversation.startedDate}
-                  endedDate={conversation.endedDate}
-                  onClick={() => handleConversationClick(conversation.id)}
-                />
-              ))
-            ) : (
-              <div className="col-span-2 text-center py-8">
-                <Text color="text-gray-500">No conversations found for this ticket.</Text>
+          {isLoadingConversations ? (
+            <div className="text-center py-8">
+              <Text color="text-gray-500">Loading conversation history...</Text>
+            </div>
+          ) : conversationsError ? (
+            <div className="text-center py-8">
+              <Text color="text-red-500">{conversationsError}</Text>
+              <button 
+                onClick={fetchConversations}
+                className="mt-4 px-4 py-2 bg-bianca-primary text-white rounded hover:bg-bianca-primary/80"
+              >
+                Try Again
+              </button>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {sortedConversations.length > 0 ? (
+                sortedConversations.map((conversation) => (
+                  <ConversationCard
+                    key={conversation.id}
+                    number={conversation.number}
+                    startedDate={conversation.startedDate}
+                    endedDate={conversation.endedDate}
+                    onClick={() => handleConversationClick(conversation.id, conversation.number)}
+                  />
+                ))
+              ) : (                <div className="col-span-2 text-center py-8">
+                  <Text color="text-gray-500">No conversations found for this ticket.</Text>
+                </div>
+              )}
+            </div>
+          )}
+          
+          {/* Show button to start new conversation except for Cancelled/Resolved tickets */}
+          {ticket.status !== 'Cancelled' && ticket.status !== 'Resolved' && (
+            <>
+              {createConversationError && (
+                <div className="bg-red-50 p-4 rounded-md border border-red-200 mt-4">
+                  <Text color="text-red-600" align="center">{createConversationError}</Text>
+                </div>
+              )}
+              <div className="mt-4">
+                <PrimaryButton 
+                  onClick={handleStartConversation} 
+                  fullWidth
+                  disabled={isCreatingConversation}
+                >
+                  {isCreatingConversation ? (
+                    <span className="flex items-center justify-center gap-2">
+                      <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-solid border-white border-r-transparent"></span>
+                      Creating Conversation...
+                    </span>
+                  ) : (
+                    'Start a New Conversation'
+                  )}
+                </PrimaryButton>
               </div>
-            )}
-          </div>
+            </>
+          )}
         </div>
       ) : (
         <div className="w-full max-w-4xl mx-auto px-4 sm:px-6 mt-6">

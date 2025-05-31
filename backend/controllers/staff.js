@@ -172,7 +172,7 @@ export const resolveTicket = async (req, res) => {
         await ticket.update({
             status_id: 3, // sets status to resolved
             resolved_at: new Date(),
-            staff_id: req.staff.id 
+            staff_id: req.staff.staff_id
         });
 
         return res.status(200).json({ 
@@ -207,7 +207,7 @@ export const cancelTicket = async (req, res) => {
         // Update the ticket
         await ticket.update({
             status_id: 4, // set status to cancelled
-            staff_id: req.staff.id 
+            staff_id: req.staff.staff_id
         });
 
         res.status(200).json({ 

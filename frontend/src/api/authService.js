@@ -65,8 +65,64 @@ export const authService = {
     },    async getTicketPool() {
         const response = await api.get('/staff/tickets/pool');
         return response.data;
-    },    async claimTicket(ticketId) {
+    },    
+    
+    async claimTicket(ticketId) {
         const response = await api.patch(`/staff/tickets`, { ticket_id: ticketId });
         return response.data;
+    },    
+    
+    async staffCancelTicket(ticketId) {
+        const response = await api.patch(`/staff/tickets/${ticketId}/cancel`);
+        return response.data;
+    },    
+    
+    async staffResolveTicket(ticketId) {
+        const response = await api.patch(`/staff/tickets/${ticketId}/resolve`);
+        return response.data;
+    },
+      
+    async updateTicketNote(ticketId, note) {
+        const response = await api.patch(`/staff/tickets/${ticketId}/note`, { note });
+        return response.data;
+    },
+      async getConversationHistory(ticketId, sortBy = 'newest') {
+        const response = await api.get(`/conversation/${ticketId}/history?sortBy=${sortBy}`);
+        return response.data;
+    },
+
+    async closeConversation(conversationId) {
+        const response = await api.patch(`/conversation/${conversationId}`);
+        return response.data;
+    },
+
+    async createConversation(ticketId) {
+        const response = await api.post(`/conversation/${ticketId}`);
+        return response.data;
+    },
+
+    async sendMessage(conversationId, message) {
+        const response = await api.post(`/conversation/${conversationId}/message`, { content: message });
+        return response.data;
+    },    
+    
+    async getConversation(conversationId) {
+        const response = await api.get(`/conversation/${conversationId}`);
+       
+        if (Array.isArray(response.data) && !response.data.metadata) {
+           
+            const responseData = [...response.data];
+            
+            const sequenceNumber = sessionStorage.getItem(`conversation_number_${conversationId}`);
+
+            responseData.metadata = {
+                sequenceNumber: sequenceNumber ? parseInt(sequenceNumber) : null,
+                isOpen: true
+            };
+            
+            return responseData;
+        }
+        return response.data;
     }
+
 };

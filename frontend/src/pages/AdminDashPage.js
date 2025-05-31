@@ -185,9 +185,8 @@ function AdminDashboard() {
     if (sortConfig.key !== columnKey) {
       return <span className="text-gray-400">↕</span>;
     }
-    return sortConfig.direction === 'asc' ? 
-      <span className="text-blue-600">↑</span> : 
-      <span className="text-blue-600">↓</span>;
+    return sortConfig.direction === 'asc' ?      <span className="text-bianca-primary">↑</span> : 
+      <span className="text-bianca-primary">↓</span>;
   };
 
   // Filter tickets based on search and filters
@@ -265,7 +264,7 @@ function AdminDashboard() {
           <div className="flex gap-4 mb-8 border-b border-gray-200">
             <button
               className={`px-4 py-2 font-semibold border-b-2 transition-colors ${
-                activeTab === 'tickets' ? 'border-blue-600 text-blue-700' : 'border-transparent text-gray-500 hover:text-blue-600'
+                activeTab === 'tickets' ? 'border-bianca-primary text-bianca-primary' : 'border-transparent text-gray-500 hover:text-bianca-primary'
               }`}
               onClick={() => setActiveTab('tickets')}
             >
@@ -273,7 +272,7 @@ function AdminDashboard() {
             </button>
             <button
               className={`px-4 py-2 font-semibold border-b-2 transition-colors ${
-                activeTab === 'staffs' ? 'border-blue-600 text-blue-700' : 'border-transparent text-gray-500 hover:text-blue-600'
+                activeTab === 'staffs' ? 'border-bianca-primary text-bianca-primary' : 'border-transparent text-gray-500 hover:text-bianca-primary'
               }`}
               onClick={() => setActiveTab('staffs')}
             >

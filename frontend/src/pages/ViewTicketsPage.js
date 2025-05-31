@@ -178,10 +178,9 @@ function ViewTicketsPage() {
           {/* Error State */}
           {error && !isLoading && (
             <div className="text-center py-10">
-              <Text color="text-red-500">{error}</Text>
-              <button 
+              <Text color="text-red-500">{error}</Text>              <button 
                 onClick={() => window.location.reload()}
-                className="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                className="mt-4 px-4 py-2 bg-bianca-primary text-white rounded hover:bg-bianca-primary/80"
               >
                 Try Again
               </button>

@@ -6,10 +6,9 @@ const PrimaryButton = ({ children, onClick, fullWidth, type = 'button', classNam
     <button
       type={type}
       onClick={onClick}
-      disabled={disabled}
-      className={`
-        px-4 py-2 bg-blue-600 text-white rounded-md
-        hover:bg-blue-700 transition-colors
+      disabled={disabled}      className={`
+        px-4 py-2 bg-bianca-primary text-white rounded-md
+        hover:bg-bianca-primary/80 transition-colors
         disabled:opacity-50 disabled:cursor-not-allowed
         ${fullWidth ? 'w-full' : ''}
         ${className}

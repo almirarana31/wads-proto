@@ -54,7 +54,7 @@ function HomePage() {
         
         <Text size="base" color="gray" center className="mb-6 md:mb-8">
           Registered users can log in to view responses in-app, while
-          guests will receive replies via email or phone.
+          guests will receive replies via email.
         </Text>
         
         <div className="flex flex-col sm:flex-row flex-wrap gap-4 justify-center">
