@@ -108,7 +108,6 @@ function AdminTicketView() {
                 <Text className="text-gray-600 mb-2">Email: <span className="font-medium text-gray-800">{ticket.customer.email}</span></Text>
               </div>
               <div>
-                <Text className="text-gray-600 mb-2">Phone: <span className="font-medium text-gray-800">{ticket.customer.phone}</span></Text>
                 <Text className="text-gray-600 mb-2">Created: <span className="font-medium text-gray-800">{new Date(ticket.created).toLocaleString()}</span></Text>
               </div>
             </div>

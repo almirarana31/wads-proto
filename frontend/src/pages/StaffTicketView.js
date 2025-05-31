@@ -47,8 +47,7 @@ function StaffTicketView() {  const { ticketId } = useParams();
           customer: {
             name: response.User?.username || 'Unknown',
             accountType: response.User?.role || 'Registered',
-            email: response.User?.email || 'No email provided',
-            phone: response.User?.phone || 'No phone provided'
+            email: response.User?.email || 'No email provided'
           }
         };
         
@@ -79,33 +78,31 @@ function StaffTicketView() {  const { ticketId } = useParams();
       
       try {
         setIsLoadingConversations(true);
-        // Remove 'TKT-' prefix if present in the ticketId
         const rawTicketId = ticketId.startsWith('TKT-') ? ticketId.replace('TKT-', '') : ticketId;
+        const [conversationHistory] = await Promise.all([
+          authService.getConversationHistory(rawTicketId, sortOrder)
+        ]);
         
-        const response = await authService.getTicketConversations(rawTicketId);
-        
-        // Format conversation data to match component needs
-        const formattedConversations = response.map((conv, index) => ({
+        // Format conversation data
+        const formattedConversations = conversationHistory.map((conv, index) => ({
           id: conv.id,
           number: index + 1,
           startedDate: conv.createdAt,
-          endedDate: conv.endedAt || null
+          endedDate: conv.endedAt || null,
+          messages: conv.Messages?.map(msg => ({
+            id: msg.id,
+            content: msg.content,
+            sender: msg.sender_type,
+            senderName: msg.sender_name,
+            timestamp: new Date(msg.createdAt).toLocaleString()
+          })) || []
         }));
         
-        // Sort conversations based on sortOrder
-        const sortedConversations = formattedConversations.sort((a, b) => {
-          const dateA = new Date(a.startedDate);
-          const dateB = new Date(b.startedDate);
-          return sortOrder === 'newest' ? dateB - dateA : dateA - dateB;
-        });
-        
-        setConversations(sortedConversations);
+        setConversations(formattedConversations);
         setConversationsError(null);
       } catch (err) {
         console.error('Error fetching conversations:', err);
-        setConversationsError('Failed to load conversation history');
-        // Default to empty array if API fails
-        setConversations([]);
+        setConversationsError('Failed to load conversations. Please try again.');
       } finally {
         setIsLoadingConversations(false);
       }
@@ -278,8 +275,7 @@ function StaffTicketView() {  const { ticketId } = useParams();
           customer: {
             name: response.User?.username || 'Unknown',
             accountType: response.User?.role || 'Registered',
-            email: response.User?.email || 'No email provided',
-            phone: response.User?.phone || 'No phone provided'
+            email: response.User?.email || 'No email provided'
           }
         };
         
@@ -404,7 +400,6 @@ function StaffTicketView() {  const { ticketId } = useParams();
                   </div>
                   <div>
                     <Text className="mb-2" color="text-gray-600">Email: <span className="font-medium text-gray-800 break-words">{ticket.customer.email}</span></Text>
-                    <Text className="mb-2" color="text-gray-600">Phone: <span className="font-medium text-gray-800 break-words">{ticket.customer.phone}</span></Text>
                   </div>
                 </div>
               </div>

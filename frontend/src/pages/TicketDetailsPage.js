@@ -21,6 +21,8 @@ function TicketDetailsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [conversations, setConversations] = useState([]);
+  const [isLoadingConversations, setIsLoadingConversations] = useState(false);
+  const [conversationsError, setConversationsError] = useState(null);
   const [editForm, setEditForm] = useState({
     title: '',
     description: '',
@@ -193,6 +195,45 @@ function TicketDetailsPage() {
     navigate(`/chatroom/${ticketId}/${conversationId}`);
   };
 
+  // Fetch conversations for the ticket
+  const fetchConversations = async () => {
+    if (!ticket) return;
+    
+    try {
+      setIsLoadingConversations(true);
+      const rawTicketId = ticket.rawId;
+      const conversationHistory = await authService.getConversationHistory(rawTicketId, sortOrder);
+      
+      // Format conversation data
+      const formattedConversations = conversationHistory.map((conv, index) => ({
+        id: conv.id,
+        number: index + 1,
+        startedDate: conv.createdAt,
+        endedDate: conv.endedAt || null,
+        messages: conv.Messages?.map(msg => ({
+          id: msg.id,
+          content: msg.content,
+          sender: msg.sender_type,
+          senderName: msg.sender_name,
+          timestamp: new Date(msg.createdAt).toLocaleString()
+        })) || []
+      }));
+      
+      setConversations(formattedConversations);
+      setConversationsError(null);
+    } catch (err) {
+      console.error('Error fetching conversations:', err);
+      setConversationsError('Failed to load conversations. Please try again.');
+    } finally {
+      setIsLoadingConversations(false);
+    }
+  };
+
+  // Fetch conversations when ticket loads or sort order changes
+  useEffect(() => {
+    fetchConversations();
+  }, [ticket, sortOrder]);
+
   // Loading and error states
   if (isLoading && !ticket) {
     return (
@@ -296,23 +337,39 @@ function TicketDetailsPage() {
             </div>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {sortedConversations.length > 0 ? (
-              sortedConversations.map((conversation) => (
-                <ConversationCard
-                  key={conversation.id}
-                  number={conversation.number}
-                  startedDate={conversation.startedDate}
-                  endedDate={conversation.endedDate}
-                  onClick={() => handleConversationClick(conversation.id)}
-                />
-              ))
-            ) : (
-              <div className="col-span-2 text-center py-8">
-                <Text color="text-gray-500">No conversations found for this ticket.</Text>
-              </div>
-            )}
-          </div>
+          {isLoadingConversations ? (
+            <div className="text-center py-8">
+              <Text color="text-gray-500">Loading conversation history...</Text>
+            </div>
+          ) : conversationsError ? (
+            <div className="text-center py-8">
+              <Text color="text-red-500">{conversationsError}</Text>
+              <button 
+                onClick={fetchConversations}
+                className="mt-4 px-4 py-2 bg-bianca-primary text-white rounded hover:bg-bianca-primary/80"
+              >
+                Try Again
+              </button>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {sortedConversations.length > 0 ? (
+                sortedConversations.map((conversation) => (
+                  <ConversationCard
+                    key={conversation.id}
+                    number={conversation.number}
+                    startedDate={conversation.startedDate}
+                    endedDate={conversation.endedDate}
+                    onClick={() => handleConversationClick(conversation.id)}
+                  />
+                ))
+              ) : (
+                <div className="col-span-2 text-center py-8">
+                  <Text color="text-gray-500">No conversations found for this ticket.</Text>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       ) : (
         <div className="w-full max-w-4xl mx-auto px-4 sm:px-6 mt-6">

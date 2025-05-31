@@ -1,4 +1,3 @@
-import { closeConversation, getConversationHistory } from '../../../backend/controllers/conversation';
 import api from './axios';
 
 export const authService = {
@@ -82,13 +81,13 @@ export const authService = {
         const response = await api.patch(`/staff/tickets/${ticketId}/resolve`);
         return response.data;
     },
-      async updateTicketNote(ticketId, note) {
+      
+    async updateTicketNote(ticketId, note) {
         const response = await api.patch(`/staff/tickets/${ticketId}/note`, { note });
         return response.data;
     },
-    
-    async getConversationHistory(ticketId) {
-        const response = await api.get(`/conversation/${ticketId}/history${queryString ? '?' + queryString : ''}`, {sortBy: 'newest'});
+      async getConversationHistory(ticketId, sortBy = 'newest') {
+        const response = await api.get(`/conversation/${ticketId}/history?sortBy=${sortBy}`);
         return response.data;
     },
 
