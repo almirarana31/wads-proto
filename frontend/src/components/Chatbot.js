@@ -1,11 +1,8 @@
-import React, { useState, useEffect, useRef } from 'react'; // Added useEffect, useRef
-import { useAuth } from '../context/AuthContext';
+import React, { useState, useEffect, useRef } from 'react';
 import { IoChatbubbleEllipses } from "react-icons/io5";
 
-
-// Simple Chat Icon (SVG) - You can replace this with a proper icon library if you use one
 const ChatIcon = () => (
-    <IoChatbubbleEllipses size={24} /> // Added size for better control
+    <IoChatbubbleEllipses size={24} />
 );
 
 const CloseIcon = () => (
@@ -14,27 +11,23 @@ const CloseIcon = () => (
     </svg>
 );
 
-const Chatbot = () => {
-    const { user, isAuthenticated, isLoading } = useAuth();
-    const [isChatOpen, setIsChatOpen] = useState(false); // State to toggle chat window
-    const [messages, setMessages] = useState([]); // State for chat messages
-    const [inputValue, setInputValue] = useState(''); // State for input field
-    const messagesEndRef = useRef(null); // For auto-scrolling
+// Modified to accept props directly from App.js
+const Chatbot = ({ isAuthenticated, userRole }) => {
+    const [isChatOpen, setIsChatOpen] = useState(false);
+    const [messages, setMessages] = useState([]);
+    const [inputValue, setInputValue] = useState('');
+    const messagesEndRef = useRef(null);
+    const [isLoading, setIsLoading] = useState(false); // For API call loading state
 
     // Auto-scroll to the latest message
     useEffect(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
     }, [messages]);
 
-    if (isLoading) {
-        // Optionally, render nothing or a loader while auth state is loading
-        return null; 
-    }
-
     // Determine who should see the chatbot
     // Guests: !isAuthenticated
-    // Customers: isAuthenticated && user.role === 'USR' (Updated to match App.js role)
-    const canSeeChatbot = !isAuthenticated || (isAuthenticated && user && user.role === 'USR');
+    // Customers: isAuthenticated && userRole === 'USR'
+    const canSeeChatbot = !isAuthenticated || (isAuthenticated && userRole === 'USR');
 
     if (!canSeeChatbot) {
         return null; // Don't render the chatbot if the user doesn't have access
@@ -63,15 +56,24 @@ const Chatbot = () => {
             sender: 'user'
         };
 
-        // Simulate bot response for now
-        // In a real app, you would call your backend API here
-        const botResponse = {
-            id: Date.now() + 1, // Ensure unique ID
-            text: `Echo: ${inputValue}`,
-            sender: 'bot'
-        };
-
-        setMessages(prevMessages => [...prevMessages, newUserMessage, botResponse]);
+        // Add user message immediately
+        setMessages(prevMessages => [...prevMessages, newUserMessage]);
+        
+        // Simulate bot response for now (this will be replaced by API call)
+        setIsLoading(true); // Show loading indicator
+        
+        // Simulate API delay
+        setTimeout(() => {
+            const botResponse = {
+                id: Date.now() + 1,
+                text: `Echo: ${inputValue}`,
+                sender: 'bot'
+            };
+            
+            setMessages(prevMessages => [...prevMessages, botResponse]);
+            setIsLoading(false); // Hide loading indicator
+        }, 1000);
+        
         setInputValue(''); // Clear input field
     };
 
@@ -90,7 +92,6 @@ const Chatbot = () => {
                     position: 'fixed',
                     bottom: '20px',
                     right: '20px',
-                    // backgroundColor: '#007bff', // Removed
                     color: 'white',
                     width: '60px',
                     height: '60px',
@@ -103,7 +104,7 @@ const Chatbot = () => {
                     justifyContent: 'center',
                     zIndex: 1000,
                 }}
-                className="bg-bianca-dark-blue" // Added Tailwind class
+                className="bg-bianca-dark-blue"
                 aria-label="Open chat"
             >
                 <ChatIcon />
@@ -130,7 +131,6 @@ const Chatbot = () => {
             <div 
                 style={{
                     padding: '10px',
-                    // backgroundColor: '#007bff', // Removed
                     color: 'white',
                     borderTopLeftRadius: '9px',
                     borderTopRightRadius: '9px',
@@ -139,7 +139,7 @@ const Chatbot = () => {
                     justifyContent: 'space-between',
                     alignItems: 'center',
                 }}
-                className="bg-bianca-dark-blue" // Added Tailwind class
+                className="bg-bianca-dark-blue"
             >
                 <span>AI Chat Assistant</span>
                 <button 
@@ -169,7 +169,50 @@ const Chatbot = () => {
                         </div>
                     </div>
                 ))}
-                <div ref={messagesEndRef} /> {/* Element to scroll to */}
+                {isLoading && (
+                    <div style={{
+                        textAlign: 'left',
+                        marginBottom: '10px'
+                    }}>
+                        <div style={{
+                            display: 'inline-block',
+                            padding: '8px 12px',
+                            borderRadius: '15px',
+                            backgroundColor: '#e9e9eb',
+                            maxWidth: '70%',
+                        }}>
+                            <div style={{
+                                display: 'flex',
+                                gap: '4px',
+                            }}>
+                                <div style={{
+                                    width: '8px',
+                                    height: '8px',
+                                    backgroundColor: '#888',
+                                    borderRadius: '50%',
+                                    animation: 'bounce 1s infinite',
+                                }}></div>
+                                <div style={{
+                                    width: '8px',
+                                    height: '8px',
+                                    backgroundColor: '#888',
+                                    borderRadius: '50%',
+                                    animation: 'bounce 1s infinite',
+                                    animationDelay: '0.2s',
+                                }}></div>
+                                <div style={{
+                                    width: '8px',
+                                    height: '8px',
+                                    backgroundColor: '#888',
+                                    borderRadius: '50%',
+                                    animation: 'bounce 1s infinite',
+                                    animationDelay: '0.4s',
+                                }}></div>
+                            </div>
+                        </div>
+                    </div>
+                )}
+                <div ref={messagesEndRef} />
             </div>
             <div style={{ padding: '10px', borderTop: '1px solid #ccc', display: 'flex', alignItems: 'center' }}>
                 <input 
@@ -188,12 +231,14 @@ const Chatbot = () => {
                 />
                 <button 
                     onClick={handleSendMessage}
+                    disabled={isLoading || !inputValue.trim()}
                     style={{
                         padding: '8px 15px',
                         borderRadius: '20px',
                         border: 'none',
                         color: 'white',
                         cursor: 'pointer',
+                        opacity: isLoading || !inputValue.trim() ? 0.7 : 1,
                     }}
                     className="bg-bianca-dark-blue"
                 >

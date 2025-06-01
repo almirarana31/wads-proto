@@ -20,6 +20,7 @@ import StaffDashPage from './pages/StaffDashPage';
 import StaffTicketView from './pages/StaffTicketView';
 import AdminTicketView from './pages/AdminTicketView';
 import ActivateAccountPage from './pages/ActivateAccountPage';
+import Chatbot from './components/Chatbot'; // Import Chatbot component
 
 function App() {
   // For demo purposes - in a real app, this would come from auth context/state
@@ -187,6 +188,8 @@ function App() {
           </Routes>
         </main>
         <Footer />
+        {/* Add Chatbot here - it will handle its own visibility logic */}
+        <Chatbot isAuthenticated={isAuthenticated} userRole={userRole} />
       </div>
     </Router>  );
 }
