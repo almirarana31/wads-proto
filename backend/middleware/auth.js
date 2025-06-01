@@ -280,9 +280,20 @@ export const ticketAuthZ = async (req,res,next) => {
                 ],
                 id: ticket_id 
             }
-        })
+        })  
 
         if (!ticket) {
+            // checking to see if requester is an admin 
+            const admin = await Staff.findOne({
+                where: {
+                    id: user.staff_id,
+                    role_id: 2
+                }
+            })
+            if (admin) {
+                // allow admin 
+                return next()
+            }
             return res.status(403).json({message: "Forbidden access"})
         }
 

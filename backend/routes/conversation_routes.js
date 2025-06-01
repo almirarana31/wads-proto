@@ -10,7 +10,7 @@ router.use(authN, userAuthZ)
 router.get('/:id/history', ticketAuthZ, getConversationHistory)
 
 // this is conversation id
-router.get('/:id', conversationAuthZ, getConversation)
+router.get('/:id', getConversation)
 
 // this is conversation id
 router.post('/:id/message', conversationAuthZ, sendMessage)
