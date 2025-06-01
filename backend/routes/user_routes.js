@@ -1,6 +1,6 @@
 import express from 'express';
-import { signUp, activate, logIn, signOut, forgetPassword, getUserTickets, submitTicket, editTicket, cancelTicket, enterNewPass } from '../controllers/user.js';
-import { userAuthZ, guestAuthZ, authN } from '../middleware/auth.js'; // to be used for user-resource fetching 
+import { signUp, activate, logIn, signOut, forgetPassword, getUserTickets, submitTicket, editTicket, cancelTicket, enterNewPass, getUserDetail } from '../controllers/user.js';
+import { userAuthZ, guestAuthZ, authN, getUserRoles } from '../middleware/auth.js'; // to be used for user-resource fetching 
 
 const router = express.Router();
 
@@ -15,7 +15,6 @@ router.get('/activate/:token', activate);
 
 router.post('/forget-password', forgetPassword);
 
-router.post('/enter-new-password/:token', enterNewPass);
 router.post('/enter-new-password/:token', enterNewPass);
 
 // ticket submission
