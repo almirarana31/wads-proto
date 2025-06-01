@@ -368,9 +368,9 @@ function Chatroom() {
   // Add a function to check user role when component mounts
   useEffect(() => {
     const checkUserRole = async () => {
-      try {
-        const userDetails = await authService.getUserDetails();
-        // Assuming the user details include a role or isStaff property
+      try {        const userDetails = await authService.getUserDetail();
+        console.log('User details for staff check:', userDetails);
+        // Setting isStaff based on role from backend
         setIsStaff(userDetails.role === 'staff' || userDetails.role === 'admin');
       } catch (err) {
         console.error('Error checking user role:', err);

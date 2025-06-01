@@ -21,7 +21,7 @@ await sequelize.sync();
 const app = express();
 
 app.use(cors({
-  origin: 'http://localhost:3000', // or '*' for all origins (not recommended for production)
+  origin: 'http://localhost:3001', // or '*' for all origins (not recommended for production)
   credentials: true
 }));
 

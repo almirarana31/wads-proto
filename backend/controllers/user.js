@@ -531,13 +531,26 @@ export const getUserTickets = async (req, res) => {
 // use userAuthZ
 export const getUserDetail = async (req, res) => {
     const source = req.user || req.staff || req.admin || {};
-    const { email, username } = source;
+    const { email, username, staff_id } = source;
     try {
+        let role = "user";
+        if (staff_id) {
+            // Look up staff role
+            const staff = await Staff.findOne({
+                where: {
+                    id: staff_id
+                },
+                attributes: ['role_id'],
+                raw: true
+            });
+            role = staff.role_id === 2 ? "admin" : "staff";
+        }
         return res.status(200).json({
             email: email,
-            username: username
-        })
+            username: username,
+            role: role
+        });
     } catch(error) {
         return res.status(500).json({message: error.message})
-    }
+    }
 };
