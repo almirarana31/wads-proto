@@ -28,7 +28,10 @@ function AuditLogPage() {
         setAuditLogs(data);
         setError(null);
       } catch (err) {
-        setError('Failed to load audit logs');
+        setError('⚠️ Failed to load audit logs. Please: \n' + 
+          '1. Check your network connection\n' +
+          '2. Disable ad blocker for this site\n' + 
+          '3. Refresh the page');
         console.error('Error fetching audit logs:', err);
       } finally {
         setLoading(false);
