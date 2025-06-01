@@ -38,7 +38,7 @@ export const getConversation = async (req, res) => {
         if (admin) {
             isAdmin = true
         } 
-        if ((!isStaff || !isUser) && !isAdmin) {
+        if ((!isStaff && !isUser) && !isAdmin) {
             return res.status(403).json({message: "Forbidden access!"})
         }
 
@@ -153,6 +153,19 @@ export const createConversation = async (req, res) => {
             raw: true
         })
 
+
+        const hasOne = await Conversation.count({
+            where: {
+                ticket_id: ticket_id,
+                closed: [false, null]
+            }
+        })
+        console.log(hasOne)
+
+        if (hasOne > 0) {
+            return res.status(400).json({message: "Ongoing conversation!"})
+        }
+
         if (!assigned) return res.status(403).json({message: "Staff is not assigned to this ticket"})
 
         const newConvo = await Conversation.create({
@@ -190,7 +203,7 @@ export const closeConversation = async (req, res) => {
                 id: conversation_id
             }
         });
-
+        
         // audit here
         await logAudit(
             'Update',

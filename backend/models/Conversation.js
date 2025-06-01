@@ -18,6 +18,10 @@ Conversation.init(
         endedAt: {
             type: DataTypes.DATE,
             allowNull: true
+        },
+        closed: {
+            type: DataTypes.BOOLEAN,
+            allowNull: true
         }
     }, {
         sequelize,
