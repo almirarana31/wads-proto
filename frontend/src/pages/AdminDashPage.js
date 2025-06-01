@@ -124,6 +124,7 @@ function AdminDashboard() {
   const [priorities, setPriorities] = useState([]);
   const [categories, setCategories] = useState([]);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [adminUsername, setAdminUsername] = useState('');
 
   useEffect(() => {
     async function fetchPriorities() {
@@ -147,6 +148,19 @@ function AdminDashboard() {
       }
     }
     fetchCategories();
+  }, []);
+
+  useEffect(() => {
+    const getAdminUsername = async () => {
+      try {
+        const userDetails = await authService.getUserDetail();
+        setAdminUsername(userDetails.username || 'Admin');
+      } catch (err) {
+        console.error('Failed to fetch admin username:', err);
+        setAdminUsername('Admin'); // Fallback value
+      }
+    };
+    getAdminUsername();
   }, []);
 
   const handleViewTicket = async (ticketId) => {
@@ -384,7 +398,7 @@ function AdminDashboard() {
             title="Admin Dashboard"
             subtitle={
               <>
-                Welcome <span className="font-medium text-blue-600">Admin</span>, manage your dashboard here
+                Welcome <span className="font-medium text-blue-600">{adminUsername}</span>, manage your dashboard here
               </>
             }
           />

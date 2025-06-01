@@ -190,7 +190,8 @@ function Chatroom() {
       const now = new Date();
       const timestamp = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
       
-      // Add optimistic message with a flag
+      // add optimistic message with a flag
+      // optimistic meaning to show the message immediately without confirming to backend (only for the user)
       const optimisticMessage = {
         id: tempId,
         content: messageContent,
@@ -199,7 +200,7 @@ function Chatroom() {
         timestamp: timestamp,
         showSender: chatMessages.length === 0 || chatMessages[chatMessages.length - 1].sender !== 'staff',
         isSender: true,
-        isOptimistic: true // Add this flag
+        isOptimistic: true
       };
       
       setChatMessages(prev => [...prev, optimisticMessage]);
@@ -223,7 +224,7 @@ function Chatroom() {
     }
   };
 
-  // let user send message with enter key ||real app maybe also handle
+  // let user send message with enter key
   const handleKeyDown = (e) => {
     if (e.key === 'Enter') handleSend();
   };
