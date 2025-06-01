@@ -152,7 +152,7 @@ export const addNote = async (req, res) => {
         // if ticket empty does not exist return 400 error
         if (!ticket) return res.status(400).json({message: "Ticket does not exist"})
 
-        return res.status(200).json({message: "Not successfully added"})
+        return res.status(200).json({message: "Note successfully added"})
     } catch (error) {
         return res.status(500).json({message: error.message})
     }

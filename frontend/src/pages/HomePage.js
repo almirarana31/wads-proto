@@ -13,9 +13,8 @@ function HomePage() {
     const localToken = localStorage.getItem('token');
     if (localToken) {
       // Set token in sessionStorage for axios interceptor
-      sessionStorage.setItem('token', localToken);
-      // Call backend to get user roles
-      authService.getUserRoles
+      sessionStorage.setItem('token', localToken);      // Call backend to get user roles
+      authService.getUserRoles()
         .then((roles) => {
           if (roles.isAdmin) {
             navigate('/admin-dashboard');

@@ -1,0 +1,838 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Bianca Helpdesk API",
+    "version": "1.0.0",
+    "description": "API documentation for Bianca Aesthetic Clinic's Helpdesk System."
+  },
+  "servers": [
+    {
+      "url": "http://localhost:5000/api/user",
+      "description": "User and Guest Endpoints"
+    },
+    {
+      "url": "http://localhost:5000/api/staff",
+      "description": "Staff Endpoints"
+    },
+    {
+      "url": "http://localhost:5000/api/admin",
+      "description": "Admin Endpoints"
+    },
+    {
+      "url": "http://localhost:5000/api/ticket",
+      "description": "Ticket Management"
+    }
+  ],
+  "paths": {
+    "/categories": {
+      "get": {
+        "tags": ["Ticket Management"],
+        "summary": "Get available ticket categories",
+        "description": "Returns a list of all available ticket categories",
+        "security": [
+          { "bearerAuth": [] }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of ticket categories",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": { "type": "integer" },
+                      "name": { "type": "string" }
+                    }
+                  }
+                },
+                "example": [
+                  {
+                    "id": 1,
+                    "name": "General"
+                  },
+                  {
+                    "id": 2,
+                    "name": "Billing"
+                  },
+                  {
+                    "id": 3,
+                    "name": "IT Support"
+                  }
+                ]
+              }
+            }
+          },
+          "400": {
+            "description": "Authentication failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": { "type": "string" }
+                  }
+                },
+                "example": {
+                  "message": "Token Expired or Invalid Authentication"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/activate/{token}": {
+      "get": {
+        "tags": ["User"],
+        "summary": "Activate a user account",
+        "description": "Activates a user account using the token sent to their email after registration",
+        "parameters": [
+          {
+            "name": "token",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Activation token received via email"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Account successfully verified",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": { "type": "string" }
+                  }
+                },
+                "example": {
+                  "message": "Successfully verified account!"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": { "type": "string" }
+                  }
+                },
+                "examples": {
+                  "emailExists": {
+                    "value": {
+                      "message": "email already exists"
+                    }
+                  },
+                  "tokenExpired": {
+                    "value": {
+                      "message": "jwt expired"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/sign-up": {
+      "post": {
+        "tags": ["User"],
+        "summary": "Register a new user account",
+        "description": "Creates a new user account and sends OTP for verification",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "username": { 
+                    "type": "string",
+                    "description": "Username must be at least 3 characters long"
+                  },
+                  "password": { 
+                    "type": "string",
+                    "description": "Password must be 6-20 characters with 1 number, 1 lowercase, and 1 uppercase letter"
+                  },
+                  "email": { 
+                    "type": "string",
+                    "format": "email",
+                    "description": "Valid email address"
+                  }
+                },
+                "required": ["username", "password", "email"]
+              },
+              "example": {
+                "username": "Username",
+                "password": "Pass123",
+                "email": "example@email.com"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successfully registered and OTP sent",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": { "type": "string" },
+                    "username": { "type": "string" },
+                    "email": { "type": "string" }
+                  }
+                },
+                "example": {
+                  "message": "Successfully sent otp. Please check your email at example@email.com",
+                  "username": "Username",
+                  "email": "example@email.com"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": { "type": "string" }
+                  }
+                },                "examples": {
+                  "invalidEmail": {
+                    "value": {
+                      "message": "Invalid email"
+                    }
+                  },
+                  "emailInUse": {
+                    "value": {
+                      "message": "Email is in use"
+                    }
+                  },
+                  "invalidPassword": {
+                    "value": {
+                      "message": "Password should be 6 to 20 characters long with a numeric, 1 lowercase and 1 uppercase letters"
+                    }
+                  },
+                  "invalidUsername": {
+                    "value": {
+                      "message": "Username length must be 3 or longer"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/log-in": {
+      "post": {
+        "tags": ["User"],
+        "summary": "User login",
+        "description": "Authenticates a user and returns session tokens",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "email": { 
+                    "type": "string",
+                    "format": "email",
+                    "description": "User's email address"
+                  },
+                  "password": { 
+                    "type": "string",
+                    "description": "User's password"
+                  },
+                  "rememberMe": { 
+                    "type": "boolean",
+                    "description": "Whether to extend session token validity"
+                  }
+                },
+                "required": ["email", "password"]
+              },
+              "example": {
+                "email": "user@example.com",
+                "password": "Pass123",
+                "rememberMe": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful login",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": { "type": "string" },
+                    "sessionToken": { 
+                      "type": "string",
+                      "description": "JWT token for session authentication"
+                    },
+                    "localToken": { 
+                      "type": "string",
+                      "description": "Token for extended session if rememberMe is true",
+                      "nullable": true
+                    }
+                  }
+                },
+                "example": {
+                  "message": "Successful login",
+                  "sessionToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MTgsInN0YWZmX2lkIjowLCJlbWFpbCI6InJhbmFhbG1pcmFAZ21haWwuY29tIiwidXNlcm5hbWUiOiJBbGx5IENVU1RPTUVSIiwiaXNfZ3Vlc3QiOmZhbHNlLCJpYXQiOjE3NDg3MDQ3MTMsImV4cCI6MTc0ODcwODMxM30.F7OBV6KTn-XnpN88lf8igScMH4dZWa66CwFQkh6Np_I",
+                  "localToken": null
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": { "type": "string" }
+                  }
+                },
+                "example": {
+                  "message": "Incorrect credentials"
+                }
+              }
+            }
+          }
+        }
+      }
+    },    "/{id}": {
+      "get": {
+        "tags": ["Ticket Management"],
+        "summary": "Get ticket details",
+        "description": "Retrieves detailed information about a specific ticket. Requires authentication of the ticket owner.",
+        "security": [
+          { "bearerAuth": [] },
+          {}
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "ID of the ticket to retrieve"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Ticket details retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": { "type": "integer" },
+                    "subject": { "type": "string" },
+                    "description": { "type": "string" },
+                    "createdAt": { "type": "string", "format": "date-time" },
+                    "note": { "type": "string", "nullable": true },
+                    "Status": {
+                      "type": "object",
+                      "properties": {
+                        "name": { "type": "string" }
+                      }
+                    },
+                    "Category": {
+                      "type": "object",
+                      "properties": {
+                        "name": { "type": "string" }
+                      }
+                    },
+                    "Priority": { "type": "object", "nullable": true },
+                    "Staff": { "type": "object", "nullable": true },
+                    "User": {
+                      "type": "object",
+                      "properties": {
+                        "username": { "type": "string" },
+                        "email": { "type": "string" },
+                        "is_guest": { "type": "boolean" }
+                      }
+                    }
+                  }
+                },
+                "example": {
+                  "id": 13,
+                  "subject": "Updated Ticket Title",
+                  "description": "This is the updated description",
+                  "createdAt": "2025-06-01T14:12:06.945Z",
+                  "note": null,
+                  "Status": {
+                    "name": "Cancelled"
+                  },
+                  "Category": {
+                    "name": "Billing"
+                  },
+                  "Priority": null,
+                  "Staff": null,
+                  "User": {
+                    "username": "User",
+                    "email": "example@email.com",
+                    "is_guest": false
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - Authentication failed or unauthorized access",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": { "type": "string" }
+                  }
+                },
+                "example": {
+                  "message": "Token Expired or Invalid Authentication"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": ["User"],
+        "summary": "Edit a ticket",
+        "description": "Updates an existing ticket. Requires user authentication. Only tickets with 'pending' status can be edited.",
+        "security": [
+          { "bearerAuth": [] },
+          {}
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "ID of the ticket to edit"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "title": { 
+                    "type": "string",
+                    "description": "Updated title of the ticket"
+                  },
+                  "category_id": { 
+                    "type": "integer",
+                    "description": "Updated category ID: 1=General, 2=Billing, 3=IT Support",
+                    "enum": [1, 2, 3]
+                  },
+                  "description": { 
+                    "type": "string",
+                    "description": "Updated description of the issue"
+                  }
+                },
+                "required": ["title", "category_id", "description"]
+              },
+              "example": {
+                "title": "Updated Ticket Title",
+                "category_id": 2,
+                "description": "This is the updated description"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Ticket successfully updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": { "type": "string" }
+                  }
+                },
+                "example": {
+                  "message": "Successfully updated ticket"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - Authentication failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": { "type": "string" }
+                  }
+                },
+                "example": {
+                  "message": "Token Expired or Invalid Authentication"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": { "type": "string" }
+                  }
+                },
+                "example": {
+                  "message": "insert or update on table \"ticket\" violates foreign key constraint \"ticket_category_id_fkey\""
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": ["User"],
+        "summary": "Cancel a ticket",
+        "description": "Cancels an existing ticket. Requires user authentication. Only tickets with 'pending' status can be cancelled.",
+        "security": [
+          { "bearerAuth": [] },
+          {}
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "ID of the ticket to cancel"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Ticket successfully cancelled",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": { "type": "string" }
+                  }
+                },
+                "example": {
+                  "message": "Successfully cancelled ticket"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - Authentication failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": { "type": "string" }
+                  }
+                },
+                "example": {
+                  "message": "Token Expired or Invalid Authentication"
+                }
+              }
+            }
+          }
+        }
+      }
+    }, 
+    "/tickets": {
+      "post": {
+        "tags": ["User"],
+        "summary": "Submit a new ticket",
+        "description": "Creates a new ticket request for both registered users (with auth token) and guest users (no auth token)",
+        "security": [
+          { "bearerAuth": [] },
+          {}
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "email": { 
+                    "type": "string",
+                    "format": "email",
+                    "description": "User's email address, required for guest users" 
+                  },
+                  "title": { 
+                    "type": "string",
+                    "description": "Title of the ticket issue"
+                  },
+                  "category_id": { 
+                    "type": "integer",
+                    "description": "Category ID: 1=General, 2=Billing, 3=IT Support",
+                    "enum": [1, 2, 3]
+                  },
+                  "description": { 
+                    "type": "string", 
+                    "description": "Detailed description of the issue"
+                  }
+                },
+                "required": ["title", "category_id", "description"]
+              },
+              "example": {
+                "email": "example@email.com",
+                "title": "The website is broken",
+                "category_id": 3,
+                "description": "The products won't add to my cart."
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Ticket successfully created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": { "type": "string" },
+                    "ticket_id": { "type": "integer" },
+                    "title": { "type": "string" },
+                    "created_at": { "type": "string", "format": "date-time" },
+                    "email": { "type": "string" }
+                  }
+                },
+                "example": {
+                  "message": "Ticket successfully created",
+                  "ticket_id": 8,
+                  "title": "The website is broken",
+                  "created_at": "2025-06-01T13:44:41.688Z",
+                  "email": "example@email.com"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": { "type": "string" }
+                  }
+                },
+                "example": {
+                  "message": "Title and description fields need to be filled"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": { "type": "string" }
+                  }
+                },
+                "example": {
+                  "message": "insert or update on table \"ticket\" violates foreign key constraint \"ticket_category_id_fkey\""
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": ["Staff"],
+        "summary": "Get all assigned or pool tickets",
+        "parameters": [
+          { "name": "priority", "in": "query", "schema": { "type": "string" } },
+          { "name": "status", "in": "query", "schema": { "type": "string" } },
+          { "name": "search", "in": "query", "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "A list of tickets"
+          }
+        }
+      }    },    "/priorities": {
+      "get": {
+        "tags": ["Ticket Management"],
+        "summary": "Get available ticket priorities",
+        "description": "Returns a list of all available ticket priorities. Requires admin authentication.",
+        "security": [
+          { "bearerAuth": [] },
+          {}
+        ],
+        "responses": {
+          "200": {
+            "description": "List of ticket priorities",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": { "type": "integer" },
+                      "name": { "type": "string" }
+                    }
+                  }
+                },
+                "example": [
+                  {
+                    "id": 1,
+                    "name": "High"
+                  },
+                  {
+                    "id": 2,
+                    "name": "Medium"
+                  },
+                  {
+                    "id": 3,
+                    "name": "Low"
+                  }
+                ]
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - Authentication failed or insufficient privileges",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": { "type": "string" }
+                  }
+                },
+                "example": {
+                  "message": "Forbidden access"
+                }
+              }
+            }
+          }
+        }
+      }
+    },    "/statuses": {
+      "get": {
+        "tags": ["Ticket Management"],
+        "summary": "Get available ticket statuses",
+        "description": "Returns a list of all available ticket statuses. Requires admin authentication.",
+        "security": [
+          { "bearerAuth": [] }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of ticket statuses",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": { "type": "integer" },
+                      "name": { "type": "string" }
+                    }
+                  }
+                },
+                "example": [
+                  {
+                    "id": 1,
+                    "name": "Pending"
+                  },
+                  {
+                    "id": 2,
+                    "name": "In Progress"
+                  },
+                  {
+                    "id": 3,
+                    "name": "Resolved"
+                  },
+                  {
+                    "id": 4,
+                    "name": "Cancelled"
+                  }
+                ]
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - Authentication failed or insufficient privileges",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": { "type": "string" }
+                  }
+                },
+                "example": {
+                  "message": "Forbidden access"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/summary": {
+      "get": {
+        "tags": ["Admin"],
+        "summary": "Get ticket status summary",
+        "responses": {
+          "200": {
+            "description": "Summary of ticket statuses"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer"
+      }
+    }
+  },
+  "security": [{ "bearerAuth": [] }]
+}

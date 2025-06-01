@@ -26,3 +26,5 @@ yarn-error.log*
 .env
 
 frontend/.env
+*storybook.log
+storybook-static

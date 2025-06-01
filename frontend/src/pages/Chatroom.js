@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import ContentContainer from '../components/ContentContainer';
 import ChatBubble from '../components/ChatBubble';
@@ -8,13 +8,12 @@ import { PageTitle, Text } from '../components/text';
 import { authService } from '../api/authService';
 
 function Chatroom() {
-  // Gets the conversation id from the url || fetches the right chat by ID i think in the real app
   const { ticketId, conversationId } = useParams();
   const navigate = useNavigate();
-
-  // Check if this is a new conversation
   const isNewConversation = conversationId === 'new';
-  // State for chat messages and loading/error handling
+  const chatContainerRef = useRef(null);
+
+  // State declarations
   const [chatMessages, setChatMessages] = useState([]);
   const [isLoading, setIsLoading] = useState(!isNewConversation);
   const [error, setError] = useState(null);
@@ -23,84 +22,16 @@ function Chatroom() {
   const [lastMessageId, setLastMessageId] = useState(null);
   const [input, setInput] = useState('');
   const [conversationNumber, setConversationNumber] = useState(null);
-  // First, add a state to track if user is staff/admin
-  const [isStaff, setIsStaff] = useState(false);
+  const [isSending, setIsSending] = useState(false);
+  const [sendError, setSendError] = useState(null);
+  const [isClosing, setIsClosing] = useState(false);
+  const [userRole, setUserRole] = useState(null);
 
-  // ref that scrolls the chat to the bottom after new message
-  const chatContainerRef = useRef(null);
-  
-  // --- IMPORTANTES ---
-  // Fetch conversation data when component mounts
-  useEffect(() => {
-    if (!isNewConversation) {
-      // Fetch existing conversation
-      fetchConversationData();
-      // Get the conversation number
-      getConversationNumber();
-    }
-  }, [conversationId]);
+  // Helper function to check if user is staff or admin
+  const isStaffOrAdmin = (role) => ['staff', 'admin'].includes(role?.toLowerCase());
 
-  // When a new conversation is created, update conversation number
-  useEffect(() => {
-    if (actualConversationId && isNewConversation) {
-      // This happens after creating a new conversation
-      getConversationNumber();
-    }
-  }, [actualConversationId]);
-
-  // Track when new conversation has been converted to a real conversation
-  useEffect(() => {
-    if (isNewConversation && actualConversationId) {
-      // Update URL without page reload when a new conversation is created
-      window.history.replaceState(null, '', `/chatroom/${ticketId}/${actualConversationId}`);
-    }
-  }, [isNewConversation, actualConversationId, ticketId]);
-  // Function to get the conversation number for display
-  const getConversationNumber = async () => {
-    // Determine which conversation ID to use (the one from params or newly created)
-    const convId = isNewConversation ? actualConversationId : conversationId;
-    
-    // Skip if we don't have a valid conversation ID yet
-    if (!convId) return;
-    
-    // First try to get from sessionStorage
-    const storedNumber = sessionStorage.getItem(`conversation_number_${convId}`);
-    
-    if (storedNumber) {
-      setConversationNumber(storedNumber);
-      return;
-    }
-    
-    // If not in sessionStorage, fetch all conversations for the ticket to determine the number
-    try {
-      // Make sure we're using a raw numeric ID for the API call
-      const rawTicketId = ticketId.startsWith('TKT-') ? ticketId.replace('TKT-', '') : ticketId;
-      const conversationHistory = await authService.getConversationHistory(rawTicketId);
-      
-      if (Array.isArray(conversationHistory)) {
-        // Find the index of current conversation in the history
-        // Sort by creation date to ensure consistent numbering
-        const sortedConversations = [...conversationHistory].sort(
-          (a, b) => new Date(a.createdAt) - new Date(b.createdAt)
-        );
-        
-        const index = sortedConversations.findIndex(conv => conv.id.toString() === convId.toString());
-        
-        if (index !== -1) {
-          const number = index + 1; // Convert to 1-based index
-          setConversationNumber(number);
-          // Store for future use
-          sessionStorage.setItem(`conversation_number_${convId}`, number);
-        }
-      }
-    } catch (err) {
-      console.error('Error determining conversation number:', err);
-      // Fallback to using '#' if we can't determine the number
-      setConversationNumber('#');
-    }
-  };
-  // Fetch conversation messages from API
-  const fetchConversationData = async () => {
+  // Define fetchConversationData first
+  const fetchConversationData = useCallback(async () => {
     try {
       setIsLoading(true);
       setError(null);
@@ -165,8 +96,74 @@ function Chatroom() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [conversationId]);
   
+  // Define getConversationNumber next
+  const getConversationNumber = useCallback(async () => {
+    const convId = isNewConversation ? actualConversationId : conversationId;
+    if (!convId) return;
+    
+    // First try to get from sessionStorage
+    const storedNumber = sessionStorage.getItem(`conversation_number_${convId}`);
+    
+    if (storedNumber) {
+      setConversationNumber(storedNumber);
+      return;
+    }
+    
+    // If not in sessionStorage, fetch all conversations for the ticket to determine the number
+    try {
+      // Make sure we're using a raw numeric ID for the API call
+      const rawTicketId = ticketId.startsWith('TKT-') ? ticketId.replace('TKT-', '') : ticketId;
+      const conversationHistory = await authService.getConversationHistory(rawTicketId);
+      
+      if (Array.isArray(conversationHistory)) {
+        // Find the index of current conversation in the history
+        // Sort by creation date to ensure consistent numbering
+        const sortedConversations = [...conversationHistory].sort(
+          (a, b) => new Date(a.createdAt) - new Date(b.createdAt)
+        );
+        
+        const index = sortedConversations.findIndex(conv => conv.id.toString() === convId.toString());
+        
+        if (index !== -1) {
+          const number = index + 1; // Convert to 1-based index
+          setConversationNumber(number);
+          // Store for future use
+          sessionStorage.setItem(`conversation_number_${convId}`, number);
+        }
+      }
+    } catch (err) {
+      console.error('Error determining conversation number:', err);
+      // Fallback to using '#' if we can't determine the number
+      setConversationNumber('#');
+    }
+  }, [isNewConversation, actualConversationId, conversationId, ticketId]); // Add all dependencies
+
+  // Fetch conversation data on mount or when conversationId changes
+  useEffect(() => {
+    if (!isNewConversation) {
+      fetchConversationData();
+      getConversationNumber();
+    }
+  }, [isNewConversation, fetchConversationData, getConversationNumber]);
+
+  // When a new conversation is created, update conversation number
+  useEffect(() => {
+    if (actualConversationId && isNewConversation) {
+      // This happens after creating a new conversation
+      getConversationNumber();
+    }
+  }, [actualConversationId, isNewConversation, getConversationNumber]);
+
+  // Track when new conversation has been converted to a real conversation
+  useEffect(() => {
+    if (isNewConversation && actualConversationId) {
+      // Update URL without page reload when a new conversation is created
+      window.history.replaceState(null, '', `/chatroom/${ticketId}/${actualConversationId}`);
+    }
+  }, [isNewConversation, actualConversationId, ticketId]);
+
   // Scroll to bottom when messages change
   useEffect(() => {
     if (chatContainerRef.current) {
@@ -177,75 +174,57 @@ function Chatroom() {
   const handleBack = () => {
     navigate(-1);
   };  // Send message state
-  const [isSending, setIsSending] = useState(false);
-  const [sendError, setSendError] = useState(null);
-  const [isClosing, setIsClosing] = useState(false);
   
   // Send message to backend with optimistic update
   const handleSend = async () => {
     if (input.trim() === '') return;
     
-    // Store message content for optimistic update/error handling
     const messageContent = input;
-    setInput(''); // Clear input immediately for better UX
+    setInput('');
     
     try {
       setIsSending(true);
       setSendError(null);
       
-      // Generate a temporary ID for optimistic update
       const tempId = `temp-${Date.now()}`;
       const now = new Date();
       const timestamp = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
       
-      // Add message to UI immediately (optimistic update)
+      // add optimistic message with a flag
+      // optimistic meaning to show the message immediately without confirming to backend (only for the user)
       const optimisticMessage = {
         id: tempId,
         content: messageContent,
-        sender: 'staff', // Assuming staff is sending, adjust based on your app logic
-        senderName: 'You', // This would be replaced by actual name from auth context
+        sender: 'staff',
+        senderName: 'You',
         timestamp: timestamp,
         showSender: chatMessages.length === 0 || chatMessages[chatMessages.length - 1].sender !== 'staff',
-        isSender: true
+        isSender: true,
+        isOptimistic: true
       };
       
       setChatMessages(prev => [...prev, optimisticMessage]);
-        // Create conversation if it's a new one
+
       if (isNewConversation) {
-        // Make sure we're using a raw numeric ID for the API call
         const rawTicketId = ticketId.startsWith('TKT-') ? ticketId.replace('TKT-', '') : ticketId;
         const newConvResponse = await authService.createConversation(rawTicketId);
-        
-        // Save the newly created conversation ID
         setActualConversationId(newConvResponse.id);
-        
-        // Send message to the new conversation
         await authService.sendMessage(newConvResponse.id, messageContent);
-        
-        // We'll let the useEffect handle updating the URL and conversation number
       } else {
-        // Send message to existing conversation
         await authService.sendMessage(conversationId, messageContent);
       }
-      
-      // If successful, we could refresh message list or just keep optimistic update
-      // In this case, polling will update anyway, so we don't need to fetch again
       
     } catch (err) {
       console.error('Error sending message:', err);
       setSendError('Failed to send message. Please try again.');
-      
-      // Remove optimistic message on failure
-      setChatMessages(prev => prev.filter(msg => msg.id !== `temp-${Date.now()}`));
-      
-      // Add the unsent message back to input
+      setChatMessages(prev => prev.filter(msg => !msg.isOptimistic));
       setInput(messageContent);
     } finally {
       setIsSending(false);
     }
   };
 
-  // let user send message with enter key ||real app maybe also handle
+  // let user send message with enter key
   const handleKeyDown = (e) => {
     if (e.key === 'Enter') handleSend();
   };
@@ -271,54 +250,32 @@ function Chatroom() {
           // Filter out any items that are not actual messages
           const messages = response.filter(item => !('closed' in item));
           
-          // Check if we have new messages by comparing with lastMessageId
-          const lastMessage = messages[messages.length - 1];
-          
-          if (lastMessage && (!lastMessageId || lastMessage.id > lastMessageId)) {
-            // Format and add only new messages
-            const newMessages = messages
-              .filter(msg => !lastMessageId || msg.id > lastMessageId)
-              .map((msg, index, filteredArray) => {
-                const prevMsg = index > 0 ? filteredArray[index - 1] : null;
-                const showSender = !prevMsg || prevMsg.sender_id !== msg.sender_id;
-                
-                return {
-                  id: msg.id,
-                  content: msg.content,
-                  sender: msg.isSender ? 'staff' : 'user',
-                  senderName: msg.sender_username,
-                  timestamp: new Date(msg.sentAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-                  showSender: showSender,
-                  isSender: msg.isSender
-                };
-              });
-            
-            if (newMessages.length > 0) {
-              setChatMessages(prev => [...prev, ...newMessages]);
-              setLastMessageId(lastMessage.id);
-            }
-          }
-          
-          // Check for metadata in the response for potential updates
-          if (response.metadata) {
-            // If backend provides sequence number, use it
-            if (response.metadata.sequenceNumber && !conversationNumber) {
-              setConversationNumber(response.metadata.sequenceNumber);
-              sessionStorage.setItem(`conversation_number_${actualConversationId}`, response.metadata.sequenceNumber);
-            }
-            
-            // Update conversation status if provided and different from current
-            if (response.metadata.isOpen !== undefined) {
-              const newStatus = response.metadata.isOpen ? 'open' : 'closed';
-              if (newStatus !== conversationStatus) {
-                setConversationStatus(newStatus);
-              }
-            }
+          // Replace optimistic messages with real ones
+          setChatMessages(prev => {
+            const realMessages = messages.map((msg, index) => ({
+              id: msg.id,
+              content: msg.content,
+              sender: msg.isSender ? 'staff' : 'user',
+              senderName: msg.sender_username,
+              timestamp: new Date(msg.sentAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+              showSender: index === 0 || messages[index - 1].sender_id !== msg.sender_id,
+              isSender: msg.isSender
+            }));
+
+            // Keep only optimistic messages that aren't in the real messages
+            const optimisticMessages = prev.filter(
+              msg => msg.isOptimistic && !realMessages.some(rm => rm.content === msg.content)
+            );
+
+            return [...realMessages, ...optimisticMessages];
+          });
+
+          if (messages.length > 0) {
+            setLastMessageId(messages[messages.length - 1].id);
           }
         }
       } catch (err) {
         console.error('Error polling for new messages:', err);
-        // Don't set error state here to avoid disrupting the UI during polling
       }
     };
     
@@ -327,7 +284,9 @@ function Chatroom() {
     
     // Cleanup interval on unmount
     return () => clearInterval(intervalId);
-  }, [actualConversationId, isNewConversation, conversationStatus, lastMessageId, conversationNumber]);  // Function to close a conversation
+  }, [actualConversationId, isNewConversation, conversationStatus, lastMessageId]);
+
+  // Function to close a conversation
   const handleCloseConversation = async () => {
     try {
       // Make sure we have a valid conversation ID
@@ -365,20 +324,19 @@ function Chatroom() {
     }
   };
 
-  // Add a function to check user role when component mounts
+  // Fetch user role on mount
   useEffect(() => {
-    const checkUserRole = async () => {
-      try {        const userDetails = await authService.getUserDetail();
-        console.log('User details for staff check:', userDetails);
-        // Setting isStaff based on role from backend
-        setIsStaff(userDetails.role === 'staff' || userDetails.role === 'admin');
+    const getUserRole = async () => {
+      try {
+        const userDetails = await authService.getUserDetail();
+        setUserRole(userDetails.role);
       } catch (err) {
-        console.error('Error checking user role:', err);
-        setIsStaff(false);
+        console.error('Error fetching user role:', err);
+        const user = JSON.parse(localStorage.getItem('currentUser') || '{}');
+        setUserRole(user.role);
       }
     };
-
-    checkUserRole();
+    getUserRole();
   }, []);
 
   return (
@@ -451,38 +409,54 @@ function Chatroom() {
       </div>
         {/* Chat input */}
       <div className="max-w-2xl mx-auto w-full mt-4">
-        {conversationStatus === 'open' || isNewConversation ? (
+        {conversationStatus === 'closed' ? (
+          <div className="bg-gray-50 border border-gray-200 rounded-lg p-5 text-center">
+            <div className="flex items-center justify-center mb-2">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+              </svg>
+              <Text color="text-gray-700" weight="semibold" size="lg">
+                This conversation is closed
+              </Text>
+            </div>
+            <Text color="text-gray-500" size="sm" className="max-w-md mx-auto mb-2">
+              This conversation has been marked as completed and can no longer be modified.
+            </Text>
+          </div>
+        ) : (
           <>
-            <div className="flex bg-white rounded-xl shadow-md border border-gray-200">
-              <input
-                type="text"
-                className="flex-1 px-4 py-3 rounded-l-xl outline-none"
-                placeholder="Type your message..."
-                value={input}
-                onChange={e => setInput(e.target.value)}
-                onKeyDown={handleKeyDown}
-                disabled={isSending}
-              />
-              <PrimaryButton
-                onClick={handleSend}
-                aria-label="Send"
-                type="button"
-                className="px-5 flex items-center justify-center"
-                disabled={isSending || input.trim() === ''}
-              >
-                {isSending ? (
-                  <div className="inline-block h-5 w-5 animate-spin rounded-full border-2 border-solid border-white border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite]"></div>
-                ) : (
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none"
-                    viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round"
-                      d="M5 12l14-7-7 14-2-5-5-2z" />
-                  </svg>
-                )}
-              </PrimaryButton>
-            </div>            
-            {/* Close conversation button - show if the conversation is open */}
-            {conversationStatus === 'open' && (
+            {/* Chat Input - Show for everyone except admin */}
+            {userRole !== 'admin' && (
+              <div className="flex bg-white rounded-xl shadow-md border border-gray-200">
+                <input
+                  type="text"
+                  className="flex-1 px-4 py-3 rounded-l-xl outline-none"
+                  placeholder="Type your message..."
+                  value={input}
+                  onChange={e => setInput(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  disabled={isSending}
+                />
+                <PrimaryButton
+                  onClick={handleSend}
+                  aria-label="Send"
+                  type="button"
+                  className="px-5 flex items-center justify-center"
+                  disabled={isSending || input.trim() === ''}
+                >
+                  {isSending ? (
+                    <div className="inline-block h-5 w-5 animate-spin rounded-full border-2 border-solid border-white border-r-transparent"></div>
+                  ) : (
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 12l14-7-7 14-2-5-5-2z" />
+                    </svg>
+                  )}
+                </PrimaryButton>
+              </div>
+            )}
+
+            {/* Close Button - Show only for staff */}
+            {userRole === 'staff' && conversationStatus === 'open' && (
               <div className="flex justify-end mt-3">
                 <button
                   onClick={handleCloseConversation}
@@ -505,22 +479,16 @@ function Chatroom() {
                 </button>
               </div>
             )}
-          </>        ) : (
-          <div className="bg-gray-50 border border-gray-200 rounded-lg p-5 text-center">
-            <div className="flex items-center justify-center mb-2">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-              </svg>
-              <Text color="text-gray-700" weight="semibold" size="lg">
-                This conversation is closed
-              </Text>
-            </div>
-            <Text color="text-gray-500" size="sm" className="max-w-md mx-auto mb-2">
-              This conversation has been marked as completed and can no longer be modified.
-              To continue the discussion, please start a new conversation.
-            </Text>        
-          </div>
-        )}
+
+            {/* Admin Message - Show only for admin */}
+            {userRole === 'admin' && (
+              <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 text-center">
+                <Text color="text-gray-600">
+                  You are viewing this conversation as an administrator. You cannot participate in the conversation.
+                </Text>
+              </div>
+            )}
+          </>        )}
       </div>
     </ContentContainer>
   );

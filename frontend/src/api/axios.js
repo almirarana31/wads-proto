@@ -29,22 +29,19 @@ api.interceptors.response.use(
     (error) => {
         // Handle specific error cases here
         if (error.response) {
-            // The request was made and the server responded with a status code
-            // that falls out of the range of 2xx
             switch (error.response.status) {
                 case 401:
-                    // Clear tokens on unauthorized response
+                    // Clear tokens ONLY on unauthorized (invalid/expired token)
                     sessionStorage.removeItem('token');
                     sessionStorage.removeItem('user');
                     sessionStorage.removeItem('sessionExpires');
                     localStorage.removeItem('token');
+                    window.location.href = '/login';
                     break;
                 case 403:
-                    // Also clear tokens on forbidden response (token expired)
-                    sessionStorage.removeItem('token');
-                    sessionStorage.removeItem('user');
-                    sessionStorage.removeItem('sessionExpires');
-                    localStorage.removeItem('token');
+                    // Don't clear tokens for forbidden requests
+                    console.error('Access forbidden:', error.response.data);
+                    // You might want to show an error message to the user here
                     break;
                 default:
                     break;
