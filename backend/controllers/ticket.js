@@ -8,9 +8,6 @@ export const getTicketDetail = async (req, res) => {
     // get ticket id from route params
     const ticket_id = req.params.id
 
-    // get staff_id from the body (gained from the request maker)
-    const staff = req.staff;
-
     // role id, if 2 admin if 1 starff
     const role_id = req.role_id;
     const user = req.user;
@@ -23,7 +20,7 @@ export const getTicketDetail = async (req, res) => {
             where: {
                 id: ticket_id,
                 [Op.or]: [
-                    ...(staff ? [{staff_id: staff.staff_id}] : []),
+                    ...(user ? [{staff_id: user.staff_id}] : []),
                     ...(user ? [{user_id: user.id}] : [])
                 ]
             }
@@ -31,7 +28,7 @@ export const getTicketDetail = async (req, res) => {
 
         const checkAdm = await Staff.findOne({
             where: {
-                id: staff.staff_id,
+                id: user.staff_id,
                 role_id: 2
             }
         })
@@ -49,10 +46,10 @@ export const getTicketDetail = async (req, res) => {
             }, {
                 model: Category,
                 attributes: ['name']
-            }, ...(staff ? [{
+            }, ...(user.staff_id ? [{
                 model: Priority,
                 attributes: ['name']
-            }] : []), ...(staff ? [{
+            }] : []), ...(user.staff_id ? [{
                 model: Staff,
                 as: 'Staff',
                 include: [{
