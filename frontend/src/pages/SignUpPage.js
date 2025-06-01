@@ -4,6 +4,7 @@ import { authService } from '../api/authService';
 import checkIcon from '../assets/accept.png';
 import PrimaryButton from '../components/buttons/PrimaryButton';
 import { PageTitle, Text, Label, Heading } from '../components/text';
+import GoogleSignupButton from '../components/GoogleSignUpButton';
 
 function SignUpPage() {
   const navigate = useNavigate();
@@ -94,6 +95,15 @@ function SignUpPage() {
               {error}
             </div>
           )}
+
+          {/* Google OAuth Sign Up Button */}
+          <GoogleSignupButton />
+          
+          <div className="flex items-center my-4">
+            <div className="flex-grow border-t border-gray-300"></div>
+            <span className="flex-shrink mx-4 text-gray-400">or</span>
+            <div className="flex-grow border-t border-gray-300"></div>
+          </div>
           
           <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-5">
             <div>
