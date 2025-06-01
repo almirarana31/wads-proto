@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { PageTitle, Text, Subheading, StatText } from '../components/text';
+import { PageTitle, Subheading, StatText } from '../components/text';
 import SecondaryButton from '../components/buttons/SecondaryButton';
 import StaffTicketQueuePage from './StaffTicketQueuePage';
 import PriorityPill from '../components/PriorityPill';
