@@ -19,14 +19,29 @@ export const getTicketDetail = async (req, res) => {
     // if the user that is sent with the body is not a staff, then the response should not contain priority
 
     try {
-        const ticket = await Ticket.findOne({
+        const allowed = await Ticket.findOne({
             where: {
                 id: ticket_id,
-                [Op.or]: [ // the only people that can view the details of this ticket are staff and admin (role_id = 2)
-                  ...(staff ? [{staff_id: staff.staff_id}] : []), 
-                    ...(user  ? [{user_id: user.id}] : []),
-                      ...(role_id == 2 ? [{}] : [])
+                [Op.or]: [
+                    ...(staff ? [{staff_id: staff.staff_id}] : []),
+                    ...(user ? [{user_id: user.id}] : [])
                 ]
+            }
+        })
+
+        const checkAdm = await Staff.findOne({
+            where: {
+                id: staff.staff_id,
+                role_id: 2
+            }
+        })
+
+        let isAdmin = false
+        if (checkAdm) isAdmin = true
+
+        const ticket = await Ticket.findOne({
+            where: {
+                id: ticket_id
             },
             include: [{
                 model: Status,
@@ -55,11 +70,11 @@ export const getTicketDetail = async (req, res) => {
             attributes: ['id', 'subject', 'description', 'createdAt', 'note']
         });
 
-        if (!ticket) {
-            return res.status(400).json({message: "Access denied"})
+        if (isAdmin || allowed) {
+            return res.status(200).json(ticket)
         }
 
-        return res.status(200).json(ticket);
+        return res.status(400).json({message: "Access denied"})
     } catch (error) {
         return res.status(500).json({message: error.message});
     }

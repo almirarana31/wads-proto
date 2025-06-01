@@ -10,10 +10,38 @@ export const getConversation = async (req, res) => {
     // YOU will always be the requester
     // run this function by userAuthZ and staffAuthZ
     // if sender_id = token's user_id, isSender = true >> make it blue text bbl otherwise, false
-
     const conversation_id = req.params.id
     const user = req.user
+    const id = req.params.id
     try {   
+        // get the conversation object from the database 
+        const conversation = await Conversation.findByPk(id, {
+            include: [{
+                model: Ticket,
+                attributes: ['user_id', 'staff_id'],
+                required: true
+            }],
+        })
+        // checking to see if belongs to the conversation // slapstick solution should kill myself
+        const isStaff = user?.staff_id == conversation.Ticket.staff_id;
+        const isUser = user?.id == conversation.Ticket.user_id;
+
+        // now to check for admin
+        const admin = await Staff.findOne({
+            where: {
+                id: user.staff_id,
+                role_id: 2
+            }
+        })
+
+        let isAdmin = false
+        if (admin) {
+            isAdmin = true
+        } 
+        if ((!isStaff || !isUser) && !isAdmin) {
+            return res.status(403).json({message: "Forbidden access!"})
+        }
+
         // get messages with this conversation id 
         const messages = await Message.findAll({
             where: {
@@ -21,12 +49,11 @@ export const getConversation = async (req, res) => {
             }, 
             include: [{
                 model: User,
-                attributes: ['username'],
+                attributes: ['username', 'staff_id'],
                 required: true
             }, {
                 model: Conversation,
-                attributes: ['closed'],
-                required: true
+                attributes: ['closed']
             }],
             order: [['sentAt', 'ASC']]
         });
@@ -37,16 +64,28 @@ export const getConversation = async (req, res) => {
             }
         )
 
+        if (isAdmin) {
+            const result = messages.map(msg => ({
+                id: msg.id,
+                content: msg.content,
+                sentAt: msg.sentAt,
+                sender_id: msg.sender_id,
+                sender_username: msg.User.username,
+                isSender: msg.User.staff_id ? true : false,
+            }));
+            result[result.length] = isClosed
+            return res.status(200).json(result)
+        }
+
         const result = messages.map(msg => ({
             id: msg.id,
             content: msg.content,
             sentAt: msg.sentAt,
             sender_id: msg.sender_id,
             sender_username: msg.User.username,
-            isSender: msg.sender_id === user.id
+            isSender: msg.sender_id === user.id,
         }));
         result[result.length] = isClosed
-
         return res.status(200).json(result)
     } catch (error) {
         return res.status(500).json({message: error.message})
@@ -55,8 +94,6 @@ export const getConversation = async (req, res) => {
  
 export const getConversationHistory = async (req, res) => {
     const ticket_id = req.params.id
-    const user = req.user;
-    const staff = req.staff;
     const sortBy = req.query.sortBy // newest/oldest
     try {
         const conversation = await Conversation.findAll({
@@ -66,16 +103,11 @@ export const getConversationHistory = async (req, res) => {
                 required: true
             }],
             where: {
-                ticket_id: ticket_id,
-                [Op.or]: [
-                    ...(user ? [{'$Ticket.user_id$': user.id}] : []), // if user is request sender, ticket must belong to user
-                    ...(staff ? [{'$Ticket.staff_id$': staff.staff_id}] : []) // if staff is request sender, ticket must belong to staff
-                ]
+                ticket_id: ticket_id
             },
-            attributes: ['id', 'createdAt', 'endedAt'],
+            attributes: ['id', 'createdAt', 'endedAt', 'closed'],
             order: [['createdAt', sortBy?.toLowerCase() === 'newest' ? 'DESC' : 'ASC']]
         });
-        
         return res.status(200).json(conversation);
     } catch (error) {
         return res.status(500).json({message: error.message});
@@ -125,7 +157,8 @@ export const createConversation = async (req, res) => {
 
         const newConvo = await Conversation.create({
             ticket_id: assigned.id,
-            endedAt: null  
+            endedAt: null,
+            closed: false
         })
 
         // audit here
@@ -150,7 +183,8 @@ export const closeConversation = async (req, res) => {
     try {
         // do conversationAuthZ middleware and staffAuthZ middleware
         const closed = await Conversation.update({
-            endedAt: new Date(Date.now())
+            endedAt: new Date(Date.now()),
+            closed: true
         }, {
             where: {
                 id: conversation_id
