@@ -98,6 +98,15 @@ export const authService = {
 
     async createConversation(ticketId) {
         const response = await api.post(`/conversation/${ticketId}`);
+        if (response.data && !response.data.id) {
+            // if don't have an ID in the response, try to fetch the latest conversation
+            const conversations = await this.getConversationHistory(ticketId);
+            if (conversations && conversations.length > 0) {
+                // get most recent conversation
+                const latestConversation = conversations[0];
+                return { id: latestConversation.id };
+            }
+        }
         return response.data;
     },
 
@@ -145,7 +154,6 @@ export const authService = {
 
     async getAdminStatusSummary() {
         const response = await api.get('/admin/status-summary');
-        // Transform the response data to match the expected format
         const summary = {
             total: 0,
             pending: 0,
@@ -168,6 +176,9 @@ export const authService = {
                     break;
                 case 'cancelled':
                     summary.cancelled = parseInt(item.count);
+                    break;
+                default:
+                    console.warn(`Unknown status type: ${item.name}`);
                     break;
             }
         });
@@ -263,5 +274,23 @@ export const authService = {
             console.error('Error fetching staff activation status:', error);
             throw error;
         }
+    },
+
+    async getAdminTicketDetails(ticketId) {
+        try {
+            // Add admin flag to indicate admin access
+            const response = await api.get(`/admin/tickets/${ticketId}`, {
+              headers: {
+                'X-User-Role': 'ADM' // Add role header to bypass category restrictions
+              }
+            });
+            return response.data;
+          } catch (error) {
+            if (error.response?.status === 401) {
+              // Handle session expiration explicitly
+              throw new Error('Session expired. Please log in again.');
+            }
+            throw error;
+          }
     }
 };

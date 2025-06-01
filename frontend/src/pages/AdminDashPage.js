@@ -14,7 +14,7 @@ function AdminDashboard() {
   const navigate = useNavigate();
   const [tickets, setTickets] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState('');
 
   useEffect(() => {
     async function fetchTickets() {
@@ -54,7 +54,8 @@ function AdminDashboard() {
 
         setTickets(ticketsWithStaff);
       } catch (err) {
-        setError('Failed to fetch tickets');
+        console.error('Failed to fetch tickets:', err);
+        setError('Failed to fetch tickets. Please try again later.');
       } finally {
         setLoading(false);
       }
@@ -119,11 +120,10 @@ function AdminDashboard() {
   const [isAssignModalOpen, setIsAssignModalOpen] = useState(false);
   const [selectedTicketId, setSelectedTicketId] = useState('');  const [activeTab, setActiveTab] = useState('tickets');
   const [isAddStaffModalOpen, setIsAddStaffModalOpen] = useState(false);
-  const [isDeactivateModalOpen, setIsDeactivateModalOpen] = useState(false);
-  const [selectedStaffId, setSelectedStaffId] = useState(null);
   const [selectedStaff, setSelectedStaff] = useState(null);
   const [priorities, setPriorities] = useState([]);
   const [categories, setCategories] = useState([]);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   useEffect(() => {
     async function fetchPriorities() {
@@ -149,8 +149,15 @@ function AdminDashboard() {
     fetchCategories();
   }, []);
 
-  const handleViewTicket = (ticketId) => {
-    navigate(`/admin/ticket/${ticketId}`);
+  const handleViewTicket = async (ticketId) => {
+    try {
+      const formattedId = ticketId.toString().replace('TKT-', '');
+      // Use the admin route instead of staff route
+      navigate(`/admin/ticket/${formattedId}`);
+    } catch (error) {
+      console.error('Error navigating to ticket:', error);
+      setError('Failed to view ticket details. Please try again.');
+    }
   };
   const handleAssignTicket = (ticketId) => {
     setSelectedTicketId(ticketId);
@@ -211,16 +218,7 @@ function AdminDashboard() {
       console.error('Error updating staff:', error);
     }
   };
-  const handleDeactivateClick = (staffId) => {
-    if (window.confirm("Are you sure you want to deactivate this staff member? This action cannot be undone.")) {
-      handleConfirmDeactivate(staffId);
-    }
-  };
-  const handleConfirmDeactivate = (staffId) => {
-    // Add your deactivation logic here
-    console.log(`Deactivating staff member ${staffId}`);
-    setSelectedStaffId(null);
-  };
+
 
   // Sorting functionality
   const handleSort = (key) => {
@@ -242,17 +240,27 @@ function AdminDashboard() {
   // Filter tickets based on search and filters
   const filteredTickets = tickets.filter(ticket => {
     const searchLower = searchQuery.toLowerCase();
-    return (
-      // Search by ticket ID (as string), subject, username, or email
-      ticket.id.toString().includes(searchLower) ||
-      (ticket.subject || '').toLowerCase().includes(searchLower) ||
-      (ticket.name || '').toLowerCase().includes(searchLower) ||
-      (ticket.email || '').toLowerCase().includes(searchLower)
-    ) &&
-    (filters.priority === 'All priority' || (ticket.priority || '') === filters.priority) &&
-    (filters.status === 'All status' || (ticket.status || '') === filters.status) &&
-    (filters.category === 'All category' || (ticket.category || '') === filters.category)
-  });
+    const matchesSearch = (
+        ticket.id.toString().includes(searchLower) ||
+        (ticket.subject || '').toLowerCase().includes(searchLower) ||
+        (ticket.name || '').toLowerCase().includes(searchLower) ||
+        (ticket.email || '').toLowerCase().includes(searchLower)
+    );
+
+    const matchesPriority = 
+        filters.priority === 'All priority' || 
+        (ticket.priority?.name || '') === filters.priority;
+
+    const matchesStatus = 
+        filters.status === 'All status' || 
+        ticket.status === filters.status;
+
+    const matchesCategory = 
+        filters.category === 'All category' || 
+        ticket.category === filters.category;
+
+    return matchesSearch && matchesPriority && matchesStatus && matchesCategory;
+});
 
   const sortedTickets = useMemo(() => {
     let sortableTickets = [...filteredTickets];
@@ -298,10 +306,80 @@ function AdminDashboard() {
     }
     return sortableTickets;
   }, [filteredTickets, sortConfig]);
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    try {
+      setLoading(true);
+      setStatsLoading(true);
+
+      // Fetch both tickets and stats in parallel
+      const [ticketsData, statsData] = await Promise.all([
+        authService.getAdminTickets(),
+        authService.getAdminStatusSummary()
+      ]);
+
+      // Process tickets
+      const ticketsWithStaff = await Promise.all(ticketsData.map(async ticket => {
+        let assignedStaff = null;
+        try {
+          const staffData = await authService.getStaffForTicket(ticket.ticket_id);
+          if (staffData && staffData.length > 0) {
+            assignedStaff = {
+              id: staffData[0].staff_id,
+              name: staffData[0].staff_name
+            };
+          }
+        } catch (err) {
+          console.error(`Error fetching staff for ticket ${ticket.ticket_id}:`, err);
+        }
+
+        return {
+          id: ticket.ticket_id,
+          subject: ticket.subject,
+          createdAt: ticket.createdAt,
+          lastUpdated: ticket.updatedAt || ticket.createdAt,
+          note: ticket.note,
+          category: ticket.Category?.name || '',
+          status: ticket.Status?.name || '',
+          priority: ticket.Priority || null,
+          name: ticket.User?.username || '',
+          email: ticket.User?.email || '',
+          assignedStaff: assignedStaff
+        };
+      }));
+
+      // Update both states
+      setTickets(ticketsWithStaff);
+      setStats(statsData);
+
+    } catch (error) {
+      console.error('Failed to refresh data:', error);
+      setError('Failed to refresh data. Please try again later.');
+    } finally {
+      setLoading(false);
+      setStatsLoading(false);
+      setIsRefreshing(false);
+    }
+  };
+
+  // First, add a new handler function for refreshing staff data
+  const handleStaffRefresh = async () => {
+    setIsRefreshing(true);
+    try {
+      const data = await authService.getAdminStaffPerformance();
+      setStaffPerformance(data);
+    } catch (error) {
+      console.error('Failed to refresh staff data:', error);
+      setError('Failed to refresh staff data. Please try again later.');
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
+
   return (
     <div className="min-h-screen py-6 sm:py-12 px-4">
-      <div className="bg-white p-6 md:p-10 rounded shadow-md max-w-auto mx-auto">
-        <div className="max-w-7xl mx-auto">
+      <div className="bg-white p-6 md:p-10 rounded shadow-md">
+        <div className="mx-auto">
           <PageTitle 
             title="Admin Dashboard"
             subtitle={
@@ -384,7 +462,23 @@ function AdminDashboard() {
               
               {/* Ticket Management Section */}
               <div className="bg-white p-6 rounded-lg shadow-md mb-8">
-                <Subheading className="text-blue-700">Ticket Management</Subheading>
+                <div className="flex justify-between items-center mb-4">
+                  <Subheading className="text-blue-700">Ticket Management</Subheading>
+                  <button 
+                    onClick={handleRefresh} 
+                    className="flex items-center px-4 py-2 bg-bianca-primary text-white rounded hover:bg-bianca-primary/80 transition-colors" 
+                    disabled={isRefreshing}
+                  >
+                    {isRefreshing ? (
+                      <span className="inline-block h-4 w-4 mr-2 animate-spin rounded-full border-2 border-solid border-white border-r-transparent"></span>
+                    ) : (
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                      </svg>
+                    )}
+                    Refresh
+                  </button>
+                </div>
                 <div className="mb-4">
                   <input
                     type="text"
@@ -401,9 +495,11 @@ function AdminDashboard() {
                     onChange={(e) => setFilters({...filters, priority: e.target.value})}
                   >
                     <option value="All priority">All priority</option>
-                    <option value="High">High</option>
-                    <option value="Medium">Medium</option>
-                    <option value="Low">Low</option>
+                    {priorities.map(priority => (
+                      <option key={priority.id} value={priority.name}>
+                        {priority.name}
+                      </option>
+                    ))}
                   </select>
                   <select
                     className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-300 bg-white"
@@ -422,9 +518,11 @@ function AdminDashboard() {
                     onChange={(e) => setFilters({...filters, category: e.target.value})}
                   >
                     <option value="All category">All category</option>
-                    <option value="Billing">Billing</option>
-                    <option value="Technical">IT Support</option>
-                    <option value="General">General</option>
+                    {categories.map(category => (
+                      <option key={category.id} value={category.name}>
+                        {category.name}
+                      </option>
+                    ))}
                   </select>
                 </div>               
                 {/* Tickets Table */}
@@ -601,13 +699,29 @@ function AdminDashboard() {
                 {/* Add this container for the header and button */}
                 <div className="flex justify-between items-center mb-6">
                   <Subheading className="text-blue-700">Staff Management</Subheading>
-                  <PrimaryButton
-                    onClick={handleAddStaff}
-                    className="flex items-center gap-2"
-                  >
-                    <span className="text-xl">+</span>
-                    Add Staff
-                  </PrimaryButton>
+                  <div className="flex gap-2">
+                    <button 
+                      onClick={handleStaffRefresh} 
+                      className="flex items-center px-4 py-2 bg-bianca-primary text-white rounded hover:bg-bianca-primary/80 transition-colors" 
+                      disabled={isRefreshing}
+                    >
+                      {isRefreshing ? (
+                        <span className="inline-block h-4 w-4 mr-2 animate-spin rounded-full border-2 border-solid border-white border-r-transparent"></span>
+                      ) : (
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                        </svg>
+                      )}
+                      Refresh
+                    </button>
+                    <PrimaryButton
+                      onClick={handleAddStaff}
+                      className="flex items-center gap-2"
+                    >
+                      <span className="text-xl">+</span>
+                      Add Staff
+                    </PrimaryButton>
+                  </div>
                 </div>
                 
                 {/* Existing staff grid */}
@@ -616,7 +730,6 @@ function AdminDashboard() {
                     <StaffCard 
                       key={staff.staff_id} 
                       staff={staff} 
-                      onDeactivate={() => handleDeactivateClick(staff.staff_id)}
                       onEdit={handleEditStaff}
                     />
                   ))}
@@ -657,6 +770,13 @@ function AdminDashboard() {
         onSave={handleSaveStaff}
         staffData={selectedStaff}
       />
+
+      {/* Error Display */}
+      {error && (
+        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+          {error}
+        </div>
+      )}
     </div>
   );
 }
