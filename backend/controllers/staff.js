@@ -1,4 +1,4 @@
-import { Staff, User, Ticket, Status, Category, Priority } from '../models/index.js';
+import { Staff, User, Ticket, Status, Category, Priority, Conversation } from '../models/index.js';
 import sequelize from '../config/sequelize.js';
 import { Op } from 'sequelize';
 import { logAudit } from './audit.js';
@@ -46,7 +46,8 @@ export const getTickets = async (req, res) => {
                         {description: {[Op.substring]: search}},
                         ...(!isNaN(search) ? [{id: parseInt(search)}] : [])
                     ]}
-                : {})
+                : {}),
+                category_id: req.staff_field
             },
             attributes: [['id', 'ticket_id'], 'subject', 'createdAt']
         })
@@ -191,6 +192,25 @@ export const resolveTicket = async (req, res) => {
             staff_id: req.staff.staff_id
         });
 
+        const conversation = await Conversation.findAll({
+            where: {
+                ticket_id: ticketId
+            }
+        })
+
+        for (const convo of conversation) {
+            convo.closed = true
+            await convo.save();
+        }
+        
+
+        // audit here
+        await logAudit(
+            'Update',
+            req.staff.id,
+            `Ticket ID ${ticketId} resolved`
+        )
+
         return res.status(200).json({ 
             success: true,
             message: 'Ticket resolved successfully',
@@ -226,7 +246,25 @@ export const cancelTicket = async (req, res) => {
             staff_id: req.staff.staff_id
         });
 
-        res.status(200).json({ 
+        const conversation = await Conversation.findAll({
+            where: {
+                ticket_id: ticketId
+            }
+        })
+
+        for (const convo of conversation) {
+            convo.closed = true
+            await convo.save();
+        }
+        
+        // audit here
+        await logAudit(
+            'Update',
+            req.staff.id,
+            `Ticket ID ${ticketId} cancelled`
+        )
+
+        return res.status(200).json({ 
             success: true,
             message: 'Ticket cancelled successfully',
             ticket
