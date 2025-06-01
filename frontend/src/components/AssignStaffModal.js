@@ -22,25 +22,12 @@ function AssignStaffModal({ isOpen, onClose, onAssign, ticketId }) {
         setError(null);
         setStaffList([]);
         
-        // Get the ticket details to know the category
         const ticketDetails = await authService.getTicketDetail(ticketId);
-        console.log('Ticket Details:', {
-          categoryId: ticketDetails.Category.id,
-          categoryName: ticketDetails.Category.name
-        });
-
-        // Get all staff performance data
         const allStaffData = await authService.getAdminStaffPerformance();
         
-        // Get staff details to match with field/category
         const staffDetails = await Promise.all(
           allStaffData.map(async (staff) => {
             const details = await authService.getAdminStaffDetail(staff.staff_id);
-            console.log(`Staff ${staff.staff_name} details:`, {
-              staffId: staff.staff_id,
-              fieldName: details[0]?.field_name,
-              fieldId: details[0]?.field_id
-            });
             return {
               ...staff,
               field_name: details[0]?.field_name,
@@ -49,16 +36,9 @@ function AssignStaffModal({ isOpen, onClose, onAssign, ticketId }) {
           })
         );
 
-        // Filter staff by matching category name (current working approach)
         const eligibleStaff = staffDetails.filter(staff => {
           const matchesCategory = staff.field_name === ticketDetails.Category.name;
           const isActive = !staff.is_guest;
-          console.log(`Filtering staff ${staff.staff_name}:`, {
-            staffFieldName: staff.field_name,
-            ticketCategory: ticketDetails.Category.name,
-            matches: matchesCategory,
-            isActive
-          });
           return matchesCategory && isActive;
         });
 
@@ -75,8 +55,7 @@ function AssignStaffModal({ isOpen, onClose, onAssign, ticketId }) {
         setStaffList(formattedStaff);
 
       } catch (err) {
-        console.error('Staff fetch error:', err);
-        setError(err.message || 'Failed to load available staff members');
+        setError('Failed to load available staff members');
       } finally {
         setLoading(false);
       }
@@ -87,8 +66,6 @@ function AssignStaffModal({ isOpen, onClose, onAssign, ticketId }) {
 
   // filter staff based on search query
   const filteredStaff = useMemo(() => {
-    console.log('Current staff list:', staffList); // Debug log
-    
     if (!searchQuery) {
       return staffList.filter(staff => !staff.is_guest);
     }
@@ -151,14 +128,6 @@ function AssignStaffModal({ isOpen, onClose, onAssign, ticketId }) {
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-300"
           />
-        </div>
-
-        <div className="mt-2 p-2 bg-gray-50 rounded text-xs">
-          <pre>{JSON.stringify({ 
-            totalStaff: staffList.length,
-            filteredStaff: filteredStaff.length,
-            category: staffList[0]?.field_name 
-          }, null, 2)}</pre>
         </div>
 
         <div>
