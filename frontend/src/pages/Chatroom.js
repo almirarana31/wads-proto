@@ -480,31 +480,31 @@ function Chatroom() {
                   </svg>
                 )}
               </PrimaryButton>
-            </div>            {/* Close conversation button - only show if we have messages */}
-            {chatMessages.length > 0 && !isNewConversation && 
- conversationStatus === 'open' && isStaff && (
-  <div className="flex justify-end mt-3">
-    <button
-      onClick={handleCloseConversation}
-      className="text-sm text-red-600 hover:text-red-800 flex items-center px-3 py-1 border border-red-200 rounded-md hover:bg-red-50 transition-colors"
-      disabled={isClosing || conversationStatus !== 'open'}
-    >
-      {isClosing ? (
-        <>
-          <div className="inline-block h-4 w-4 mr-2 animate-spin rounded-full border-2 border-solid border-red-600 border-r-transparent"></div>
-          Closing...
-        </>
-      ) : (
-        <>
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-          </svg>
-          Close Conversation
-        </>
-      )}
-    </button>
-  </div>
-)}
+            </div>            
+            {/* Close conversation button - show if the conversation is open */}
+            {conversationStatus === 'open' && (
+              <div className="flex justify-end mt-3">
+                <button
+                  onClick={handleCloseConversation}
+                  className="text-sm text-red-600 hover:text-red-800 flex items-center px-3 py-1 border border-red-200 rounded-md hover:bg-red-50 transition-colors"
+                  disabled={isClosing}
+                >
+                  {isClosing ? (
+                    <>
+                      <div className="inline-block h-4 w-4 mr-2 animate-spin rounded-full border-2 border-solid border-red-600 border-r-transparent"></div>
+                      Closing...
+                    </>
+                  ) : (
+                    <>
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                      Close Conversation
+                    </>
+                  )}
+                </button>
+              </div>
+            )}
           </>        ) : (
           <div className="bg-gray-50 border border-gray-200 rounded-lg p-5 text-center">
             <div className="flex items-center justify-center mb-2">
