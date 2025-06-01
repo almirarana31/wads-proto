@@ -1,12 +1,59 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import Modal from './Modal';
 import PrimaryButton from './buttons/PrimaryButton';
 import SecondaryButton from './buttons/SecondaryButton';
 import { Text, Label } from './text';
+import { authService } from '../api/authService';
 
-function AssignStaffModal({ isOpen, onClose, onAssign, staffList, ticketId }) {
+function AssignStaffModal({ isOpen, onClose, onAssign, ticketId }) {
   const [selectedStaff, setSelectedStaff] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
+  const [staffList, setStaffList] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+
+  // Fetch available staff when modal opens
+  useEffect(() => {
+    async function fetchEligibleStaff() {
+        if (!isOpen || !ticketId) return;
+        
+        try {
+            setLoading(true);
+            setError(null);
+            setStaffList([]); // Clear previous list
+            
+            console.log('Fetching staff for ticket:', ticketId);
+            const staffData = await authService.getStaffForTicket(ticketId);
+            console.log('Received staff data:', staffData);
+
+            if (!staffData || staffData.length === 0) {
+                setError('No eligible staff found for this ticket');
+                return;
+            }
+
+            const formattedStaff = staffData.map(staff => ({
+                staff_id: staff.staff_id,
+                name: staff.staff_name || 'Unknown',
+                field_name: staff.field_name,
+                resolution_rate: staff.resolution_rate || '0%',
+                in_progress: staff.in_progress || '0',
+                resolved: staff.resolved || '0',
+                is_guest: Boolean(staff.is_guest)
+            }));
+            
+            console.log('Formatted staff:', formattedStaff);
+            setStaffList(formattedStaff);
+
+        } catch (err) {
+            console.error('Staff fetch error:', err);
+            setError(err.message || 'Failed to load available staff members');
+        } finally {
+            setLoading(false);
+        }
+    }
+
+    fetchEligibleStaff();
+  }, [isOpen, ticketId]);
 
   // filter staff based on search query
   const filteredStaff = useMemo(() => {
@@ -14,16 +61,22 @@ function AssignStaffModal({ isOpen, onClose, onAssign, staffList, ticketId }) {
     
     const searchLower = searchQuery.toLowerCase();
     return staffList.filter(staff => 
-      staff.name.toLowerCase().includes(searchLower) ||
-      staff.id.toString().includes(searchLower)
+      (staff.name?.toLowerCase().includes(searchLower) || 
+      staff.staff_id?.toString().includes(searchLower)) &&
+      !staff.is_guest // Only show active staff
     );
   }, [staffList, searchQuery]);
 
-  const handleAssign = () => {
+  const handleAssign = async () => {
     if (selectedStaff) {
-      const staff = staffList.find(s => s.id === selectedStaff);
-      onAssign(ticketId, selectedStaff, staff?.name);
-      handleClose();
+      const staff = staffList.find(s => s.staff_id === selectedStaff);
+      try {
+        await authService.assignTicketToStaff(ticketId, selectedStaff);
+        onAssign(ticketId, selectedStaff, staff?.name);
+        handleClose();
+      } catch (err) {
+        setError('Failed to assign ticket');
+      }
     }
   };
 
@@ -38,17 +91,23 @@ function AssignStaffModal({ isOpen, onClose, onAssign, staffList, ticketId }) {
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={handleClose} title={`Assign Ticket ${ticketId}`} actions={ <>
-          <SecondaryButton onClick={handleClose}>
-            Cancel
-          </SecondaryButton>
-          <PrimaryButton onClick={handleAssign} disabled={!selectedStaff}>
-            Assign Ticket
-          </PrimaryButton>
-        </>
-      }
-    >
+    <Modal isOpen={isOpen} onClose={handleClose} title={`Assign Ticket ${ticketId}`} actions={
+      <>
+        <SecondaryButton onClick={handleClose}>
+          Cancel
+        </SecondaryButton>
+        <PrimaryButton onClick={handleAssign} disabled={!selectedStaff}>
+          Assign Ticket
+        </PrimaryButton>
+      </>
+    }>
       <div className="space-y-4">
+        {error && (
+          <div className="p-3 bg-red-50 border border-red-200 rounded-md">
+            <Text color="text-red-600">{error}</Text>
+          </div>
+        )}
+
         <div>
           <Label>Search Staff Members:</Label>
           <input
@@ -63,37 +122,39 @@ function AssignStaffModal({ isOpen, onClose, onAssign, staffList, ticketId }) {
         <div>
           <Label>Select Staff Member:</Label>
           <div className="max-h-64 overflow-y-auto border border-gray-300 rounded-md">
-            {filteredStaff.length === 0 ? (
+            {loading ? (
+              <div className="p-4 text-center">
+                <Text color="text-gray-500">Loading staff members...</Text>
+              </div>
+            ) : filteredStaff.length === 0 ? (
               <div className="p-4 text-center">
                 <Text color="text-gray-500">No staff members found.</Text>
               </div>
             ) : (
               filteredStaff.map((staff) => (
                 <div
-                  key={staff.id}
+                  key={staff.staff_id}
                   className={`p-3 border-b border-gray-100 hover:bg-gray-50 cursor-pointer ${
-                    selectedStaff === staff.id ? 'bg-bianca-background/30 border-bianca-primary/30' : ''
+                    selectedStaff === staff.staff_id ? 'bg-blue-50 border-blue-200' : ''
                   }`}
-                  onClick={() => handleStaffSelect(staff.id)}
+                  onClick={() => handleStaffSelect(staff.staff_id)}
                 >
-                  <div className="flex justify-between items-center">                    <div>
+                  <div className="flex justify-between items-center">
+                    <div>
                       <Text weight="medium">{staff.name}</Text>
-                      <Text size="sm" color="text-gray-600">ID: {staff.id}</Text>
+                      <Text size="sm" color="text-gray-600">ID: {staff.staff_id}</Text>
                     </div>
                     <div className="text-right">
                       <Text size="sm" color="text-gray-600">
-                        Resolution Rate: <span className="font-medium text-green-600">{staff.resolutionRate || '0%'}</span>
+                        Resolution Rate: <span className="font-medium text-green-600">{staff.resolution_rate}</span>
                       </Text>
-                      <div className="flex items-center justify-end mt-1">
-                        <Text size="xs" color="text-gray-600">Status: </Text>
-                        <span className={`ml-1 px-2 py-0.5 rounded-full text-xs font-medium ${staff.activelyAssigned ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}>
-                          {staff.activelyAssigned ? 'Active' : 'Available'}
-                        </span>
-                      </div>
+                      <Text size="xs" color={staff.is_guest ? 'text-red-600' : 'text-green-600'}>
+                        {staff.is_guest ? 'Inactive' : 'Active'}
+                      </Text>
                     </div>
                     {selectedStaff === staff.id && (
                       <div className="ml-2">
-                        <div className="w-4 h-4 bg-bianca-primary rounded-full flex items-center justify-center">
+                        <div className="w-4 h-4 bg-blue-600 rounded-full flex items-center justify-center">
                           <svg className="w-2 h-2 text-white" fill="currentColor" viewBox="0 0 20 20">
                             <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                           </svg>
@@ -110,7 +171,8 @@ function AssignStaffModal({ isOpen, onClose, onAssign, staffList, ticketId }) {
         {selectedStaff && (
           <div className="p-3 bg-bianca-background/30 border border-bianca-primary/30 rounded-md">
             <Text size="sm" color="text-blue-800">
-              Selected: {staffList.find(s => s.id === selectedStaff)?.name} (ID: {selectedStaff})
+              Selected: {staffList.find(s => s.staff_id === selectedStaff)?.name} 
+              (ID: {selectedStaff})
             </Text>
           </div>
         )}

@@ -18,7 +18,7 @@ router.post('/forget-password', forgetPassword);
 router.post('/enter-new-password/:token', enterNewPass);
 
 // ticket submission
-router.post('/tickets', guestAuthZ, userAuthZ, submitTicket); // no authentication required because of guest users
+router.post('/tickets', guestAuthZ, submitTicket); // no authentication required because of guest users
 
 router.put('/tickets/:id', authN, userAuthZ, editTicket) // uses authN
 
