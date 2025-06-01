@@ -1,11 +1,13 @@
-import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import PrimaryButton from '../components/buttons/PrimaryButton';
 import { PageTitle, Text, Label } from '../components/text';
 import { authService } from '../api/authService';
+import GoogleLoginButton from '../components/GoogleLoginButton';
 
 function LoginPage({ onLogin }) {
   const navigate = useNavigate();
+  const location = useLocation();
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -13,6 +15,34 @@ function LoginPage({ onLogin }) {
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  
+  // Check for OAuth tokens in URL
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const sessionToken = params.get('sessionToken');
+    const localToken = params.get('localToken');
+    
+    if (sessionToken) {
+      sessionStorage.setItem('token', sessionToken);
+      
+      if (localToken) {
+        localStorage.setItem('token', localToken);
+      }
+      
+      // Redirect based on role (will be handled by App.js)
+      window.location.href = location.pathname;
+    }
+    
+    // Check for OAuth errors
+    const error = params.get('error');
+    if (error) {
+      if (error === 'google_auth_failed') {
+        setError('Google authentication failed. Please try again.');
+      } else {
+        setError('Authentication error occurred. Please try again.');
+      }
+    }
+  }, [location]);
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -62,7 +92,6 @@ function LoginPage({ onLogin }) {
       setLoading(false);
     }
   };
-
   return (
     <div className="min-h-screen pt-8 pb-12">      
     <div className="max-w-md mx-auto p-6">
@@ -74,6 +103,15 @@ function LoginPage({ onLogin }) {
               {error}
             </div>
           )}
+          
+          {/* Google OAuth Login Button */}
+          <GoogleLoginButton />
+          
+          <div className="flex items-center my-4">
+            <div className="flex-grow border-t border-gray-300"></div>
+            <span className="flex-shrink mx-4 text-gray-400">or</span>
+            <div className="flex-grow border-t border-gray-300"></div>
+          </div>
           
           <form onSubmit={handleSubmit}>
             <div className="mb-6">
