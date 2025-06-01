@@ -14,13 +14,17 @@ function AuditLogPage() {
     action: '',
     user: ''
   });
-
   // Fetch audit logs
   useEffect(() => {
     const fetchAuditLogs = async () => {
       try {
         setLoading(true);
-        const data = await authService.showAudit();
+        const data = await authService.showAudit({
+          startDate: filters.startDate || undefined,
+          endDate: filters.endDate || undefined,
+          action: filters.action || undefined,
+          search: filters.user || undefined
+        });
         setAuditLogs(data);
         setError(null);
       } catch (err) {
@@ -31,8 +35,10 @@ function AuditLogPage() {
       }
     };
 
-    fetchAuditLogs();
-  }, []); // Fetch on component mount
+    // Debounce the API call to prevent too many requests
+    const timeoutId = setTimeout(fetchAuditLogs, 300);
+    return () => clearTimeout(timeoutId);
+  }, [filters]); // Re-fetch when filters change
 
   const handleFilterChange = (e, field) => {
     setFilters(prev => ({
@@ -40,15 +46,6 @@ function AuditLogPage() {
       [field]: e.target.value
     }));
   };
-
-  // Filter logs based on filters
-  const filteredLogs = auditLogs.filter(log => {
-    if (filters.startDate && new Date(log.timestamp) < new Date(filters.startDate)) return false;
-    if (filters.endDate && new Date(log.timestamp) > new Date(filters.endDate)) return false;
-    if (filters.action && log.action !== filters.action) return false;
-    if (filters.user && !log['User.email'].toLowerCase().includes(filters.user.toLowerCase())) return false;
-    return true;
-  });
 
   return (
     <div className="min-h-screen py-6 sm:py-12 px-4">
@@ -125,8 +122,7 @@ function AuditLogPage() {
             </div>
           )}
 
-          {/* Audit Log Table */}
-          {!loading && !error && (
+          {/* Audit Log Table */}          {!loading && !error && (
             <div className="overflow-x-auto">
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50">
@@ -149,7 +145,7 @@ function AuditLogPage() {
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {filteredLogs.map((log) => (
+                  {auditLogs.map((log) => (
                     <tr key={log.id} className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
                         {log.id}
@@ -174,7 +170,7 @@ function AuditLogPage() {
           )}
 
           {/* No Results Message */}
-          {!loading && !error && filteredLogs.length === 0 && (
+          {!loading && !error && auditLogs.length === 0 && (
             <div className="text-center py-4 text-gray-500">
               No audit logs found matching the current filters.
             </div>
