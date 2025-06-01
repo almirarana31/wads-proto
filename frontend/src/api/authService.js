@@ -126,10 +126,15 @@ export const authService = {
             return responseData;
         }
         return response.data;
-    },
-
-    async showAudit() {
-        const response = await api.get('/audit/log');
+    },    async showAudit(params = {}) {
+        const queryParams = new URLSearchParams();
+        if (params.startDate) queryParams.append('startDate', params.startDate);
+        if (params.endDate) queryParams.append('endDate', params.endDate);
+        if (params.action) queryParams.append('action', params.action);
+        if (params.search) queryParams.append('search', params.search);
+        
+        const queryString = queryParams.toString();
+        const response = await api.get(`/audit/log${queryString ? '?' + queryString : ''}`);
         return response.data;
     }
 
