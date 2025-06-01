@@ -13,8 +13,8 @@ import { User, Ticket, Role, Category, Priority, Status } from './models/index.j
 import { escalatePriority } from './controllers/ticket.js';
 // import { addFK } from './queries.js';
 import cors from 'cors';
-import swaggerUi from 'swagger-ui-express';
-import swaggerDocument from './swagger.json' assert { type: 'json' };
+// import swaggerUi from 'swagger-ui-express';
+// import swaggerDocument from './swagger.json' assert { type: 'json' };
 
 dotenv.config();
 
@@ -22,7 +22,7 @@ await sequelize.sync();
 
 const app = express();
 
-app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
+// app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
 app.use(cors({
   origin: 'http://localhost:3000', // or '*' for all origins (not recommended for production)

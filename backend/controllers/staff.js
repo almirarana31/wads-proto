@@ -2,6 +2,7 @@ import { Staff, User, Ticket, Status, Category, Priority } from '../models/index
 import sequelize from '../config/sequelize.js';
 import { Op } from 'sequelize';
 import { logAudit } from './audit.js';
+import sendOTP from './otp.js';
 
 // tickets that have been assigned to the staff
 export const getTickets = async (req, res) => {
@@ -167,11 +168,26 @@ export const resolveTicket = async (req, res) => {
         if (!ticket) {
             return res.status(404).json({ message: 'Ticket not found' });
         }
+        // auto assign ticket 
+        const userTicket = await Ticket.findOne({
+            include: [{
+                model: User,
+                as: 'User',
+                required: true
+            }],
+            where: {
+                id: ticketId
+            },
+            attributes: ['User.email']
+        })
+        const email = userTicket.User.email
+        const emailBody = `Ticket has been resolved. Thank you for using bianca ticketing service`;
+        await sendOTP(email, "Ticket has been resolved", emailBody);
 
         // Update the ticket
         await ticket.update({
             status_id: 3, // sets status to resolved
-            resolved_at: new Date(),
+            resolved_at: new Date(Date.now()),
             staff_id: req.staff.staff_id
         });
 

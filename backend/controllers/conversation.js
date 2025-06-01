@@ -152,7 +152,7 @@ export const createConversation = async (req, res) => {
             },
             raw: true
         })
-
+        if (assigned.status_id ===3 || assigned.status_id === 4) return res.status(400).json({message:"Ticket is already closed. Get banned"})
 
         const hasOne = await Conversation.count({
             where: {

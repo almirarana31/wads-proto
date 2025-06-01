@@ -2,6 +2,7 @@ import { Staff, User, Ticket, Status, Category, Priority, Assignment } from '../
 import sequelize from '../config/sequelize.js';
 import { Op } from 'sequelize';
 import { logAudit } from './audit.js';
+import sendOTP from './otp.js';
 
 // dash board begins here
 export const getAdminUsername = async (req, res) => {
@@ -238,9 +239,10 @@ export const editStaff = async (req, res) => {
 }
 
 // ticket actions start here
-const roundRobinAssignment = async (ticket_id, category_id, admin_id) => {
+const roundRobinAssignment = async (ticket_id, category_id, admin_id, email) => {
     try {
         // get all staff
+        console.log("this is category_id", category_id)
         const staffs = await Staff.findAll({
             where: {
                 field_id: category_id
@@ -257,16 +259,18 @@ const roundRobinAssignment = async (ticket_id, category_id, admin_id) => {
 
         const last_staff = assignment?.last_staff
         const lastIndex = staffs.findIndex(staff => staff.id === last_staff); // returns -1 if last_staff doesnt exist
-
+        console.log(staffs)
         for (let i = 1; i <= staffs.length; i++) {
             const index = (lastIndex + i) % staffs.length
-
+            console.log("hello trying to see if this works")
             const count = await Ticket.count({
                 where: {
                     staff_id: staffs[index].id,
                     status_id: {[Op.notIn]: [4, 3]} // not resolved, not cancelled
                 }
             })
+
+            console.log("Hi this is ", count)
 
             if (count < 3) {
                 // update the ticket
@@ -278,6 +282,11 @@ const roundRobinAssignment = async (ticket_id, category_id, admin_id) => {
                     id: ticket_id
                   }
                 })
+                console.log("here is a email ", email)
+                const emailBody = `
+                Staff has been assigned! Please wait for follow up emails!
+                `;
+                await sendOTP(email, "Ticket in progress", emailBody);
 
                 // update the assignment
                 if (last_staff) {
@@ -342,9 +351,21 @@ export const updateField = async (req, res) => {
         
         if (count === 0) return res.status(400).json({message: "No row updated"});
 
-        // auto assign ticket
+        // auto assign ticket 
+        const userTicket = await Ticket.findOne({
+            include: [{
+                model: User,
+                as: 'User',
+                required: true
+            }],
+            where: {
+                id: ticket_id
+            },
+            attributes: ['User.email']
+        })
+        const email = userTicket.User.email
 
-        const robin = await roundRobinAssignment(ticket_id, ticket[0].category_id, admin.id)
+        const robin = await roundRobinAssignment(ticket_id, ticket[0].category_id, admin.id, email)
 
         await logAudit(
             "Update",
@@ -405,10 +426,10 @@ export const searchStaff = async (req, res) => {
         console.log('Ticket category:', ticket.Category.id);
         console.log('Found staff:', staffList);
 
-        res.json(staffList);
+        return res.json(staffList);
     } catch (error) {
         console.error('Error in searchStaff:', error);
-        res.status(500).json({ message: 'Server error' });
+        return res.status(500).json({ message: 'Server error' });
     }
 }
 
