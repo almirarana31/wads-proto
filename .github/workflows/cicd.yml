@@ -1,4 +1,4 @@
-name: Todolist CI/CD
+name: Final Project CI/CD
 
 on:
   push:
