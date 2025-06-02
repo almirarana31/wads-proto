@@ -14,8 +14,8 @@ import { User, Ticket, Role, Category, Priority, Status } from './models/index.j
 import { escalatePriority } from './controllers/ticket.js';
 // import { addFK } from './queries.js';
 import cors from 'cors';
-import swaggerUi from 'swagger-ui-express';
-import swaggerDocument from './swagger.json' assert { type: 'json' };
+// import swaggerUi from 'swagger-ui-express';
+// import swaggerDocument from './swagger.json' assert { type: 'json' };
 
 dotenv.config();
 
@@ -26,7 +26,7 @@ const app = express();
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
 app.use(cors({
-    origin: "https://e2425-wads-l4ccg3-client.csbihub.id",
+    origin: process.env.CORS_ORIGIN,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     credentials: true,
     allowedHeaders: [
@@ -46,7 +46,7 @@ app.use(cors({
     preflightContinue: false,
     optionsSuccessStatus: 204,
     maxAge: 86400 // 24 hours
-};
+}));
 
 // Apply CORS middleware to all routes
 app.use(cors(corsOptions));
