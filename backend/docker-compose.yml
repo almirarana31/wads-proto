@@ -3,13 +3,12 @@ version: "3.8"
 services:
   db:
     image: postgres:latest
-    restart: always
     environment:
       POSTGRES_DB: BiancaTicketSystem
       POSTGRES_USER: PrettyPrincessAdmin
       POSTGRES_PASSWORD: BiancaAdmin123!
     ports:
-      - "8099:8099"
+      - "5432:5432"
 
   backend:
     image: alfarana/wads-pp-fp-backend:latest
@@ -21,10 +20,10 @@ services:
       DB_USER: PrettyPrincessAdmin
       DB_PASS: BiancaAdmin123!
       DB_HOST: db
-      DB_PORT: 8099:8099
+      DB_PORT: 5432
       DB_DIALECT: postgres
       DB_SSL: false
-      PORT: 3034:3034
+      PORT: 3034
       ACCESS_TOKEN_SECRET: buttwebbythesecond
       BASE_URL: https://e2425-wads-l4ccg3-server.csbihub.id
       AUTH_EMAIL: almira.rana31@gmail.com
