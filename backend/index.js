@@ -13,7 +13,7 @@ import chatbotRoutes from './routes/chatbot_routes.js';
 import { User, Ticket, Role, Category, Priority, Status } from './models/index.js'
 import { escalatePriority } from './controllers/ticket.js';
 // import { addFK } from './queries.js';
-import cors from 'cors';
+// import cors from 'cors';
 // import swaggerUi from 'swagger-ui-express';
 // import swaggerDocument from './swagger.json' assert { type: 'json' };
 
