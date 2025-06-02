@@ -156,7 +156,7 @@ export const signUp = async (req, res) => {
             </div>
           </div>
         `;
-        await sendOTP(email, "OTP Sign Up Verification", emailBody);
+        await sendOTP(email, "Verify your Bianca Helpdesk Account", emailBody);
 
         // only for development
         console.log(otpToken);
@@ -339,13 +339,12 @@ export const enterNewPass = async (req, res) => {
             returning: true
         })
 
-        if (count === 0) return res.status(400).json({message: "User does not exist"})
+        if (count === 0) return res.status(400).json({message: "User does not exist"}) // 0 rows affected
         // audit here
         await logAudit(
             'Update',
             user[0].id,
             `User ${user[0].id} updated passwords`
-            
         )
         return res.status(200).json({message: "Successfully updated like a heck!"})
     } catch(error) {
@@ -381,6 +380,7 @@ export const validResetLink = async (req, res) => {
     const token = req.params.token;
     try {
        // verify access token
+       if(!token) return res.status(400).json({message: "Token does not exist"})
         const decode = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
 
         return res.status(200).json({message: "Valid reset password link"});
@@ -531,13 +531,26 @@ export const getUserTickets = async (req, res) => {
 // use userAuthZ
 export const getUserDetail = async (req, res) => {
     const source = req.user || req.staff || req.admin || {};
-    const { email, username } = source;
+    const { email, username, staff_id } = source;
     try {
+        let role = "user";
+        if (staff_id) {
+            // Look up staff role
+            const staff = await Staff.findOne({
+                where: {
+                    id: staff_id
+                },
+                attributes: ['role_id'],
+                raw: true
+            });
+            role = staff.role_id === 2 ? "admin" : "staff";
+        }
         return res.status(200).json({
             email: email,
-            username: username
-        })
+            username: username,
+            role: role
+        });
     } catch(error) {
         return res.status(500).json({message: error.message})
-    }
+    }
 };

@@ -4,8 +4,10 @@ var fs = require('fs');
 const users_router = require('./routes/users');
 const app = express();
 
+
 app.use(express.json());
 app.use('/api', users_router);
+
 
 // dummy database
 var obj;

@@ -127,13 +127,14 @@ function StaffTicketView() {  const { ticketId } = useParams();
     }
   }, [sortOrder]);
   const handleBack = () => {
-    // Check if the URL contains "admin" to determine which dashboard to return to
-    if (window.location.pathname.includes('/admin/')) {
-      navigate('/admin-dashboard');
-    } else {
-      navigate('/staff-dashboard');
-    }
-  };  const [isCreatingConversation, setIsCreatingConversation] = useState(false);
+  // Only need to check if we're in staff view now
+  const path = window.location.pathname;
+  if (path.includes('/staff/')) {
+    navigate('/staff-dashboard');
+  } else {
+    navigate('/view-tickets');
+  }
+};  const [isCreatingConversation, setIsCreatingConversation] = useState(false);
   const [createConversationError, setCreateConversationError] = useState(null);
     const handleStartConversation = async () => {
     try {
@@ -355,7 +356,7 @@ function StaffTicketView() {  const { ticketId } = useParams();
       <div className="relative mb-5">
         <BackButton onClick={handleBack} className="absolute -top-2 -left-2" />
         <div className="text-center pt-8">
-          <PageTitle title="Ticket Details" />
+          <PageTitle title="Ticket Detail" />
         </div>
       </div>
       

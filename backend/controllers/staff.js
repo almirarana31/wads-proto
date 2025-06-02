@@ -1,7 +1,8 @@
-import { Staff, User, Ticket, Status, Category, Priority } from '../models/index.js';
+import { Staff, User, Ticket, Status, Category, Priority, Conversation } from '../models/index.js';
 import sequelize from '../config/sequelize.js';
 import { Op } from 'sequelize';
 import { logAudit } from './audit.js';
+import sendOTP from './otp.js';
 
 // tickets that have been assigned to the staff
 export const getTickets = async (req, res) => {
@@ -45,7 +46,8 @@ export const getTickets = async (req, res) => {
                         {description: {[Op.substring]: search}},
                         ...(!isNaN(search) ? [{id: parseInt(search)}] : [])
                     ]}
-                : {})
+                : {}),
+                category_id: req.staff_field
             },
             attributes: [['id', 'ticket_id'], 'subject', 'createdAt']
         })
@@ -167,13 +169,47 @@ export const resolveTicket = async (req, res) => {
         if (!ticket) {
             return res.status(404).json({ message: 'Ticket not found' });
         }
+        // auto assign ticket 
+        const userTicket = await Ticket.findOne({
+            include: [{
+                model: User,
+                as: 'User',
+                required: true
+            }],
+            where: {
+                id: ticketId
+            },
+            attributes: ['User.email']
+        })
+        const email = userTicket.User.email
+        const emailBody = `Ticket has been resolved. Thank you for using bianca ticketing service`;
+        await sendOTP(email, "Ticket has been resolved", emailBody);
 
         // Update the ticket
         await ticket.update({
             status_id: 3, // sets status to resolved
-            resolved_at: new Date(),
+            resolved_at: new Date(Date.now()),
             staff_id: req.staff.staff_id
         });
+
+        const conversation = await Conversation.findAll({
+            where: {
+                ticket_id: ticketId
+            }
+        })
+
+        for (const convo of conversation) {
+            convo.closed = true
+            await convo.save();
+        }
+        
+
+        // audit here
+        await logAudit(
+            'Update',
+            req.staff.id,
+            `Ticket ID ${ticketId} resolved`
+        )
 
         return res.status(200).json({ 
             success: true,
@@ -210,7 +246,25 @@ export const cancelTicket = async (req, res) => {
             staff_id: req.staff.staff_id
         });
 
-        res.status(200).json({ 
+        const conversation = await Conversation.findAll({
+            where: {
+                ticket_id: ticketId
+            }
+        })
+
+        for (const convo of conversation) {
+            convo.closed = true
+            await convo.save();
+        }
+        
+        // audit here
+        await logAudit(
+            'Update',
+            req.staff.id,
+            `Ticket ID ${ticketId} cancelled`
+        )
+
+        return res.status(200).json({ 
             success: true,
             message: 'Ticket cancelled successfully',
             ticket

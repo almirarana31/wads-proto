@@ -15,41 +15,50 @@ function AssignStaffModal({ isOpen, onClose, onAssign, ticketId }) {
   // Fetch available staff when modal opens
   useEffect(() => {
     async function fetchEligibleStaff() {
-        if (!isOpen || !ticketId) return;
+      if (!isOpen || !ticketId) return;
+      
+      try {
+        setLoading(true);
+        setError(null);
+        setStaffList([]);
         
-        try {
-            setLoading(true);
-            setError(null);
-            setStaffList([]); // Clear previous list
-            
-            console.log('Fetching staff for ticket:', ticketId);
-            const staffData = await authService.getStaffForTicket(ticketId);
-            console.log('Received staff data:', staffData);
+        const ticketDetails = await authService.getTicketDetail(ticketId);
+        const allStaffData = await authService.getAdminStaffPerformance();
+        
+        const staffDetails = await Promise.all(
+          allStaffData.map(async (staff) => {
+            const details = await authService.getAdminStaffDetail(staff.staff_id);
+            return {
+              ...staff,
+              field_name: details[0]?.field_name,
+              field_id: details[0]?.field_id
+            };
+          })
+        );
 
-            if (!staffData || staffData.length === 0) {
-                setError('No eligible staff found for this ticket');
-                return;
-            }
+        const eligibleStaff = staffDetails.filter(staff => {
+          const matchesCategory = staff.field_name === ticketDetails.Category.name;
+          const isActive = !staff.is_guest;
+          return matchesCategory && isActive;
+        });
 
-            const formattedStaff = staffData.map(staff => ({
-                staff_id: staff.staff_id,
-                name: staff.staff_name || 'Unknown',
-                field_name: staff.field_name,
-                resolution_rate: staff.resolution_rate || '0%',
-                in_progress: staff.in_progress || '0',
-                resolved: staff.resolved || '0',
-                is_guest: Boolean(staff.is_guest)
-            }));
-            
-            console.log('Formatted staff:', formattedStaff);
-            setStaffList(formattedStaff);
+        const formattedStaff = eligibleStaff.map(staff => ({
+          staff_id: staff.staff_id,
+          name: staff.staff_name,
+          field_name: staff.field_name,
+          resolution_rate: `${staff.resolution_rate}%`,
+          in_progress: staff.assigned - staff.resolved,
+          resolved: staff.resolved,
+          is_guest: false
+        }));
 
-        } catch (err) {
-            console.error('Staff fetch error:', err);
-            setError(err.message || 'Failed to load available staff members');
-        } finally {
-            setLoading(false);
-        }
+        setStaffList(formattedStaff);
+
+      } catch (err) {
+        setError('Failed to load available staff members');
+      } finally {
+        setLoading(false);
+      }
     }
 
     fetchEligibleStaff();
@@ -57,14 +66,16 @@ function AssignStaffModal({ isOpen, onClose, onAssign, ticketId }) {
 
   // filter staff based on search query
   const filteredStaff = useMemo(() => {
-    if (!searchQuery) return staffList;
+    if (!searchQuery) {
+      return staffList.filter(staff => !staff.is_guest);
+    }
     
     const searchLower = searchQuery.toLowerCase();
-    return staffList.filter(staff => 
-      (staff.name?.toLowerCase().includes(searchLower) || 
-      staff.staff_id?.toString().includes(searchLower)) &&
-      !staff.is_guest // Only show active staff
-    );
+    return staffList.filter(staff => {
+      const nameMatch = staff.name?.toLowerCase().includes(searchLower);
+      const idMatch = staff.staff_id?.toString().includes(searchLower);
+      return (nameMatch || idMatch) && !staff.is_guest;
+    });
   }, [staffList, searchQuery]);
 
   const handleAssign = async () => {

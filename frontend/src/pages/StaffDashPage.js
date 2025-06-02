@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { PageTitle, Text, Subheading, StatText } from '../components/text';
+import { PageTitle, Subheading, StatText } from '../components/text';
 import SecondaryButton from '../components/buttons/SecondaryButton';
 import StaffTicketQueuePage from './StaffTicketQueuePage';
 import PriorityPill from '../components/PriorityPill';
@@ -193,7 +193,7 @@ function StaffDashPage() {
   }, [filteredTickets, sortConfig]);
   return (
     <div className="min-h-screen py-6 sm:py-12 px-4">
-      <div className="bg-white p-6 md:p-10 rounded shadow-md max-w-[1200px] mx-auto">
+      <div className="bg-white p-6 md:p-10 rounded shadow-md max-w-screen-2xl mx-auto">
         <PageTitle 
           title="Staff Dashboard"          subtitle={
             <>
@@ -296,7 +296,7 @@ function StaffDashPage() {
                 </select>
               </div>              
               {/* Tickets Table */}
-              <div className="overflow-x-auto">
+              <div className="overflow-x-auto w-full">
                 {isLoading ? (
                   <div className="text-center p-6">
                     <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-bianca-primary border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite]"></div>
