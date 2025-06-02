@@ -1,14 +1,26 @@
 version: "3.8"
 
 services:
+  db:
+    image: postgres:latest
+    restart: always
+    environment:
+      POSTGRES_DB: BiancaTicketSystem
+      POSTGRES_USER: PrettyPrincessAdmin
+      POSTGRES_PASSWORD: BiancaAdmin123!
+    ports:
+      - "5432:5432"
+
   backend:
     image: alfarana/wads-pp-fp-backend:latest
     restart: always
+    depends_on:
+      - db
     environment:
       DB_NAME: BiancaTicketSystem
       DB_USER: PrettyPrincessAdmin
       DB_PASS: BiancaAdmin123!
-      DB_HOST: localhost
+      DB_HOST: db  # Change from localhost to db
       DB_PORT: 5432
       DB_DIALECT: postgres
       DB_SSL: false
