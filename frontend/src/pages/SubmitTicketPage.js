@@ -6,6 +6,7 @@ import PrimaryButton from '../components/buttons/PrimaryButton';
 import SecondaryButton from '../components/buttons/SecondaryButton';
 import { PageTitle, Text, Label, Heading } from '../components/text';
 import { authService } from '../api/authService';
+import Modal from '../components/Modal';
 
 function SubmitTicketPage() {
   const navigate = useNavigate();  const [formData, setFormData] = useState({
@@ -17,6 +18,14 @@ function SubmitTicketPage() {
   const [ticket, setTicket] = useState(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [userEmail, setUserEmail] = useState('');
+  
+  // Modal state
+  const [showModal, setShowModal] = useState(false);
+  const [modalConfig, setModalConfig] = useState({
+    title: '',
+    message: '',
+    isError: false
+  });
   // Check authentication status and get user email when component mounts
   useEffect(() => {
     const checkAuthStatus = async () => {
@@ -34,6 +43,7 @@ function SubmitTicketPage() {
           // First try to get user details from API
           const userDetails = await authService.getUserDetail();
           if (userDetails && userDetails.email) {
+            console.log('User details fetched from API:', userDetails);
             setUserEmail(userDetails.email);
             setFormData(prev => ({ ...prev, email: userDetails.email }));
             return;
@@ -86,7 +96,7 @@ function SubmitTicketPage() {
         category_id:
           formData.category === 'General' ? 1 :
           formData.category === 'Billing' ? 2 :
-          formData.category === 'Technical' || formData.category === 'IT Support' ? 3 : 1,
+          formData.category === 'IT Support' ? 3 : 1, // Default to General if not matched
         description: formData.description
       };
       const res = await authService.sendTicket(ticketData);
@@ -101,18 +111,25 @@ function SubmitTicketPage() {
         title: '',
         category: 'General',
         description: ''
-      });
-    } catch (error) {
+      });    } catch (error) {
       if (error.response?.data?.message === 'Email is verified. Please log in') {
-        alert('This email is already registered. Please log in to submit a ticket.');
+        setModalConfig({
+          title: 'Account Already Exists',
+          message: 'This email is already registered. Please log in to submit a ticket.',
+          isError: false
+        });
+        setShowModal(true);
         return;
       }
-      alert(
-        error.response?.data?.message ||
-        error.response?.data?.error ||
-        error.message ||
-        'Failed to submit ticket.'
-      );
+      setModalConfig({
+        title: 'Error',
+        message: error.response?.data?.message ||
+                error.response?.data?.error ||
+                error.message ||
+                'Failed to submit ticket.',
+        isError: true
+      });
+      setShowModal(true);
     }
   };  if (ticket) {
     return (
@@ -185,8 +202,7 @@ function SubmitTicketPage() {
         </div>
       </div>
     );
-  }
-  return (    <div className="py-6 md:py-12 px-4 sm:px-6 flex-grow">
+  }  return (    <div className="py-6 md:py-12 px-4 sm:px-6 flex-grow">
       <div className="bg-white p-5 sm:p-6 md:p-8 rounded shadow-md w-full max-w-2xl mx-auto">
         <PageTitle title="Submit a Ticket" subtitle="Submit your question or issue below" className="mb-4 sm:mb-6" />
         <div className="space-y-6">          <div>
@@ -229,8 +245,8 @@ function SubmitTicketPage() {
                 className="appearance-none w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-300"
               >
                 <option value="General">General</option>
-                <option value="Technical">Technical</option>
                 <option value="Billing">Billing</option>
+                <option value="IT Support">IT Support</option>
               </select>
               <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
                 <ChevronDown className="h-5 w-5 text-gray-500" />
@@ -258,6 +274,31 @@ function SubmitTicketPage() {
           </div>
         </div>
       </div>
+
+      {/* Modal for alerts */}
+      <Modal
+        isOpen={showModal}
+        onClose={() => setShowModal(false)}
+        title={modalConfig.title}
+        actions={
+          modalConfig.isError ? (
+            <PrimaryButton onClick={() => setShowModal(false)}>
+              OK
+            </PrimaryButton>
+          ) : (
+            <>
+              <SecondaryButton onClick={() => setShowModal(false)}>
+                Cancel
+              </SecondaryButton>
+              <PrimaryButton onClick={() => navigate('/login')}>
+                Go to Login
+              </PrimaryButton>
+            </>
+          )
+        }
+      >
+        <p className="text-gray-700">{modalConfig.message}</p>
+      </Modal>
     </div>
   );
 }

@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { authService } from '../api/authService';
 import SecondaryButton from '../components/buttons/SecondaryButton';
 import { PageTitle, Label } from '../components/text';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 function AuditLogPage() {
   const [auditLogs, setAuditLogs] = useState([]);
@@ -42,12 +44,87 @@ function AuditLogPage() {
     const timeoutId = setTimeout(fetchAuditLogs, 300);
     return () => clearTimeout(timeoutId);
   }, [filters]); // Re-fetch when filters change
-
   const handleFilterChange = (e, field) => {
     setFilters(prev => ({
       ...prev,
       [field]: e.target.value
     }));
+  };
+  const exportToPDF = () => {
+    // Create new PDF document
+    const doc = new jsPDF({
+      orientation: 'landscape',
+      unit: 'mm',
+      format: 'a4'
+    });
+
+    // Add title
+    doc.setFontSize(16);
+    doc.text('System Audit Log', 14, 20);
+    
+    // Add generation date
+    doc.setFontSize(10);
+    doc.text(`Generated on: ${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}`, 14, 30);
+
+    // Add filters info if any are active
+    const activeFilters = [];
+    if (filters.startDate) activeFilters.push(`Start Date: ${filters.startDate}`);
+    if (filters.endDate) activeFilters.push(`End Date: ${filters.endDate}`);
+    if (filters.action) activeFilters.push(`Action: ${filters.action}`);
+    if (filters.user) activeFilters.push(`User: ${filters.user}`);
+    
+    if (activeFilters.length > 0) {
+      doc.text(`Filters Applied: ${activeFilters.join(', ')}`, 14, 35);
+    }
+
+    // Prepare table data
+    const tableColumns = ['ID', 'Timestamp', 'Action', 'User Email', 'Detail'];
+    const tableRows = auditLogs.map(log => [
+      log.id?.toString() || '',
+      new Date(log.timestamp).toLocaleString(),
+      log.action || '',
+      log["User.email"] || '',
+      log.detail || ''
+    ]);    // Add table using autoTable
+    autoTable(doc, {
+      head: [tableColumns],
+      body: tableRows,
+      startY: activeFilters.length > 0 ? 40 : 35,
+      styles: {
+        fontSize: 8,
+        cellPadding: 2,
+      },
+      headStyles: {
+        fillColor: [71, 85, 105], // Gray-700
+        textColor: 255,
+        fontStyle: 'bold'
+      },
+      alternateRowStyles: {
+        fillColor: [249, 250, 251] // Gray-50
+      },
+      columnStyles: {
+        0: { cellWidth: 15 }, // ID
+        1: { cellWidth: 45 }, // Timestamp
+        2: { cellWidth: 25 }, // Action
+        3: { cellWidth: 50 }, // User Email
+        4: { cellWidth: 'auto' } // Detail
+      },
+      margin: { top: 40, right: 14, bottom: 20, left: 14 },
+      didDrawPage: function (data) {
+        // Add page numbers
+        const pageCount = doc.internal.getNumberOfPages();
+        const pageNumber = doc.internal.getCurrentPageInfo().pageNumber;
+        doc.setFontSize(8);
+        doc.text(`Page ${pageNumber} of ${pageCount}`, 
+          data.settings.margin.left, 
+          doc.internal.pageSize.height - 10
+        );
+      }
+    });
+
+    // Save the PDF
+    const filename = `audit-log-${new Date().toISOString().split('T')[0]}.pdf`;
+    doc.save(filename);
   };
 
   return (
@@ -57,14 +134,12 @@ function AuditLogPage() {
           <PageTitle 
             title="System Audit Log"
             subtitle="Track and monitor system activities"
-          />
-
-          {/* Action Buttons */}
+          />          {/* Action Buttons */}
           <div className="flex justify-end mb-6">
-            <SecondaryButton onClick={() => console.log('Export logs')}>
+            <SecondaryButton onClick={exportToPDF}>
               Export Log
             </SecondaryButton>
-          </div>          
+          </div>
 
           {/* Filters */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
@@ -123,10 +198,12 @@ function AuditLogPage() {
             <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
               <span className="block sm:inline">{error}</span>
             </div>
-          )}
-
-          {/* Audit Log Table */}          {!loading && !error && (
-            <div className="overflow-x-auto">
+          )}          {/* Audit Log Table */}          {!loading && !error && (
+            <div id="audit-log-table" className="overflow-x-auto">
+              <div className="mb-4 text-center">
+                <h2 className="text-xl font-bold text-gray-800">System Audit Log</h2>
+                <p className="text-sm text-gray-600">Generated on {new Date().toLocaleDateString()}</p>
+              </div>
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50">
                   <tr>

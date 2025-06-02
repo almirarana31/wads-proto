@@ -54,7 +54,7 @@ function StaffDashPage() {
           switch (ticket.Category.name) {
             case '1': categoryName = 'General'; break;
             case '2': categoryName = 'Billing'; break;
-            case '3': categoryName = 'IT Support/Technical'; break;
+            case '3': categoryName = 'IT Support'; break;
             default: categoryName = ticket.Category.name; // Fall back to the name if it's already a string
           }
         }

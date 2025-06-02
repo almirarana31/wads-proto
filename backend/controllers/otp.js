@@ -7,7 +7,7 @@ const sendOTP = async ( email, message, text, duration = 2) => {
             from: process.env.AUTH_EMAIL,
             to: email,
             subject: message,
-            text: text
+            text: html
         };
         await sendEmail(mailOptions);
 

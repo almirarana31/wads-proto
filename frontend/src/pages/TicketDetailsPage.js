@@ -22,12 +22,15 @@ function TicketDetailsPage() {
   const [error, setError] = useState(null);
   const [conversations, setConversations] = useState([]);
   const [isLoadingConversations, setIsLoadingConversations] = useState(false);
-  const [conversationsError, setConversationsError] = useState(null);
-  const [editForm, setEditForm] = useState({
+  const [conversationsError, setConversationsError] = useState(null);  const [editForm, setEditForm] = useState({
     title: '',
     description: '',
     category: ''
   });
+  
+  // Modal state
+  const [showErrorModal, setShowErrorModal] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
   
   // States for creating a new conversation
   const [isCreatingConversation, setIsCreatingConversation] = useState(false);
@@ -111,14 +114,17 @@ function TicketDetailsPage() {
 
     try {
       setIsLoading(true);
-      // Map frontend data to backend structure
+      console.log('Hello giggas true');      // Map frontend data to backend structure
       const ticketData = {
-        subject: editForm.title,
+        title: editForm.title,
         description: editForm.description,
-        categoryId: getCategoryId(editForm.category)
+        category_id: getCategoryId(editForm.category)
       };
+      console.log('WE are changing');
+      console.log('Ticket Data:', ticketData);
       
       await authService.editTicket(ticketId, ticketData);
+      console.log('Hello giggas 1');
       
       // Update the ticket in state with the edited values
       setTicket(prevTicket => ({
@@ -128,24 +134,25 @@ function TicketDetailsPage() {
         category: editForm.category
       }));
       
-      setIsEditModalOpen(false);
-    } catch (err) {
+      setIsEditModalOpen(false);    } catch (err) {
+      console.log('Hello giggas');
       console.error('Error updating ticket:', err);
-      alert('Failed to update ticket. Please try again.');
+      setErrorMessage('Failed to update ticket. Please try again.');
+      setShowErrorModal(true);
     } finally {
       setIsLoading(false);
     }
+    console.log('Edit form submitted:', editForm);
   };
 
   // Helper function to map category name to ID (you'll need to adjust this)
   const getCategoryId = (categoryName) => {
     const categoryMap = {
-      'Billing': 1,
-      'Technical': 2,
-      'General': 3,
-      'Service': 4
+      'General': 1,
+      'Billing': 2,
+      'IT Support': 3,
     };
-    return categoryMap[categoryName] || 1;
+    return categoryMap[categoryName] || 1; // Default to 'General' if not found
   };
   
   // Handle cancel ticket
@@ -485,10 +492,9 @@ function TicketDetailsPage() {
               onChange={(e) => setEditForm({ ...editForm, category: e.target.value })}
               className="w-full p-2 border border-gray-300 rounded-md"
             >
-              <option value="Billing">Billing</option>
-              <option value="Technical">Technical</option>
               <option value="General">General</option>
-              <option value="Service">Service</option>
+              <option value="Billing">Billing</option>
+              <option value="IT Support">IT Support</option>
             </select>
           </div>
         </div>
@@ -512,6 +518,21 @@ function TicketDetailsPage() {
       >
         <Text color="text-gray-600">
           Are you sure you want to cancel this ticket? This action cannot be undone.
+        </Text>      </Modal>
+
+      {/* Error Modal */}
+      <Modal
+        isOpen={showErrorModal}
+        onClose={() => setShowErrorModal(false)}
+        title="Error"
+        actions={
+          <PrimaryButton onClick={() => setShowErrorModal(false)} className="w-full sm:w-auto">
+            OK
+          </PrimaryButton>
+        }
+      >
+        <Text color="text-gray-600">
+          {errorMessage}
         </Text>
       </Modal>
     </ContentContainer>
