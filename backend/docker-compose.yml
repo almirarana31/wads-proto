@@ -21,7 +21,7 @@ services:
       CORS_ORIGIN: http://localhost:3033
       GEMINI_API_KEY: AIzaSyD9YrZsRyLT7WUCjiwcP_wPT1YMKE-hSAc
     ports:
-      - "3002:3002"
+      - "3002:3034"
 
   frontend:
     image: alfarana/wads-pp-fp-frontend:latest
@@ -44,4 +44,4 @@ services:
     depends_on:
       - backend
     ports:
-      - "3001:3001"
+      - "3001:3033"
