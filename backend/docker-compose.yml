@@ -42,7 +42,7 @@ services:
       DB_NAME: BiancaTicketSystem
       DB_USER: PrettyPrincessAdmin
       DB_PASS: BiancaAdmin123!
-      DB_HOST: localhost
+      DB_HOST: db
       DB_PORT: 8099:8099
       DB_DIALECT: postgres
       DB_SSL: false
