@@ -16,6 +16,10 @@
     "react-scripts": "5.0.1"
   },
   "scripts": {
+    "start": "react-scripts start",
+    "build": "react-scripts build",
+    "test": "react-scripts test",
+    "eject": "react-scripts eject",
     "lint": "eslint . -c eslint.config.mjs --format @microsoft/eslint-formatter-sarif --output-file eslint-results.sarif"
   },
   "eslintConfig": {
@@ -23,5 +27,6 @@
       "react-app",
       "react-app/jest"
     ]
-  }
+  },
+  "proxy": "http://localhost:3033"
 }
