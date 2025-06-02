@@ -53,6 +53,7 @@ services:
       AUTH_PASS: ycna futf ghbn izus
       FRONTEND_URL: https://e2425-wads-l4ccg3-client.csbihub.id
       CORS_ORIGIN: https://e2425-wads-l4ccg3-client.csbihub.id
+      REACT_APP_API_URL: https://e2425-wads-l4ccg3-server.csbihub.id
     depends_on:
       - backend
     ports:

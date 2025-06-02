@@ -57,6 +57,6 @@ app.get('/', (req, res) => {
 });
 
 app.listen(process.env.PORT, () => {
-        console.log(`Connected to the backend at port ${process.env.PORT}`);
-        console.log(`API documentation available at http://localhost:${process.env.PORT}/api-docs`);
+        console.log(`Connected to the backend at port ${process.env.BASE_URL}`);
+        console.log(`API documentation available at ${process.env.BASE_URL}/api-docs`);
 });
