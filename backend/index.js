@@ -27,11 +27,34 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
 // Enable CORS for all routes
 const corsOptions = {
-    origin: process.env.FRONTEND_URL || process.env.CORS_ORIGIN || 'https://e2425-wads-l4ccg3-client.csbihub.id',
+    origin: function(origin, callback) {
+        const allowedOrigins = [
+            process.env.FRONTEND_URL,
+            process.env.CORS_ORIGIN,
+            'https://e2425-wads-l4ccg3-client.csbihub.id'
+        ].filter(Boolean); // Remove falsy values
+        
+        // Allow requests with no origin (like mobile apps or curl requests)
+        if (!origin || allowedOrigins.indexOf(origin) !== -1) {
+            callback(null, true);
+        } else {
+            callback(new Error('Not allowed by CORS'));
+        }
+    },
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     credentials: true,
-    allowedHeaders: ['Content-Type', 'Authorization', 'X-User-Role', 'Origin', 'X-Requested-With', 'Accept'],
-    exposedHeaders: ['Access-Control-Allow-Origin', 'Access-Control-Allow-Credentials'],
+    allowedHeaders: [
+        'Content-Type',
+        'Authorization',
+        'X-User-Role',
+        'Origin',
+        'X-Requested-With',
+        'Accept'
+    ],
+    exposedHeaders: [
+        'Access-Control-Allow-Origin',
+        'Access-Control-Allow-Credentials'
+    ],
     preflightContinue: false,
     optionsSuccessStatus: 204,
     maxAge: 86400 // 24 hours
@@ -41,15 +64,43 @@ const corsOptions = {
 app.use(cors(corsOptions));
 
 // Handle preflight OPTIONS requests explicitly
-app.options('*', cors(corsOptions));
+app.options('*', (req, res, next) => {
+    console.log('Handling OPTIONS request:', {
+        path: req.path,
+        origin: req.headers.origin,
+        method: req.method
+    });
+    
+    // Set CORS headers manually for OPTIONS requests
+    res.header('Access-Control-Allow-Origin', req.headers.origin);
+    res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,PATCH,OPTIONS');
+    res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-User-Role, Origin, X-Requested-With, Accept');
+    res.header('Access-Control-Allow-Credentials', 'true');
+    res.header('Access-Control-Max-Age', '86400');
+    
+    // Respond to preflight request
+    res.status(204).end();
+});
 
 // Add better error handling for CORS and other issues
 app.use((err, req, res, next) => {
+    console.error('Error handling request:', {
+        path: req.path,
+        method: req.method,
+        origin: req.headers.origin,
+        error: err.message
+    });
+
     if (err.name === 'CORSError') {
         res.status(403).json({
             error: 'CORS error',
             message: err.message,
-            origin: req.headers.origin
+            origin: req.headers.origin,
+            allowedOrigins: [
+                process.env.FRONTEND_URL,
+                process.env.CORS_ORIGIN,
+                'https://e2425-wads-l4ccg3-client.csbihub.id'
+            ].filter(Boolean)
         });
     } else {
         next(err);
@@ -102,6 +153,36 @@ app.get('/', (req, res) => {
 app.get('/health', (req, res) => {
   res.header('Access-Control-Allow-Origin', process.env.CORS_ORIGIN);
   res.status(200).json({ status: 'ok' });
+});
+
+// Add fallback middleware for unhandled routes
+app.use((req, res) => {
+    console.warn('Unhandled request:', {
+        path: req.path,
+        method: req.method,
+        origin: req.headers.origin
+    });
+    
+    // Ensure CORS headers are set even for 404 responses
+    res.header('Access-Control-Allow-Origin', req.headers.origin);
+    res.header('Access-Control-Allow-Credentials', 'true');
+    res.status(404).json({
+        error: 'Not Found',
+        message: `Route ${req.path} not found`
+    });
+});
+
+// Final error handler
+app.use((err, req, res, next) => {
+    console.error('Unhandled error:', err);
+    
+    // Ensure CORS headers are set even for error responses
+    res.header('Access-Control-Allow-Origin', req.headers.origin);
+    res.header('Access-Control-Allow-Credentials', 'true');
+    res.status(500).json({
+        error: 'Internal Server Error',
+        message: process.env.NODE_ENV === 'development' ? err.message : 'An unexpected error occurred'
+    });
 });
 
 app.listen(process.env.PORT, () => {
