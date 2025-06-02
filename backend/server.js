@@ -1,7 +1,6 @@
-const express = require('express');
-const Joi = require('joi');
-var fs = require('fs');
-const users_router = require('./routes/users');
+import express from 'express';
+import fs from 'fs';
+import users_router from './routes/user_routes.js';
 const app = express();
 
 
