@@ -4,7 +4,6 @@ import { authService } from '../api/authService';
 import checkIcon from '../assets/accept.png';
 import PrimaryButton from '../components/buttons/PrimaryButton';
 import { PageTitle, Text, Label, Heading } from '../components/text';
-import GoogleSignupButton from '../components/GoogleSignUpButton';
 
 function SignUpPage() {
   const navigate = useNavigate();
@@ -89,22 +88,12 @@ function SignUpPage() {
     <div className="py-6 md:py-12 px-4 flex-grow">      <div className="max-w-md mx-auto">
         <div className="bg-white rounded-md shadow-md p-6 sm:p-8">
           <PageTitle title="Sign Up" subtitle="Create a new account" className="mb-6 sm:mb-8" />
-          
-          {error && (
+            {error && (
             <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
               {error}
             </div>
           )}
 
-          {/* Google OAuth Sign Up Button */}
-          <GoogleSignupButton />
-          
-          <div className="flex items-center my-4">
-            <div className="flex-grow border-t border-gray-300"></div>
-            <span className="flex-shrink mx-4 text-gray-400">or</span>
-            <div className="flex-grow border-t border-gray-300"></div>
-          </div>
-          
           <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-5">
             <div>
               <Label htmlFor="username">Username:</Label>
