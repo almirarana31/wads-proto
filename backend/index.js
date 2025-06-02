@@ -23,6 +23,8 @@ await sequelize.sync();
 
 const app = express();
 
+const cors = require('cors');
+
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
 app.use(cors({
