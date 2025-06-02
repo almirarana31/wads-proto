@@ -21,7 +21,7 @@ services:
       DB_USER: PrettyPrincessAdmin
       DB_PASS: BiancaAdmin123!
       DB_HOST: db
-      DB_PORT: 5432
+      DB_PORT: 8099
       DB_DIALECT: postgres
       DB_SSL: false
       PORT: 3034
