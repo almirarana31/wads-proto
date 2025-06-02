@@ -28,5 +28,5 @@
       "react-app/jest"
     ]
   },
-  "proxy": "http://localhost:3033"
+  "proxy": "https://e2425-wads-l4ccg3-client.csbihub.id"
 }

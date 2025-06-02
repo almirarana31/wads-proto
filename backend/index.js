@@ -26,9 +26,13 @@ const app = express();
 // app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
 app.use(cors({
-  origin: process.env.CORS_ORIGIN || 'https://e2425-wads-l4ccg3-client.csbihub.id',
-  credentials: true
+    origin: process.env.CORS_ORIGIN,
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    credentials: true,
+    allowedHeaders: ['Content-Type', 'Authorization']
 }));
+
+app.options('*', cors());
 
 app.use(express.json());
 
@@ -56,7 +60,12 @@ app.get('/', (req, res) => {
     res.send("Hello from the backend!")
 });
 
+app.get('/health', (req, res) => {
+  res.header('Access-Control-Allow-Origin', process.env.CORS_ORIGIN);
+  res.status(200).json({ status: 'ok' });
+});
+
 app.listen(process.env.PORT, () => {
-        console.log(`Connected to the backend at port ${process.env.PORT}`);
-        console.log(`API documentation available at http://localhost:${process.env.PORT}/api-docs`);
+        console.log(`Connected to the backend at port ${process.env.BASE_URL}`);
+        console.log(`API documentation available at ${process.env.BASE_URL}/api-docs`);
 });

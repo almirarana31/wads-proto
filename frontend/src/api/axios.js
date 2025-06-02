@@ -2,7 +2,7 @@ import axios from 'axios';
 
 // Create an axios instance with default config
 const api = axios.create({
-    baseURL: 'http://localhost:5000/api',  // Your backend URL from .env
+    baseURL: process.env.REACT_APP_API_URL || 'https://e2425-wads-l4ccg3-server.csbihub.id',
     headers: {
         'Content-Type': 'application/json'
     }
