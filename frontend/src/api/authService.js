@@ -316,14 +316,25 @@ export const authService = {
         } catch (error) {
             console.error('Error in enterNewPassword:', error);
             throw error;
-        }    },
-
-    async validResetLink(token) {
+        }    },    async validResetLink(token) {
         try {
             const response = await api.get(`/user/verify-reset-link/${token}`);
             return response.data;
         } catch (error) {
             console.error('Error in validResetLink:', error);
+            throw error;
+        }
+    },
+
+    async sendChatMessage(message, conversationHistory = []) {
+        try {
+            const response = await api.post('/chatbot/message', {
+                message,
+                conversationHistory
+            });
+            return response.data;
+        } catch (error) {
+            console.error('Error in sendChatMessage:', error);
             throw error;
         }
     }

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { IoChatbubbleEllipses } from "react-icons/io5";
+import { authService } from '../api/authService';
 
 const ChatIcon = () => (
     <IoChatbubbleEllipses size={24} />
@@ -45,9 +46,7 @@ const Chatbot = ({ isAuthenticated, userRole }) => {
 
     const handleInputChange = (e) => {
         setInputValue(e.target.value);
-    };
-
-    const handleSendMessage = () => {
+    };    const handleSendMessage = async () => {
         if (inputValue.trim() === '') return;
 
         const newUserMessage = {
@@ -58,23 +57,47 @@ const Chatbot = ({ isAuthenticated, userRole }) => {
 
         // Add user message immediately
         setMessages(prevMessages => [...prevMessages, newUserMessage]);
-        
-        // Simulate bot response for now (this will be replaced by API call)
         setIsLoading(true); // Show loading indicator
         
-        // Simulate API delay
-        setTimeout(() => {
-            const botResponse = {
+        const currentInput = inputValue;
+        setInputValue(''); // Clear input field immediately
+
+        try {            // Call the chatbot API with conversation history
+            const response = await authService.sendChatMessage(currentInput, messages);
+            
+            if (response.success) {
+                const botResponse = {
+                    id: Date.now() + 1,
+                    text: response.message,
+                    sender: 'bot'
+                };
+                
+                setMessages(prevMessages => [...prevMessages, botResponse]);
+            } else {
+                throw new Error(response.error || 'Unknown error occurred');
+            }
+        } catch (error) {
+            console.error('Chat error:', error);
+            
+            // Handle different types of errors
+            let errorMessage = 'Sorry, I\'m experiencing technical difficulties. Please try again later.';
+            
+            if (error.response?.status === 429) {
+                errorMessage = 'I\'m currently busy helping other customers. Please try again in a moment.';
+            } else if (error.response?.status === 401) {
+                errorMessage = 'Service temporarily unavailable. Please try again later.';
+            }
+            
+            const errorResponse = {
                 id: Date.now() + 1,
-                text: `Echo: ${inputValue}`,
+                text: errorMessage,
                 sender: 'bot'
             };
             
-            setMessages(prevMessages => [...prevMessages, botResponse]);
+            setMessages(prevMessages => [...prevMessages, errorResponse]);
+        } finally {
             setIsLoading(false); // Hide loading indicator
-        }, 1000);
-        
-        setInputValue(''); // Clear input field
+        }
     };
 
     const handleKeyPress = (e) => {
