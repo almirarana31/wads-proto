@@ -1,5 +1,4 @@
 import express from 'express';
-import Joi from 'joi';
 import fs from 'fs';
 import users_router from './routes/users.js';
 const app = express();
