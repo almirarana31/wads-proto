@@ -1,13 +1,13 @@
 import sendEmail from "../utils/sendEmail.js";
 
-const sendOTP = async ( email, message, text, duration = 2) => {
+const sendOTP = async ( email, message, html, duration = 2) => {
     try {
         // send email
         const mailOptions = {
             from: process.env.AUTH_EMAIL,
             to: email,
             subject: message,
-            text: html
+            html: html
         };
         await sendEmail(mailOptions);
 

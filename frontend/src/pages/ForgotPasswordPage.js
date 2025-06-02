@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import PrimaryButton from '../components/buttons/PrimaryButton';
 import { PageTitle, Text, Label } from '../components/text';
+import { authService } from '../api/authService';
 
 function ForgotPasswordPage() {  
+  const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -13,55 +15,47 @@ function ForgotPasswordPage() {
   const handleEmailChange = (e) => {
     setEmail(e.target.value);
   };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
     setLoading(true);
 
     try {
-      // Mock functionality for UI development
-      await new Promise(resolve => setTimeout(resolve, 1000)); // Simulating API call
-      if (email) {
-        setMessage('If an account with that email exists, a password reset link has been sent (mock).');
-        setSubmitted(true);
-      } else {
-        setError('Please enter your email address.');
-      }
+      // Call the actual API endpoint
+      await authService.forgetPassword(email);
+      setSubmitted(true);
     } catch (err) {
-      setError('Failed to send reset email. Please try again.');
+      // Handle different types of errors
+      const errorMessage = err.response?.data?.message || err.message || 'Failed to send reset email. Please try again.';
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
-  };
-  if (submitted) {
+  };if (submitted) {
     return (
-      <div className="min-h-screen py-6 sm:py-12 px-4">        <div className="max-w-md mx-auto">
+      <div className="min-h-screen flex items-center justify-center py-6 sm:py-12 px-4">
+        <div className="max-w-md w-full">
           <div className="bg-white rounded-md shadow-md p-6 sm:p-8">
             <PageTitle 
               title="Password Reset Email Sent"
             />
-            
-            <Text align="center" className="mb-6">
+              <Text align="center" className="mb-6">
               If an account exists with the email <strong>{email}</strong>, 
-              you will receive a password reset link shortly.
-            </Text>
-            
-            <div className="text-center">
-              <Link 
-                to="/login" 
-                className="bg-bianca-blue hover:bg-bianca-dark-blue text-white py-2 px-6 rounded-md inline-block transition-colors"
+              you will receive a password reset link shortly. Please check your email inbox.
+            </Text>            <div className="text-center">
+              <PrimaryButton
+                onClick={() => navigate('/login')}
               >
                 Return to Login
-              </Link>
+              </PrimaryButton>
             </div>
           </div>
         </div>
       </div>
     );
-  }
-  return (
-    <div className="min-h-screen py-6 sm:py-12 px-4">      <div className="max-w-md mx-auto">
+  }  return (
+    <div className="min-h-screen flex items-center justify-center p-4">
+      <div className="max-w-md w-full">
         <div className="bg-white rounded-md shadow-md p-6 sm:p-8">
           <PageTitle 
             title="Forgot Password"

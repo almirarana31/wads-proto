@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate, Link } from 'react-router-dom';
 import PrimaryButton from '../components/buttons/PrimaryButton';
 import { PageTitle, Text, Label } from '../components/text';
+import { authService } from '../api/authService';
 
 function ResetPasswordPage() {
   const [searchParams] = useSearchParams();
@@ -15,34 +16,25 @@ function ResetPasswordPage() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Fetch email associated with the token
-    const fetchEmail = async () => {
+    // Verify token and get email associated with it
+    const verifyTokenAndGetEmail = async () => {
       try {
-        // In a real app, you would call your backend API
-        const response = await fetch(`/api/users/verify-reset-token?token=${token}`, {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-          }
-        });
-
-        if (response.status === 200) {
-          const data = await response.json();
-          setEmail(data.email);
-          setLoading(false);
-        } else {
-          setError('Invalid or expired password reset token.');
-          setLoading(false);
-        }
+        // First verify the token is still valid
+        await authService.validResetLink(token);
+        
+        // For password reset, we don't need to fetch the email separately
+        // The token contains the email information for the backend
+        setLoading(false);
       } catch (error) {
-        console.error('Error fetching email:', error);
-        setError('An error occurred. Please try again.');
+        console.error('Error verifying token:', error);
+        const errorMessage = error.response?.data?.message || 'Invalid or expired password reset token.';
+        setError(errorMessage);
         setLoading(false);
       }
     };
 
     if (token) {
-      fetchEmail();
+      verifyTokenAndGetEmail();
     } else {
       setError('No reset token provided. Please request a password reset again.');
       setLoading(false);
@@ -59,32 +51,53 @@ function ResetPasswordPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    // Mock functionality for UI development
-    if (password && password === confirmPassword) {
+    setError('');
+    
+    // Validation
+    if (!password || !confirmPassword) {
+      setError('Please enter and confirm your new password.');
+      return;
+    }
+    
+    if (password !== confirmPassword) {
+      setError('Passwords do not match.');
+      return;
+    }
+    
+    if (password.length < 6) {
+      setError('Password must be at least 6 characters long.');
+      return;
+    }
+
+    try {
+      // Call the actual API endpoint
+      await authService.enterNewPassword(token, password);
       setSuccess(true);
       setTimeout(() => navigate('/login'), 3000);
-    } else if (password !== confirmPassword) {
-      setError('Passwords do not match.');
-    } else {
-      setError('Please enter and confirm your new password.');
+    } catch (error) {
+      console.error('Error resetting password:', error);
+      const errorMessage = error.response?.data?.message || 'Failed to reset password. Please try again.';
+      setError(errorMessage);
     }
   };
   // Show loading state
   if (loading) {
     return (
-      <div className="min-h-screen py-6 sm:py-12 px-4">        <div className="max-w-md mx-auto">
+      <div className="min-h-screen flex items-center justify-center py-6 sm:py-12 px-4">
+        <div className="max-w-md w-full">
           <div className="bg-white rounded-md shadow-md p-6 sm:p-8">
             <PageTitle title="Reset Password" />
             <Text align="center">Loading...</Text>
           </div>
         </div>
       </div>
-    );  }
-
+    );
+  }
   // Show success message
   if (success) {
     return (
-      <div className="min-h-screen py-6 sm:py-12 px-4">        <div className="max-w-md mx-auto">
+      <div className="min-h-screen flex items-center justify-center py-6 sm:py-12 px-4">
+        <div className="max-w-md w-full">
           <div className="bg-white rounded-md shadow-md p-6 sm:p-8">
             <PageTitle title="Password Reset Successful" />
             
@@ -106,15 +119,12 @@ function ResetPasswordPage() {
     );
   }
   return (
-    <div className="min-h-screen py-6 sm:py-12 px-4">      <div className="max-w-md mx-auto">
+    <div className="min-h-screen flex items-center justify-center py-6 sm:py-12 px-4">
+      <div className="max-w-md w-full">
         <div className="bg-white rounded-md shadow-md p-6 sm:p-8">
           <PageTitle 
             title="Reset Password"
-            subtitle={
-              <>
-                Enter a new password for your account: <strong>{email}</strong>
-              </>
-            }
+            subtitle="Enter a new password for your account"
           />
           
           {error && (
@@ -122,7 +132,8 @@ function ResetPasswordPage() {
               {error}
             </div>
           )}
-            <form onSubmit={handleSubmit}>
+
+          <form onSubmit={handleSubmit}>
             <div className="mb-6">
               <Label htmlFor="password">New Password:</Label>
               <input
@@ -132,7 +143,8 @@ function ResetPasswordPage() {
                 onChange={handlePasswordChange}
                 className="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-300"
                 required
-                minLength="8"
+                minLength="6"
+                placeholder="Enter your new password"
               />
             </div>
             
@@ -145,13 +157,15 @@ function ResetPasswordPage() {
                 onChange={handleConfirmPasswordChange}
                 className="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-300"
                 required
-                minLength="8"
+                minLength="6"
+                placeholder="Confirm your new password"
               />
             </div>
             
             <div className="flex justify-center mb-4">
               <PrimaryButton
                 type="submit"
+                disabled={loading}
                 fullWidth
               >
                 Reset Password

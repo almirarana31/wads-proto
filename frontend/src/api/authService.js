@@ -62,7 +62,9 @@ export const authService = {
     async getStaffTickets(queryString = '') {
         const response = await api.get(`/staff/tickets${queryString ? '?' + queryString : ''}`);
         return response.data;
-    },    async getTicketPool() {
+    },    
+    
+    async getTicketPool() {
         const response = await api.get('/staff/tickets/pool');
         return response.data;
     },    
@@ -86,7 +88,8 @@ export const authService = {
         const response = await api.patch(`/staff/tickets/${ticketId}/note`, { note });
         return response.data;
     },
-      async getConversationHistory(ticketId, sortBy = 'newest') {
+      
+    async getConversationHistory(ticketId, sortBy = 'newest') {
         const response = await api.get(`/conversation/${ticketId}/history?sortBy=${sortBy}`);
         return response.data;
     },
@@ -114,7 +117,9 @@ export const authService = {
         const response = await api.post(`/conversation/${conversationId}/message`, { content: message });
         return response.data;
     },    
-      async getConversation(conversationId) {
+      
+    
+    async getConversation(conversationId) {
         const response = await api.get(`/conversation/${conversationId}`);
        
         if (Array.isArray(response.data) && !response.data.metadata) {
@@ -292,5 +297,34 @@ export const authService = {
             }
             throw error;
           }
+    },
+    
+    async forgetPassword(email) {
+        try {
+            const response = await api.post('/user/forget-password', { email });
+            return response.data;
+        } catch (error) {
+            console.error('Error in forgetPassword:', error);
+            throw error;
+        }
+    },    
+    
+    async enterNewPassword(token, password) {
+        try {
+            const response = await api.post(`/user/enter-new-password/${token}`, { password });
+            return response.data;
+        } catch (error) {
+            console.error('Error in enterNewPassword:', error);
+            throw error;
+        }    },
+
+    async validResetLink(token) {
+        try {
+            const response = await api.get(`/user/verify-reset-link/${token}`);
+            return response.data;
+        } catch (error) {
+            console.error('Error in validResetLink:', error);
+            throw error;
+        }
     }
 };
