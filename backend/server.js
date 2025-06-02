@@ -8,12 +8,12 @@ app.use(express.json());
 app.use('/api', users_router);
 
 
-// dummy database
-var obj;
-fs.readFile("./database/users.json", "utf-8", (err, data) => {
-    if (err) throw err;
-    obj = JSON.parse(data);
-})
+// // dummy database
+// var obj;
+// fs.readFile("./database/users.json", "utf-8", (err, data) => {
+//     if (err) throw err;
+//     obj = JSON.parse(data);
+// })
 
 // PORT, .env variables
 const port = process.env.PORT || 3000;
