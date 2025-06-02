@@ -14,11 +14,11 @@ services:
       DB_SSL: false
       PORT: 3034
       ACCESS_TOKEN_SECRET: buttwebbythesecond
-      BASE_URL: http://localhost:3034
+      BASE_URL: https://e2425-wads-l4ccg3-server.csbihub.id
       AUTH_EMAIL: almira.rana31@gmail.com
       AUTH_PASS: ycna futf ghbn izus
-      FRONTEND_URL: http://localhost:3033
-      CORS_ORIGIN: http://localhost:3033
+      FRONTEND_URL: https://e2425-wads-l4ccg3-client.csbihub.id
+      CORS_ORIGIN: https://e2425-wads-l4ccg3-client.csbihub.id
       GEMINI_API_KEY: AIzaSyD9YrZsRyLT7WUCjiwcP_wPT1YMKE-hSAc
     ports:
       - "3002:3034"
@@ -36,11 +36,11 @@ services:
       DB_SSL: false
       PORT: 3033
       ACCESS_TOKEN_SECRET: buttwebbythesecond
-      BASE_URL: http://localhost:3033
+      BASE_URL: https://e2425-wads-l4ccg3-client.csbihub.id
       AUTH_EMAIL: almira.rana31@gmail.com
       AUTH_PASS: ycna futf ghbn izus
-      FRONTEND_URL: http://localhost:3033
-      CORS_ORIGIN: http://localhost:3033
+      FRONTEND_URL: https://e2425-wads-l4ccg3-client.csbihub.id
+      CORS_ORIGIN: https://e2425-wads-l4ccg3-client.csbihub.id
     depends_on:
       - backend
     ports:
