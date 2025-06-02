@@ -2,10 +2,15 @@ import axios from 'axios';
 
 // Create an axios instance with default config
 const api = axios.create({
-    baseURL: process.env.REACT_APP_API_URL || 'https://e2425-wads-l4ccg3-server.csbihub.id',
+    baseURL: process.env.NODE_ENV === 'development' 
+        ? '' // Empty string for development - will use relative URLs with the proxy
+        : (process.env.REACT_APP_API_URL || 'https://e2425-wads-l4ccg3-server.csbihub.id'),
     headers: {
-        'Content-Type': 'application/json'
-    }
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'X-Requested-With': 'XMLHttpRequest'
+    },
+    withCredentials: true // Important for CORS with credentials
 });
 
 // Add a request interceptor to prefix all requests with /api
@@ -15,8 +20,13 @@ api.interceptors.request.use(
         const url = config.url;
         if (url && !url.startsWith('/api') && !url.startsWith('http')) {
             config.url = `/api${url}`;
+            console.log(`Added /api prefix to URL: ${config.url}`);
         }
         return config;
+    },
+    (error) => {
+        console.error('Request interceptor error:', error);
+        return Promise.reject(error);
     }
 );
 

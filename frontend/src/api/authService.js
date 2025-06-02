@@ -8,12 +8,17 @@ export const authService = {
             rememberMe: credentials.rememberMe || false
         });
         return response.data;
-    },
-
-    async signup(userData) {
-        // Use the correct endpoint as per backend: 'USER/sign-up'
-        const response = await api.post('/user/sign-up', userData);
-        return response.data;
+    },    async signup(userData) {
+        console.log('Signing up user...', userData);
+        try {
+            // The /api prefix is added by the interceptor
+            const response = await api.post('/user/sign-up', userData);
+            console.log('Signup successful', response.data);
+            return response.data;
+        } catch (error) {
+            console.error('Signup failed:', error);
+            throw error;
+        }
     },
 
     async activate(token) {
