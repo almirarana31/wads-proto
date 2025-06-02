@@ -57,8 +57,8 @@ jobs:
           docker system prune -f
 
       - name: Run New Containers
-        run: |
-          docker compose up -d
+        run: docker compose up -d
+        working-directory: ./backend
         env:
           DB_NAME: ${{ secrets.DB_NAME }}
           DB_USER: ${{ secrets.DB_USER }}
