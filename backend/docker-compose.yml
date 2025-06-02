@@ -9,7 +9,7 @@ services:
       POSTGRES_USER: PrettyPrincessAdmin
       POSTGRES_PASSWORD: BiancaAdmin123!
     ports:
-      - "5432:5432"
+      - "8099:8099"
 
   backend:
     image: alfarana/wads-pp-fp-backend:latest
@@ -20,7 +20,7 @@ services:
       DB_NAME: BiancaTicketSystem
       DB_USER: PrettyPrincessAdmin
       DB_PASS: BiancaAdmin123!
-      DB_HOST: db  # Change from localhost to db
+      DB_HOST: db
       DB_PORT: 5432
       DB_DIALECT: postgres
       DB_SSL: false
@@ -43,7 +43,7 @@ services:
       DB_USER: PrettyPrincessAdmin
       DB_PASS: BiancaAdmin123!
       DB_HOST: localhost
-      DB_PORT: 5432
+      DB_PORT: 8099
       DB_DIALECT: postgres
       DB_SSL: false
       PORT: 3033
