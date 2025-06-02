@@ -9,7 +9,7 @@ import Ticket from "./Ticket.js";
 import Audit from "./Audit.js";
 import Conversation from "./Conversation.js";
 import Message from "./Message.js";
-import Assignment from './assignment.js';
+import Assignment from './Assignment.js';
 
 // Staff
 Staff.belongsTo(Role, {foreignKey: 'role_id'})
