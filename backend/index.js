@@ -27,20 +27,7 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
 // Enable CORS for all routes
 const corsOptions = {
-    origin: function(origin, callback) {
-        const allowedOrigins = [
-            process.env.FRONTEND_URL,
-            process.env.CORS_ORIGIN,
-            'https://e2425-wads-l4ccg3-client.csbihub.id'
-        ].filter(Boolean); // Remove falsy values
-        
-        // Allow requests with no origin (like mobile apps or curl requests)
-        if (!origin || allowedOrigins.indexOf(origin) !== -1) {
-            callback(null, true);
-        } else {
-            callback(new Error('Not allowed by CORS'));
-        }
-    },
+    origin: true, // Allow all origins during development
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     credentials: true,
     allowedHeaders: [
@@ -49,7 +36,9 @@ const corsOptions = {
         'X-User-Role',
         'Origin',
         'X-Requested-With',
-        'Accept'
+        'Accept',
+        'Access-Control-Request-Method',
+        'Access-Control-Request-Headers'
     ],
     exposedHeaders: [
         'Access-Control-Allow-Origin',
@@ -64,22 +53,25 @@ const corsOptions = {
 app.use(cors(corsOptions));
 
 // Handle preflight OPTIONS requests explicitly
-app.options('*', (req, res, next) => {
-    console.log('Handling OPTIONS request:', {
-        path: req.path,
-        origin: req.headers.origin,
-        method: req.method
-    });
-    
-    // Set CORS headers manually for OPTIONS requests
-    res.header('Access-Control-Allow-Origin', req.headers.origin);
-    res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,PATCH,OPTIONS');
-    res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-User-Role, Origin, X-Requested-With, Accept');
+app.use((req, res, next) => {
+    // Always set these CORS headers for all requests
+    res.header('Access-Control-Allow-Origin', req.headers.origin || '*');
     res.header('Access-Control-Allow-Credentials', 'true');
+    res.header('Access-Control-Allow-Methods', 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS');
+    res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-User-Role, Origin, X-Requested-With, Accept, Access-Control-Request-Method, Access-Control-Request-Headers');
     res.header('Access-Control-Max-Age', '86400');
     
-    // Respond to preflight request
-    res.status(204).end();
+    // Handle preflight requests
+    if (req.method === 'OPTIONS') {
+        console.log('Handling OPTIONS request:', {
+            path: req.path,
+            origin: req.headers.origin,
+            method: req.method,
+            headers: req.headers
+        });
+        return res.status(204).end();
+    }
+    next();
 });
 
 // Add better error handling for CORS and other issues

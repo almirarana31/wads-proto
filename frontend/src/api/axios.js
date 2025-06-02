@@ -8,9 +8,14 @@ const api = axios.create({
     headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
-        'X-Requested-With': 'XMLHttpRequest'
+        'X-Requested-With': 'XMLHttpRequest',
+        'Access-Control-Allow-Origin': '*'
     },
-    withCredentials: true // Important for CORS with credentials
+    withCredentials: true, // Important for CORS with credentials
+    validateStatus: function (status) {
+        // Consider any status less than 500 as success
+        return status < 500;
+    }
 });
 
 // Add a request interceptor to prefix all requests with /api
