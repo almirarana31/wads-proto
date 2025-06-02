@@ -26,7 +26,7 @@ const app = express();
 // app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
 app.use(cors({
-  origin: 'http://localhost:3000', // or '*' for all origins (not recommended for production)
+  origin: process.env.CORS_ORIGIN || 'https://e2425-wads-l4ccg3-client.csbihub.id',
   credentials: true
 }));
 
