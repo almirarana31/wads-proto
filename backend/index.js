@@ -27,7 +27,9 @@ const app = express();
 
 app.use(cors({
   origin: process.env.CORS_ORIGIN || 'https://e2425-wads-l4ccg3-client.csbihub.id',
-  credentials: true
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  credentials: true,
+  allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
 app.use(express.json());
@@ -54,6 +56,11 @@ app.use('/api', defaultQueries);
 
 app.get('/', (req, res) => {
     res.send("Hello from the backend!")
+});
+
+app.get('/health', (req, res) => {
+  res.header('Access-Control-Allow-Origin', process.env.CORS_ORIGIN);
+  res.status(200).json({ status: 'ok' });
 });
 
 app.listen(process.env.PORT, () => {
