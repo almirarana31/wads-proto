@@ -21,7 +21,7 @@ FROM nginx:alpine
 COPY client_nginx.conf /etc/nginx/conf.d/default.conf
 
 # Copy built app to Nginx
-COPY --from=builder /app/dist /usr/share/nginx/html
+COPY --from=builder /app/build /usr/share/nginx/html
 
 # Expose the application port (replace this port with client_port you received)
 EXPOSE 3033
