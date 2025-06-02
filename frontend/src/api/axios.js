@@ -8,6 +8,18 @@ const api = axios.create({
     }
 });
 
+// Add a request interceptor to prefix all requests with /api
+api.interceptors.request.use(
+    (config) => {
+        // Add /api prefix to URL if it doesn't already have it
+        const url = config.url;
+        if (url && !url.startsWith('/api') && !url.startsWith('http')) {
+            config.url = `/api${url}`;
+        }
+        return config;
+    }
+);
+
 // Add a request interceptor for handling tokens
 api.interceptors.request.use(
     (config) => {        // Try to get token from sessionStorage first, then localStorage
