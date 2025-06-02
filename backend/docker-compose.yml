@@ -8,7 +8,7 @@ services:
       POSTGRES_USER: PrettyPrincessAdmin
       POSTGRES_PASSWORD: BiancaAdmin123!
     ports:
-      - "5432:5432"
+      - "8099:5432"  # Map host port 8099 to container port 5432
 
   backend:
     image: alfarana/wads-pp-fp-backend:latest
@@ -20,7 +20,7 @@ services:
       DB_USER: PrettyPrincessAdmin
       DB_PASS: BiancaAdmin123!
       DB_HOST: db
-      DB_PORT: 5432
+      DB_PORT: 5432  # Keep internal port as 5432
       DB_DIALECT: postgres
       DB_SSL: false
       PORT: 3034
