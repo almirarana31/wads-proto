@@ -32,14 +32,21 @@ const Chatbot = ({ isAuthenticated, userRole }) => {
 
     if (!canSeeChatbot) {
         return null; // Don't render the chatbot if the user doesn't have access
-    }
-
-    const toggleChat = () => {
+    }    const toggleChat = () => {
         setIsChatOpen(!isChatOpen);
         if (!isChatOpen && messages.length === 0) {
-            // Add a default greeting when chat opens for the first time
+            // Add a more helpful greeting when chat opens for the first time
+            const greetingMessage = isAuthenticated 
+                ? "Hello! I'm here to help you with any questions or issues you may have. I can also help you create support tickets directly through our conversation. How can I assist you today?"
+                : "Hello! I'm here to help answer your questions about Bianca Aesthetic Clinic. I can also guide you through creating support tickets. How can I assist you today?";
+            
             setMessages([
-                { id: Date.now(), text: "Hello! How can I help you today?", sender: 'bot' }
+                { 
+                    id: Date.now(), 
+                    text: greetingMessage, 
+                    sender: 'bot',
+                    isSystem: true // Mark as system message so it doesn't get included in conversation history
+                }
             ]);
         }
     };
@@ -62,17 +69,42 @@ const Chatbot = ({ isAuthenticated, userRole }) => {
         const currentInput = inputValue;
         setInputValue(''); // Clear input field immediately
 
-        try {            // Call the chatbot API with conversation history
-            const response = await authService.sendChatMessage(currentInput, messages);
+        try {            // Prepare conversation history for the API call
+            // Only include messages that have actual content and avoid duplicating the current message
+            // Also exclude system messages like greetings
+            const conversationHistory = messages
+                .filter(msg => msg.text && msg.text.trim() && !msg.isSystem && !msg.requiresAuth)
+                .slice(-8) // Keep last 8 messages for context (excluding current message)
+                .map(msg => ({
+                    text: msg.text,
+                    sender: msg.sender
+                }));
+
+            // Call the chatbot API with conversation history
+            const response = await authService.sendChatMessage(currentInput, conversationHistory);
             
             if (response.success) {
                 const botResponse = {
                     id: Date.now() + 1,
                     text: response.message,
-                    sender: 'bot'
+                    sender: 'bot',
+                    ticketCreated: response.ticketCreated || false,
+                    ticket: response.ticket || null,
+                    requiresAuth: response.requiresAuth || false,
+                    ticketData: response.ticketData || null
                 };
                 
                 setMessages(prevMessages => [...prevMessages, botResponse]);
+
+                // If a ticket was created, show a success notification
+                if (response.ticketCreated && response.ticket) {
+                    console.log('Ticket created successfully:', response.ticket);
+                }
+
+                // If authentication is required, user can be directed to login
+                if (response.requiresAuth) {
+                    console.log('Authentication required for ticket creation');
+                }
             } else {
                 throw new Error(response.error || 'Unknown error occurred');
             }
@@ -172,8 +204,7 @@ const Chatbot = ({ isAuthenticated, userRole }) => {
                 >
                     <CloseIcon />
                 </button>
-            </div>
-            <div style={{ flexGrow: 1, padding: '10px', overflowY: 'auto', backgroundColor: '#f9f9f9' }}>
+            </div>            <div style={{ flexGrow: 1, padding: '10px', overflowY: 'auto', backgroundColor: '#f9f9f9' }}>
                 {messages.map(msg => (
                     <div key={msg.id} style={{
                         marginBottom: '10px',
@@ -183,12 +214,40 @@ const Chatbot = ({ isAuthenticated, userRole }) => {
                             display: 'inline-block',
                             padding: '8px 12px',
                             borderRadius: '15px',
-                            backgroundColor: msg.sender === 'user' ? '#007bff' : '#e9e9eb',
+                            backgroundColor: msg.sender === 'user' 
+                                ? '#007bff' 
+                                : (msg.ticketCreated ? '#d4edda' : '#e9e9eb'),
                             color: msg.sender === 'user' ? 'white' : 'black',
                             maxWidth: '70%',
                             wordWrap: 'break-word',
+                            border: msg.ticketCreated ? '1px solid #c3e6cb' : 'none',
                         }}>
-                            {msg.text}
+                            <div style={{ whiteSpace: 'pre-line' }}>
+                                {msg.text}
+                            </div>
+                            {msg.ticketCreated && msg.ticket && (
+                                <div style={{
+                                    marginTop: '8px',
+                                    padding: '6px',
+                                    backgroundColor: '#155724',
+                                    color: 'white',
+                                    borderRadius: '8px',
+                                    fontSize: '12px'
+                                }}>
+                                    ✅ Ticket {msg.ticket.id} created successfully!
+                                </div>
+                            )}                            {msg.requiresAuth && (
+                                <div style={{
+                                    marginTop: '8px',
+                                    padding: '6px',
+                                    backgroundColor: '#ffc107',
+                                    color: '#212529',
+                                    borderRadius: '8px',
+                                    fontSize: '12px'
+                                }}>
+                                    ℹ️ Login or create account to submit this ticket
+                                </div>
+                            )}
                         </div>
                     </div>
                 ))}
