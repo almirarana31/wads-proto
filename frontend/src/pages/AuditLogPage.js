@@ -4,6 +4,7 @@ import SecondaryButton from '../components/buttons/SecondaryButton';
 import { PageTitle, Label } from '../components/text';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import * as XLSX from 'xlsx';
 
 function AuditLogPage() {
   const [auditLogs, setAuditLogs] = useState([]);
@@ -120,11 +121,68 @@ function AuditLogPage() {
           doc.internal.pageSize.height - 10
         );
       }
-    });
-
-    // Save the PDF
+    });    // Save the PDF
     const filename = `audit-log-${new Date().toISOString().split('T')[0]}.pdf`;
     doc.save(filename);
+  };
+
+  const exportToExcel = () => {
+    // Prepare data for Excel
+    const excelData = auditLogs.map(log => ({
+      'ID': log.id || '',
+      'Timestamp': new Date(log.timestamp).toLocaleString(),
+      'Action': log.action || '',
+      'User Email': log["User.email"] || '',
+      'Detail': log.detail || ''
+    }));
+
+    // Create workbook and worksheet
+    const workbook = XLSX.utils.book_new();
+    const worksheet = XLSX.utils.json_to_sheet(excelData);
+
+    // Set column widths
+    const columnWidths = [
+      { wch: 8 },   // ID
+      { wch: 20 },  // Timestamp
+      { wch: 15 },  // Action
+      { wch: 25 },  // User Email
+      { wch: 30 }   // Detail
+    ];
+    worksheet['!cols'] = columnWidths;
+
+    // Add title and metadata as header rows
+    const headerData = [
+      ['System Audit Log'],
+      [`Generated on: ${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}`],
+      []
+    ];
+
+    // Add filters info if any are active
+    const activeFilters = [];
+    if (filters.startDate) activeFilters.push(`Start Date: ${filters.startDate}`);
+    if (filters.endDate) activeFilters.push(`End Date: ${filters.endDate}`);
+    if (filters.action) activeFilters.push(`Action: ${filters.action}`);
+    if (filters.user) activeFilters.push(`User: ${filters.user}`);
+    
+    if (activeFilters.length > 0) {
+      headerData.push([`Filters Applied: ${activeFilters.join(', ')}`]);
+      headerData.push([]);
+    }
+
+    // Create new worksheet with headers
+    const headerSheet = XLSX.utils.aoa_to_sheet(headerData);
+    
+    // Append the data
+    XLSX.utils.sheet_add_json(headerSheet, excelData, {
+      origin: `A${headerData.length + 1}`,
+      skipHeader: false
+    });
+
+    // Add worksheet to workbook
+    XLSX.utils.book_append_sheet(workbook, headerSheet, 'Audit Log');
+
+    // Save the Excel file
+    XLSX.writeFile(workbook, `audit-log-${new Date().toISOString().split('T')[0]}.xlsx`);
   };
 
   return (
@@ -135,9 +193,12 @@ function AuditLogPage() {
             title="System Audit Log"
             subtitle="Track and monitor system activities"
           />          {/* Action Buttons */}
-          <div className="flex justify-end mb-6">
+          <div className="flex justify-end gap-3 mb-6">
             <SecondaryButton onClick={exportToPDF}>
-              Export Log
+              Export as PDF
+            </SecondaryButton>
+            <SecondaryButton onClick={exportToExcel}>
+              Export as Excel
             </SecondaryButton>
           </div>
 
