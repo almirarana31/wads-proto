@@ -1,6 +1,9 @@
 import express from 'express';
 import fs from 'fs';
+import cors from 'cors';
 import users_router from './routes/user_routes.js';
+
+const cors = require('cors');
 const app = express();
 
 const corsOptions = {
