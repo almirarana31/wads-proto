@@ -28,7 +28,8 @@ const cors = require('cors');
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
 app.use(cors({
-  origin: 'https://e2425-wads-l4ccg3-client.csbihub.id', // or '*' for all origins (not recommended for production)
+  origin: 'https://e2425-wads-l4ccg3-client.csbihub.id',
+  allowedMethods: '*',
   credentials: true
 }));
 
