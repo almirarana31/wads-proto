@@ -36,6 +36,10 @@ app.use('/api/admin', adminRoutes);
 
 app.use('/api/ticket', ticketRoutes);
 
+app.use('/api/conversation', conversationRoutes);
+
+app.use('/api/audit', auditRoutes);
+
 // PORT, .env variables
 const port = process.env.PORT || 30;
 
