@@ -309,6 +309,8 @@ Authorization: Bearer <your_jwt_token>
 Visit `http://localhost:3001/api-docs` when the server is running for interactive Swagger documentation.
 
 ## 📷 Screenshots of Working Web App
+### Home Page
+![Homepage](screenshots/homepage.png)
 
 
 **Built with ❤️ for Bianca Aesthetic Clinic**
