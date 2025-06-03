@@ -9,7 +9,6 @@ const api = axios.create({
         'Content-Type': 'application/json',
         'Accept': 'application/json',
         'X-Requested-With': 'XMLHttpRequest',
-        'Access-Control-Allow-Origin': '*'
     },
     withCredentials: true, // Important for CORS with credentials
     validateStatus: function (status) {
