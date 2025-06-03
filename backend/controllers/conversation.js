@@ -10,7 +10,7 @@ export const getConversation = async (req, res) => {
     // YOU will always be the requester
     // run this function by userAuthZ and staffAuthZ
     // if sender_id = token's user_id, isSender = true >> make it blue text bbl otherwise, false
-    const conversation_id = req.params.id
+    const conversation_id = req.params.conversationID
     const user = req.user
     const id = req.params.id
     try {   
@@ -93,7 +93,7 @@ export const getConversation = async (req, res) => {
 };  
  
 export const getConversationHistory = async (req, res) => {
-    const ticket_id = req.params.id
+    const ticket_id = req.params.ticketID
     const sortBy = req.query.sortBy // newest/oldest
     try {
         const conversation = await Conversation.findAll({
@@ -115,7 +115,7 @@ export const getConversationHistory = async (req, res) => {
 }
 
 export const sendMessage = async (req, res) => {
-    const conversation_id = req.params.id
+    const conversation_id = req.params.conversationID
     const user = req.user
     const content = req.body.content
     try {
@@ -140,7 +140,7 @@ export const sendMessage = async (req, res) => {
 
 // uses staffAuthZ middleware
 export const createConversation = async (req, res) => {
-    const ticket_id = req.params.id
+    const ticket_id = req.params.ticketID
     const staff = req.staff;
 
     try {
@@ -191,7 +191,7 @@ export const createConversation = async (req, res) => {
 
 export const closeConversation = async (req, res) => {
     // get conversation id
-    const conversation_id = req.params.id
+    const conversation_id = req.params.conversationID
     const staff = req.staff
     try {
         // do conversationAuthZ middleware and staffAuthZ middleware

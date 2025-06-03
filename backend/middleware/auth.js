@@ -191,7 +191,7 @@ export const userAuthZ = async (req, res, next) => {
 export const conversationAuthZ = async (req, res, next) => {
 
     // get the conversation id
-    const id = req.params.id
+    const id = req.params.conversationID
     const staff = req.staff
     const user = req.user
     try {
@@ -269,7 +269,7 @@ export const getUserRoles = async (req, res) => {
     }
 }
 export const ticketAuthZ = async (req,res,next) => {
-    const ticket_id = req.params.id /// ticket id
+    const ticket_id = req.params.ticketID /// ticket id
     const user = req.user
     try {   
         const ticket = await Ticket.findOne({
