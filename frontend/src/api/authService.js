@@ -95,7 +95,7 @@ export const authService = {
     },
       
     async getConversationHistory(ticketId, sortBy = 'newest') {
-        const response = await api.get(`/conversation/${ticketId}/history?sortBy=${sortBy}`);
+        const response = await api.get(`/conversation/ticket/${ticketId}/history?sortBy=${sortBy}`);
         return response.data;
     },
 
@@ -105,7 +105,7 @@ export const authService = {
     },
 
     async createConversation(ticketId) {
-        const response = await api.post(`/conversation/${ticketId}`);
+        const response = await api.post(`/conversation/ticket/${ticketId}`);
         if (response.data && !response.data.id) {
             // if don't have an ID in the response, try to fetch the latest conversation
             const conversations = await this.getConversationHistory(ticketId);
@@ -246,7 +246,7 @@ export const authService = {
                 throw new Error('Ticket ID is required');
             }
 
-            const response = await api.get(`/admin/staff/${ticketId}`);
+            const response = await api.get(`/admin/staff/ticket/${ticketId}`);
             console.log('Raw API Response:', response);
             console.log('API Response data:', response.data);
 
@@ -278,7 +278,7 @@ export const authService = {
 
     async getAdminStaffActivationStatus(staffId) {
         try {
-            const response = await api.get(`/admin/${staffId}/activation-status`);
+            const response = await api.get(`/admin/account/${staffId}/activation-status`);
             return response.data;
         } catch (error) {
             console.error('Error fetching staff activation status:', error);
