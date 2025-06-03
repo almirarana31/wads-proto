@@ -107,6 +107,6 @@ app.get('/', (req, res) => {
 });
 
 app.listen(process.env.PORT, () => {
-        console.log(`Connected to the backend at https://e2425-wads-l4ccg3-server.csbihub.id/api-docs`);
-        console.log(`API documentation available at https://e2425-wads-l4ccg3-server.csbihub.id/api-docs`);
+        console.log(`Connected to the backend at https://e2425-wads-l4ccg3-server.csbihub.id`);
+        console.log(`API documentation available at https://e2425-wads-l4ccg3-server.csbihub.id`);
 });
