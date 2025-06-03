@@ -78,7 +78,7 @@ app.use(cors(corsOptions));
 // 2. Handle all OPTIONS requests before any other middleware or routes
 app.options('*', cors(corsOptions));
 
-app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
+// app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
 app.use(express.json());
 
