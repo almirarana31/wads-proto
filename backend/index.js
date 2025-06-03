@@ -29,7 +29,13 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
 app.use(cors({
   origin: 'https://e2425-wads-l4ccg3-client.csbihub.id',
-  allowedMethods: '*',
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  credentials: true
+}));
+
+app.options('*', cors({
+  origin: 'https://e2425-wads-l4ccg3-client.csbihub.id',
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   credentials: true
 }));
 
