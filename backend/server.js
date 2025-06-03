@@ -2,7 +2,6 @@ import express from 'express';
 import fs from 'fs';
 import cors from 'cors';
 import dotenv from 'dotenv';
-import express from 'express';
 import cron from "node-cron";
 import sequelize from './config/sequelize.js';
 import userRoutes from './routes/user_routes.js';
