@@ -311,7 +311,71 @@ Visit `http://localhost:3001/api-docs` when the server is running for interactiv
 ## 📷 Screenshots of Working Web App
 ### Home Page
 ![Homepage](screenshots/homepage.png)
+This home page is the landing page and where all users start. The are 2 main buttons to prompt a new ticket submission or view their own tickets.
 
+### Submit a Ticket Page
+![Submit](screenshots/submit.png)
+This is the main feature where users and staff alike may submit a new ticket whether or not they are registered/logged in. It prompts an email, ticket title, category, and ticket description.
+
+### Your Tickets Page
+![View Tickets](screenshots/ticket-view.png)
+This is where registered users view their already sent tickets to see if a staff has updated the status or started a conversation.
+
+### Editing a Ticket Modal
+![Edit Tickets](screenshots/edit-ticket.png)
+This appears when the user or staff clicks the edit ticket button. They may edit any aspect of the ticket.
+
+### Cancelling a Ticket Modal
+![Cancel Tickets](screenshots/cancel-ticket.png)
+This modal appears as validation for the user to cancel their ticket while it is still in Pending status. This is also available for staffs when they are assigned a ticket. This will update the tickets status to Cancelled.
+
+### Closed Conversation Page
+![Closed Convo](screenshots/conversation-closed.png)
+This conversation is available for users and staffs. Only staff can create conversations and users can communicate with staff through this page. This is an example of a closed conversation that can only be done by the staff that created the conversation.
+
+### Pending Ticket Detail
+![Pending](screenshots/ticket-details.png)
+This is an example of a Pending ticket, the available components are the edit ticket and cancel ticket.
+
+### Login Page
+![Login](screenshots/login.png)
+This login page is available for all users who would like to login with a registered account. If the user forgets their password they may navigate to the page or if they would like to sign up then they would also navigate to the appropriate page.
+
+### Staff Queue Page
+![Staff Queue](screenshots/queue.png)
+This ticket queue is available for all staff and can be seen as a second tab after the ticket management. This is the page where staff may claim more tickets that may have no been assigned automatically or manually. Staff can claim up to 5 tickets.
+
+### Resolved Ticket Detail
+![Resolved Ticket](screenshots/resolved-ticket.png)
+This is the example of a resolved ticket where users cannot do any actions or continue conversations.
+
+### Staff Dashboard Page
+![Staff Dash](screenshots/staff.png)
+This dashboard will show the staffs assigned tickets. With the total number of tickets along with the status and another tab to naivgate to the ticket queue. Along with the full information of each ticket including ID, title, name, email, creation and update date, category, priority, status and actions. When they view a ticket it leads them to the view ticket details page where they may start a conversation, cancel the ticket, or resolve the ticket.
+
+### Ai Chatbot Popup
+![Chatbot](screenshots/chatbot.png)
+This appears for staff, guests, and customers, as they are the only users that can make tickets. This will appear when clicking the AI Chatbot bubble in the corner of the screen. This AI can create tickets for the user.
+
+### Admin Dashboard Page
+![Admin Dash](screenshots/admin.png)
+This page is only accessible to registered admins. The seen components are the total number of tickets in the entire system along with the status of each ticket. A tab is available to switch from ticket management or staff management.
+
+### Staff Management Page
+![Staff Mgmt](screenshots/staff-info.png)
+This page is only available to registered admins. This page allows admins to add staff or view staff details.
+
+### Add New Staff Modal
+![Staff Add](screenshots/add-staff.png)
+This popup appears when clicking the "Add Staff" button in the staff management page. This modal prompts the admin to input the email of the staff, the field of the staff, and their role.
+
+### Ticket Management Page
+![Ticket Mgmt](screenshots/ticket-management.png)
+This page appears as the main management for the admin dashboard. All list of tickets can be seen along with their ID, title, name of sender, email of sender, when the ticket was made and last updated, the category, priority, status, and the assigned staff. There are action buttons available for the admin to either view and peek into the ticket or assign/reassign the ticket to a new staff.
+
+### System Audit Log
+![Audit](screenshots/audit.png)
+This audit log is only available to registered admins. This show all creations, deletions, and updates all accross the system. It can be filtered by date, action or user. The admin can also export all the data as a PDF document or Excel sheet.
 
 **Built with ❤️ for Bianca Aesthetic Clinic**
 
