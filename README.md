@@ -271,36 +271,43 @@ Authorization: Bearer <your_jwt_token>
 
 ### Key Endpoints
 
-#### Authentication
-- `POST /api/auth/login` - User login
-- `POST /api/auth/register` - User registration
-- `POST /api/auth/logout` - User logout
-- `POST /api/auth/refresh` - Refresh JWT token
+#### User Operations
+- `POST /api/user/log-in` - User login
+- `POST /api/user/sign-up` - User registration
+- `POST /api/user/tickets` - Submit a Ticket
+- `POST /api/user/forget-password` - Send reset password link to email
+- `GET /api/user/verify-reset-link/:token` - Verify auth token from reset password link
+- `POST /api/user/enter-new-password/:token` - Enter new password with verified token
+- `PUT /api/user/tickets/:id` - Edit a ticket
+- `PATCH /api/user/tickets/:id` - Cancel a ticket
+- `GET /api/user/activate/:token` - Authenticate a user
 
-#### Tickets
-- `GET /api/tickets` - Get tickets (role-based filtering)
-- `POST /api/tickets` - Create new ticket
-- `GET /api/tickets/:id` - Get ticket details
-- `PUT /api/tickets/:id` - Update ticket
-- `DELETE /api/tickets/:id` - Delete ticket
+#### Ticket Management
+- `GET /api/ticket/categories` - Get ticket categories
+- `GET /api/ticket/statuses` - Get ticket statuses
+- `GET /api/ticket/priorities` - Get ticket priorities
+- `GET /api/ticket/:id` - Get ticket details
+- `POST /api/ticket/:id/note` - Create a note for a ticket
 
 #### Staff Operations
-- `GET /api/staff/tickets` - Get assigned tickets
-- `GET /api/staff/pool` - Get ticket pool
-- `POST /api/staff/claim` - Claim ticket from pool
-- `PUT /api/staff/resolve/:id` - Resolve ticket
+- `PATCH /api/staff/tickets` Claiming a ticket
+- `GET /api/staff/tickets` - Get all assigned tickets
+- `GET /api/staff/summary` - Get performance summary of staff
+- `PATCH /api/staff/tickets/:id/resolve` - Resolve a ticket
+- `PATCH /api/staff/tickets/:id/cancel` - Cancel a ticket
 
 #### Admin Operations
-- `GET /api/admin/dashboard` - Dashboard statistics
-- `GET /api/admin/staff` - Staff performance metrics
-- `POST /api/admin/staff` - Create staff account
-- `PUT /api/admin/assign/:ticketId` - Assign ticket to staff
+- `GET /api/admin/all-tickets` - Get all available tickets
+- `GET /api/admin/staff-performance` - Staff performance metrics
+- `GET /api/admin/staff` - Get staff account
+- `PATCH /api/admin/tickets/:ticketId/staff` - Assign ticket to staff
 
 #### Conversations
-- `GET /api/conversations/:ticketId` - Get ticket conversations
-- `POST /api/conversations` - Create new conversation
-- `POST /api/conversations/:id/messages` - Send message
-- `PUT /api/conversations/:id/close` - Close conversation
+- `POST /api/conversation/:ticketId` - Create new conversation
+- `PATCH /api/conversation/:ticketId` - Close a conversation
+- `POST /api/conversation/:convoId/messages` - Send message
+- `GET /api/conversation/:convoId` - Get conversation with each chat
+- `GET /api/conversation/:convoId/history` - Get conversation history
 
 #### Chatbot
 - `POST /api/chatbot/message` - Send message to AI chatbot
