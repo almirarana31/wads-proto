@@ -21,23 +21,23 @@ dotenv.config();
 
 await sequelize.sync();
 
-const app = express();
-
 const cors = require('cors');
 
+const app = express();
+
+const corsOptions = {
+  origin: 'https://e2425-wads-l4ccg3-client.csbihub.id',
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  credentials: true
+};
+
+// 1. CORS middleware first
+app.use(cors(corsOptions));
+
+// 2. Handle all OPTIONS requests before any other middleware or routes
+app.options('*', cors(corsOptions));
+
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
-
-app.use(cors({
-  origin: 'https://e2425-wads-l4ccg3-client.csbihub.id',
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  credentials: true
-}));
-
-app.options('*', cors({
-  origin: 'https://e2425-wads-l4ccg3-client.csbihub.id',
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  credentials: true
-}));
 
 app.use(express.json());
 
