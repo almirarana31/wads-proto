@@ -40,6 +40,8 @@ app.use('/api/conversation', conversationRoutes);
 
 app.use('/api/audit', auditRoutes);
 
+app.use('/api/chatbot', chatbotRoutes);
+
 // PORT, .env variables
 const port = process.env.PORT || 30;
 
