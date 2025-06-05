@@ -5,6 +5,7 @@ import sendOTP from './otp.js';
 import { logAudit } from './audit.js';
 import sequelize from '../config/sequelize.js';
 import {Op} from 'sequelize';
+import {roundRobinAssignment} from '../utils/roundRobinAlg.js';
 
 // start with the login/sign up
 
@@ -406,7 +407,7 @@ export const validResetLink = async (req, res) => {
 
 // tickets
 export const submitTicket = async (req, res) => {
-    const {id} = req.user;
+    const {id, email} = req.user;
     const {title, category_id, description} = req.body;
     try {
         if (!title || !description || !category_id) {
@@ -418,15 +419,18 @@ export const submitTicket = async (req, res) => {
             category_id: category_id,
             status_id: 1,
             subject: title,
-            description: description
+            description: description,
+            priority_id: 3
         }, {raw: true});
-        
+
+        await roundRobinAssignment(ticket.id, category_id, email, id);
+        console.log("HELLO WORLD")
         await logAudit(
             "Create",
             id,
             `Ticket ID ${ticket.id} created`
         );
-
+        console.log("HELLO WORLD")
         return res.status(200).json({message: "Ticket successfully created",
             ticket_id: ticket.id,
             title: ticket.subject,
