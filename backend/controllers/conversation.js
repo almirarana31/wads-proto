@@ -12,20 +12,22 @@ export const getConversation = async (req, res) => {
     // if sender_id = token's user_id, isSender = true >> make it blue text bbl otherwise, false
     const conversation_id = req.params.conversationID
     const user = req.user
-    const id = req.params.id
     try {   
         // get the conversation object from the database 
-        const conversation = await Conversation.findByPk(id, {
+        const conversation = await Conversation.findOne({
+            where: {
+                id: conversation_id
+            },
             include: [{
                 model: Ticket,
                 attributes: ['user_id', 'staff_id'],
                 required: true
-            }],
+            }]
         })
+        console.log(conversation)
         // checking to see if belongs to the conversation // slapstick solution should kill myself
         const isStaff = user?.staff_id == conversation.Ticket.staff_id;
         const isUser = user?.id == conversation.Ticket.user_id;
-
         // now to check for admin
         const admin = await Staff.findOne({
             where: {
@@ -160,14 +162,49 @@ export const createConversation = async (req, res) => {
                 closed: [false, null]
             }
         })
+
+        const conversation = await Conversation.findOne({
+            where: {
+                ticket_id: ticket_id,
+                closed: true
+            }
+        })
         console.log(hasOne)
 
-        if (hasOne > 0) {
-            return res.status(400).json({message: "Ongoing conversation!"})
+        // if a conversation exists, and it is closed
+        if (conversation) {
+            if (conversation.closed) {
+
+                // if conversation in the ticket is already closed, and the "create" endpoint is called,
+                // reopens the conversation
+                await Conversation.update({
+                    closed: false
+                }, {
+                    where: {
+                        ticket_id: ticket_id,
+                        id: conversation.id
+                }
+            })
+            }
+            // audit here
+            await logAudit(
+                "Create",
+                staff.id,
+                `
+                Conversation ID ${conversation.id} re-opened
+                `
+            )
+            return res.status(200).json({message: "Conversation re-opened"})
         }
 
         if (!assigned) return res.status(403).json({message: "Staff is not assigned to this ticket"})
+        
+        // if a conversation exists, but isn't closed, ban the user 
+        if (hasOne > 0) {
+            return res.status(400).json({message: "Conversation has already been started"})
+        }
 
+        // no converation exists
         const newConvo = await Conversation.create({
             ticket_id: assigned.id,
             endedAt: null,

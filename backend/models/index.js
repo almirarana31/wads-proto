@@ -26,6 +26,7 @@ Ticket.belongsTo(Staff, {foreignKey: 'staff_id', as: 'Staff'})
 Ticket.belongsTo(Category, {foreignKey: 'category_id'})
 Ticket.belongsTo(Priority, {foreignKey: 'priority_id'})
 Ticket.belongsTo(Status, {foreignKey: 'status_id'})
+Ticket.hasOne(Conversation, {foreignKey: 'ticket_id'})
 
 // Conversation
 Message.belongsTo(Conversation, {foreignKey: 'conversation_id'})
