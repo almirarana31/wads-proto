@@ -134,23 +134,23 @@ export const getRole = async (req, res) => {
 // add note to ticket
 export const addNote = async (req, res) => {
     // ticket id from the query
-    const ticket_id = req.query.id
-    // get staff id from the auth
+    const ticket_id = req.params.id
+    // get staff id from the auth   
     const staff = req.staff
     // not content
     const {note} = req.body 
     try {
         // update ticket where staff_id = staff_id
-        const ticket = await Ticket.update({
+        const [count, ticket] = await Ticket.update({
             note: note
         }, {
             where: {
-                staff_id: staff.staff_id
+                staff_id: staff.staff_id,
+                id: ticket_id
             }
         })
-
         // if ticket empty does not exist return 400 error
-        if (!ticket) return res.status(400).json({message: "Ticket does not exist"})
+        if (count == 0) return res.status(400).json({message: "Invalid request: Ticket does not exist/Staff does not have permission"})
 
         return res.status(200).json({message: "Note successfully added"})
     } catch (error) {
