@@ -21,9 +21,11 @@ function AssignStaffModal({ isOpen, onClose, onAssign, ticketId }) {
         setLoading(true);
         setError(null);
         setStaffList([]);
-        
-        const ticketDetails = await authService.getTicketDetail(ticketId);
+          const ticketDetails = await authService.getTicketDetail(ticketId);
         const allStaffData = await authService.getAdminStaffPerformance();
+        
+        // Get the currently assigned staff ID for this ticket to exclude later
+        const currentlyAssignedStaffId = ticketDetails.staff_id;
         
         const staffDetails = await Promise.all(
           allStaffData.map(async (staff) => {
@@ -36,20 +38,21 @@ function AssignStaffModal({ isOpen, onClose, onAssign, ticketId }) {
           })
         );
 
+        // Filter staff to include all eligible staff regardless of current assignment
+        // This shows all staff matching the category, not just the currently assigned one
         const eligibleStaff = staffDetails.filter(staff => {
           const matchesCategory = staff.field_name === ticketDetails.Category.name;
           const isActive = !staff.is_guest;
           return matchesCategory && isActive;
-        });
-
-        const formattedStaff = eligibleStaff.map(staff => ({
+        });        const formattedStaff = eligibleStaff.map(staff => ({
           staff_id: staff.staff_id,
           name: staff.staff_name,
           field_name: staff.field_name,
           resolution_rate: `${staff.resolution_rate}%`,
           in_progress: staff.assigned - staff.resolved,
           resolved: staff.resolved,
-          is_guest: false
+          is_guest: false,
+          isCurrentlyAssigned: staff.staff_id === ticketDetails.staff_id
         }));
 
         setStaffList(formattedStaff);
@@ -142,17 +145,23 @@ function AssignStaffModal({ isOpen, onClose, onAssign, ticketId }) {
                 <Text color="text-gray-500">No staff members found.</Text>
               </div>
             ) : (
-              filteredStaff.map((staff) => (
-                <div
+              filteredStaff.map((staff) => (                <div
                   key={staff.staff_id}
                   className={`p-3 border-b border-gray-100 hover:bg-gray-50 cursor-pointer ${
                     selectedStaff === staff.staff_id ? 'bg-blue-50 border-blue-200' : ''
-                  }`}
+                  } ${staff.isCurrentlyAssigned ? 'bg-yellow-50' : ''}`}
                   onClick={() => handleStaffSelect(staff.staff_id)}
                 >
                   <div className="flex justify-between items-center">
                     <div>
-                      <Text weight="medium">{staff.name}</Text>
+                      <div className="flex items-center">
+                        <Text weight="medium">{staff.name}</Text>
+                        {staff.isCurrentlyAssigned && (
+                          <span className="ml-2 px-2 py-0.5 bg-yellow-100 text-yellow-800 text-xs font-medium rounded-full">
+                            Currently assigned
+                          </span>
+                        )}
+                      </div>
                       <Text size="sm" color="text-gray-600">ID: {staff.staff_id}</Text>
                     </div>
                     <div className="text-right">
