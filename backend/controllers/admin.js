@@ -239,93 +239,6 @@ export const editStaff = async (req, res) => {
 }
 
 // ticket actions start here
-const roundRobinAssignment = async (ticket_id, category_id, admin_id, email) => {
-    try {
-        // get all staff
-        console.log("this is category_id", category_id)
-        const staffs = await Staff.findAll({
-            where: {
-                field_id: category_id
-            },
-            raw: true
-        })
-
-        const assignment = await Assignment.findOne({
-            where: {
-                category_id: category_id
-            },
-            raw: true
-        })
-
-        const last_staff = assignment?.last_staff
-        const lastIndex = staffs.findIndex(staff => staff.id === last_staff); // returns -1 if last_staff doesnt exist
-        console.log(staffs)
-        for (let i = 1; i <= staffs.length; i++) {
-            const index = (lastIndex + i) % staffs.length
-            console.log("hello trying to see if this works")
-            const count = await Ticket.count({
-                where: {
-                    staff_id: staffs[index].id,
-                    status_id: {[Op.notIn]: [4, 3]} // not resolved, not cancelled
-                }
-            })
-
-            console.log("Hi this is ", count)
-
-            if (count < 3) {
-                // update the ticket
-                const ticket = await Ticket.update({
-                    status_id: 2,
-                    staff_id: staffs[index].id
-                }, {
-                    where: {
-                    id: ticket_id
-                  }
-                })
-                console.log("here is a email ", email)
-                const emailBody = `
-                Staff has been assigned! Please wait for follow up emails!
-                `;
-                await sendOTP(email, "Ticket in progress", emailBody);
-
-                // update the assignment
-                if (last_staff) {
-                    assignment.last_staff = staffs[index].id
-                    await assignment.save();
-                    // audit
-                    await logAudit(
-                        'Update',
-                        admin_id,
-                        `
-                        Ticket ID ${ticket_id} assigned to staff ID ${staffs[index].id}
-                        `
-                    )
-                    return true
-                }
-
-                const newAssignment = await Assignment.create({
-                    category_id: category_id,
-                    last_staff: staffs[index].id
-                })
-
-                // audit
-                await logAudit(
-                    'Update',
-                    admin_id,
-                    `
-                    Ticket ID ${ticket_id} assigned to staff ID ${staffs[index].id}
-                    `
-                )
-                return true // if true ticket has been automatically assigned
-            }
-            
-            // if false res.status(200).json({message: "Ticket sent to the ticket pool"})
-            return false
-        }
-    } catch(error) {
-        console.log(error.message)
-    }
-}
 
 // update ticket fields
 export const updateField = async (req, res) => {
@@ -351,22 +264,6 @@ export const updateField = async (req, res) => {
         
         if (count === 0) return res.status(400).json({message: "No row updated"});
 
-        // auto assign ticket 
-        const userTicket = await Ticket.findOne({
-            include: [{
-                model: User,
-                as: 'User',
-                required: true
-            }],
-            where: {
-                id: ticket_id
-            },
-            attributes: ['User.email']
-        })
-        const email = userTicket.User.email
-
-        const robin = await roundRobinAssignment(ticket_id, ticket[0].category_id, admin.id, email)
-
         await logAudit(
             "Update",
             req.user.id,
@@ -385,7 +282,7 @@ export const updateField = async (req, res) => {
 export const searchStaff = async (req, res) => {
     const ticket_id = req.params.ticketID;
     try {
-        // First get the ticket's category
+        // First get the ticket's details including its assigned staff and category
         const ticket = await Ticket.findByPk(ticket_id, {
             include: [{
                 model: Category,
@@ -396,8 +293,42 @@ export const searchStaff = async (req, res) => {
         if (!ticket) {
             return res.status(404).json({ message: 'Ticket not found' });
         }
+        
+        // If there's already a staff assigned to this ticket, return their info first
+        if (ticket.staff_id) {
+            // Get the currently assigned staff's information
+            const [assignedStaff] = await sequelize.query(`
+                SELECT 
+                    s.id as staff_id,
+                    u.username as staff_name,
+                    s.field_id,
+                    u.is_guest,
+                    COUNT(t.id) as assigned,
+                    SUM(CASE WHEN t.status_id = 2 THEN 1 ELSE 0 END) as in_progress,
+                    SUM(CASE WHEN t.status_id = 3 THEN 1 ELSE 0 END) as resolved,
+                    ROUND(
+                        CASE 
+                            WHEN COUNT(t.id) = 0 THEN 0
+                            ELSE SUM(CASE WHEN t.status_id = 3 THEN 1 ELSE 0 END) * 100.0/COUNT(t.id)
+                        END, 2
+                    ) as resolution_rate
+                FROM staff s
+                INNER JOIN "user" u ON u.staff_id = s.id
+                LEFT JOIN ticket t ON t.staff_id = s.id
+                WHERE s.id = :staff_id
+                GROUP BY s.id, u.username, s.field_id, u.is_guest
+            `, {
+                replacements: { staff_id: ticket.staff_id },
+                type: sequelize.QueryTypes.SELECT
+            });
+            
+            if (assignedStaff && assignedStaff.length > 0) {
+                return res.json(assignedStaff);
+            }
+        }
 
-        // Get staff with matching field_id and their performance metrics
+        // If no staff is assigned or the assigned staff wasn't found,
+        // get staff with matching field_id and their performance metrics
         const [staffList] = await sequelize.query(`
             SELECT 
                 s.id as staff_id,
@@ -421,11 +352,12 @@ export const searchStaff = async (req, res) => {
         `, {
             replacements: { category_id: ticket.Category.id },
             type: sequelize.QueryTypes.SELECT
-        });        console.log('Ticket category:', ticket.Category.id);
+        });
+
+        console.log('Ticket category:', ticket.Category.id);
         console.log('Found staff:', staffList);
 
-        // Ensure we're always returning an array, even if no staff was found
-        return res.json(staffList || []);
+        return res.json(staffList);
     } catch (error) {
         console.error('Error in searchStaff:', error);
         return res.status(500).json({ message: 'Server error' });
@@ -440,24 +372,11 @@ export const assignStaff = async (req, res) => {
     const {id} = req.body;
     const admin = req.admin;
     try {
-        // Get the current ticket to check its status
-        const currentTicket = await Ticket.findByPk(ticket_id);
-        if (!currentTicket) {
-            return res.status(404).json({message: "Ticket not found"});
-        }
-        
-        // Prepare update object - always update staff_id
-        const updateData = {
-            staff_id: id
-        };
-        
-        // Only change status to "In Progress" if the ticket is not already cancelled
-        if (currentTicket.status_id !== 4) { // 4 is "Cancelled" status
-            updateData.status_id = 2; // "In Progress" status
-        }
-        
-        // update the staff assigned to the ticket and status if needed
-        const ticket = await Ticket.update(updateData, {
+        // update the staff assigned to the ticket and the status
+        const ticket = await Ticket.update({
+            staff_id: id,
+            status_id: 2 // update to be in progress
+        }, {
             where: {
                 id: ticket_id
             },
