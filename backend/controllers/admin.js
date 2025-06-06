@@ -282,7 +282,7 @@ export const updateField = async (req, res) => {
 export const searchStaff = async (req, res) => {
     const ticket_id = req.params.ticketID;
     try {
-        // First get the ticket's category
+        // First get the ticket's details including its assigned staff and category
         const ticket = await Ticket.findByPk(ticket_id, {
             include: [{
                 model: Category,
@@ -293,8 +293,42 @@ export const searchStaff = async (req, res) => {
         if (!ticket) {
             return res.status(404).json({ message: 'Ticket not found' });
         }
+        
+        // If there's already a staff assigned to this ticket, return their info first
+        if (ticket.staff_id) {
+            // Get the currently assigned staff's information
+            const [assignedStaff] = await sequelize.query(`
+                SELECT 
+                    s.id as staff_id,
+                    u.username as staff_name,
+                    s.field_id,
+                    u.is_guest,
+                    COUNT(t.id) as assigned,
+                    SUM(CASE WHEN t.status_id = 2 THEN 1 ELSE 0 END) as in_progress,
+                    SUM(CASE WHEN t.status_id = 3 THEN 1 ELSE 0 END) as resolved,
+                    ROUND(
+                        CASE 
+                            WHEN COUNT(t.id) = 0 THEN 0
+                            ELSE SUM(CASE WHEN t.status_id = 3 THEN 1 ELSE 0 END) * 100.0/COUNT(t.id)
+                        END, 2
+                    ) as resolution_rate
+                FROM staff s
+                INNER JOIN "user" u ON u.staff_id = s.id
+                LEFT JOIN ticket t ON t.staff_id = s.id
+                WHERE s.id = :staff_id
+                GROUP BY s.id, u.username, s.field_id, u.is_guest
+            `, {
+                replacements: { staff_id: ticket.staff_id },
+                type: sequelize.QueryTypes.SELECT
+            });
+            
+            if (assignedStaff && assignedStaff.length > 0) {
+                return res.json(assignedStaff);
+            }
+        }
 
-        // Get staff with matching field_id and their performance metrics
+        // If no staff is assigned or the assigned staff wasn't found,
+        // get staff with matching field_id and their performance metrics
         const [staffList] = await sequelize.query(`
             SELECT 
                 s.id as staff_id,
