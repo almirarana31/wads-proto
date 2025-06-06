@@ -7,19 +7,19 @@ const router = express.Router();
 router.use(authN, userAuthZ)
 
 // basic conversation gets and send messages // this is ticket id
-router.get('/:id/history', ticketAuthZ, getConversationHistory)
+router.get('/ticket/:ticketID/history', ticketAuthZ, getConversationHistory)
 
 // this is conversation id
-router.get('/:id', getConversation)
+router.get('/:conversationID', getConversation)
 
 // this is conversation id
-router.post('/:id/message', conversationAuthZ, sendMessage)
+router.post('/:conversationID/message', conversationAuthZ, sendMessage)
 
 // create conversation // this is ticket id
-router.post('/:id', staffAuthZ, createConversation);
+router.post('/ticket/:ticketID', staffAuthZ, createConversation);
 
 // close conversation // this is conversation id
-router.patch('/:id', conversationAuthZ, staffAuthZ, closeConversation);
+router.patch('/:conversationID', conversationAuthZ, staffAuthZ, closeConversation);
 
 export default router
 

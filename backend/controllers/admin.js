@@ -174,7 +174,7 @@ export const getStaffPerformance = async (req, res) => {
 export const getStaff = async (req, res) => {
     
     // get the user_id of the staff from the staff-performance as a route parameter
-    const staff_id = req.params.id
+    const staff_id = req.params.staffID
     try {
         const [results] = await sequelize.query(
             `
@@ -201,7 +201,7 @@ export const getStaff = async (req, res) => {
 }
 
 export const editStaff = async (req, res) => {
-    const staff_id = req.params.id 
+    const staff_id = req.params.staffID
     const admin = req.user
     const {category_id, is_guest} = req.body
     try {
@@ -333,7 +333,7 @@ export const updateField = async (req, res) => {
     // const {category_id, priority_id, status_id} = req.body
     const {priority_id} = req.body
     // get the selected ticket by route params
-    const ticket_id = req.params.id
+    const ticket_id = req.params.ticketID
     const admin = req.user
     try {
         // update 
@@ -383,7 +383,7 @@ export const updateField = async (req, res) => {
 
 // get staff (used for assigning)
 export const searchStaff = async (req, res) => {
-    const ticket_id = req.params.ticket_id;
+    const ticket_id = req.params.ticketID;
     try {
         // First get the ticket's category
         const ticket = await Ticket.findByPk(ticket_id, {
@@ -436,7 +436,7 @@ export const searchStaff = async (req, res) => {
 // assign staff to a ticket
 export const assignStaff = async (req, res) => {
     // get ticket id from route parameter
-    const ticket_id = req.params.ticket_id
+    const ticket_id = req.params.ticketID
     // get selected staff info from the request body
     const {id} = req.body;
     const admin = req.admin;
@@ -499,7 +499,7 @@ export const createStaff = async (req, res) => {
 
 export const getAccStatus = async (req, res) => {
     
-    const staff_id = req.params.id
+    const staff_id = req.params.adminID
   
     try {
         const user = await User.findOne({
