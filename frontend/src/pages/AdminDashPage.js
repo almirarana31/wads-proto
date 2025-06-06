@@ -184,33 +184,78 @@ function AdminDashboard() {
     setIsAssignModalOpen(true);
   };  const handleStaffAssignment = async (ticketId, staffId, staffName) => {
     try {
+      console.log(`Assigning staff ${staffId} (${staffName}) to ticket ${ticketId}`);
       await authService.assignTicketToStaff(ticketId, staffId);
       
-      // Update UI - maintain current status for cancelled tickets
+      // Optimistically update the local state first
       setTickets(prevTickets => 
-        prevTickets.map(ticket => {
-          if (ticket.id === ticketId) {
-            // Only update status to 'In Progress' if it's not already 'Cancelled'
-            const updatedStatus = ticket.status === 'Cancelled' ? 'Cancelled' : 'In Progress';
-            return { 
-              ...ticket, 
-              assignedStaff: { id: staffId, name: staffName }, 
-              status: updatedStatus 
+        prevTickets.map(ticket => 
+          ticket.id === ticketId
+            ? {
+                ...ticket,
+                assignedStaff: { id: staffId, name: staffName },
+                status: 'In Progress' // Update status as well since backend will change it
+              }
+            : ticket
+        )
+      );
+
+      // Fetch fresh data in the background to ensure consistency
+      const [updatedTickets, statsData] = await Promise.all([
+        authService.getAdminTickets(),
+        authService.getAdminStatusSummary()
+      ]);
+      
+      // Map and check staff assignment for each ticket
+      const ticketsWithStaff = await Promise.all(updatedTickets.map(async ticket => {
+        let assignedStaff = null;
+        try {
+          const staffData = await authService.getStaffForTicket(ticket.ticket_id);
+          if (staffData && staffData.length > 0) {
+            assignedStaff = {
+              id: staffData[0].staff_id,
+              name: staffData[0].staff_name
             };
           }
-          return ticket;
-        })
-      );
+        } catch (err) {
+          console.error(`Error fetching staff for ticket ${ticket.ticket_id}:`, err);
+        }
+
+        return {
+          id: ticket.ticket_id,
+          subject: ticket.subject,
+          createdAt: ticket.createdAt,
+          lastUpdated: ticket.updatedAt || ticket.createdAt,
+          note: ticket.note,
+          category: ticket.Category?.name || '',
+          status: ticket.Status?.name || '',
+          priority: ticket.Priority || null,
+          name: ticket.User?.username || '',
+          email: ticket.User?.email || '',
+          assignedStaff: assignedStaff
+        };
+      }));
+
+      setTickets(ticketsWithStaff);
+      setStats(statsData);
       
-      // Show success modal instead of alert
+      // Show success modal
       setSuccessModal({
         isOpen: true,
         title: "Staff Assignment Successful",
         message: `Ticket ${ticketId} has been assigned to ${staffName}!`
       });
+
+      // Close the assign modal
+      handleCloseAssignModal();
     } catch (error) {
       console.error('Failed to assign ticket:', error);
-      setError('Failed to assign ticket. Please try again.');
+      // Show detailed error message
+      const errorMessage = error.response?.data?.message || error.message || 'Unknown error';
+      setError(`Failed to assign ticket: ${errorMessage}. Please try again.`);
+      
+      // Refresh tickets to ensure consistent state
+      handleRefresh();
     }
   };
   const handleCloseAssignModal = () => {

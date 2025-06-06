@@ -223,7 +223,7 @@ export const authService = {
         return response.data;
     },
 
-    async updateAdminTicketPriority(ticketId, priority_id) {
+    async updateTicketPriority(ticketId, priority_id) {
         const response = await api.patch(`/admin/tickets/${ticketId}`, { priority_id });
         return response.data;
     },
@@ -239,41 +239,68 @@ export const authService = {
         return response.data;
     },    async getStaffForTicket(ticketId) {
         try {
-            // Add error checking for ticketId
             if (!ticketId) {
-                throw new Error('Ticket ID is required');
-            }
-
-            const response = await api.get(`/admin/staff/ticket/${ticketId}`);
-            console.log('Raw API Response:', response);
-            console.log('API Response data:', response.data);
-
-            // If response.data is empty or null, return an empty array instead of throwing an error
-            if (!response.data || (Array.isArray(response.data) && response.data.length === 0)) {
-                console.log('No staff assigned to ticket', ticketId);
+                console.warn('getStaffForTicket called without ticketId');
                 return [];
             }
 
-            // If response.data is not an array, wrap it in an array
-            const staffData = Array.isArray(response.data) ? response.data : [response.data];
-            return staffData;
+            // Check sessionStorage cache first
+            const cachedData = sessionStorage.getItem(`ticket_staff_${ticketId}`);
+            if (cachedData) {
+                const { data, timestamp } = JSON.parse(cachedData);
+                // Cache is valid for 30 seconds
+                if (Date.now() - timestamp < 30000) {
+                    return data;
+                }
+            }
 
+            console.log(`🔍 Fetching staff for ticket ${ticketId}`);
+            const response = await api.get(`/admin/staff/ticket/${ticketId}`);
+            
+            if (!response.data) {
+                console.log(`No staff data returned for ticket ${ticketId}`);
+                return [];
+            }
+
+            // Normalize the response data
+            const staffData = Array.isArray(response.data) ? response.data : [response.data];
+            
+            // Cache the result
+            sessionStorage.setItem(`ticket_staff_${ticketId}`, JSON.stringify({
+                data: staffData,
+                timestamp: Date.now()
+            }));
+
+            return staffData;
         } catch (error) {
-            console.error('Staff fetch error:', {
-                message: error.message,
-                response: error.response?.data,
-                status: error.response?.status
-            });
-            // Return empty array instead of throwing an error to avoid breaking the UI
+            console.error('Error fetching staff for ticket:', error);
+            // Clear cache on error
+            sessionStorage.removeItem(`ticket_staff_${ticketId}`);
             return [];
         }
-    },
+    },    async assignTicketToStaff(ticketId, staffId) {
+        if (!ticketId || !staffId) {
+            throw new Error('Both ticketId and staffId are required');
+        }
 
-    async assignTicketToStaff(ticketId, staffId) {
-        const response = await api.patch(`/admin/tickets/${ticketId}/staff`, {
-            id: staffId
-        });
-        return response.data;
+        console.log(`📤 Assigning ticket ${ticketId} to staff ${staffId}`);
+        try {
+            const response = await api.patch(`/admin/tickets/${ticketId}/staff`, {
+                id: staffId
+            });
+
+            // Clear any cached staff data for this ticket
+            sessionStorage.removeItem(`ticket_staff_${ticketId}`);
+
+            console.log(`📥 Assignment successful:`, response.data);
+            return response.data;
+        } catch (error) {
+            console.error(`❌ Assignment failed:`, error.response?.data || error.message);
+            
+            // Provide detailed error information
+            const errorMessage = error.response?.data?.message || error.message;
+            throw new Error(`Failed to assign ticket: ${errorMessage}`);
+        }
     },
 
     async getAdminStaffActivationStatus(staffId) {
