@@ -301,92 +301,29 @@ export const authService = {
 
             throw error; // Let the caller handle other types of errors
         }
-    },    async assignTicketToStaff(ticketId, staffId) {
+    },async assignTicketToStaff(ticketId, staffId) {
         if (!ticketId || !staffId) {
             throw new Error('Both ticketId and staffId are required');
         }
 
-        // Remove TKT- prefix if present
-        const rawTicketId = ticketId.toString().replace('TKT-', '');
+        console.log(`📤 Assigning ticket ${ticketId} to staff ${staffId}`);
+        try {
+            const response = await api.patch(`/admin/tickets/${ticketId}/staff`, {
+                id: staffId
+            });
 
-        console.log(`📤 Assigning ticket ${rawTicketId} to staff ${staffId}`);
+            // Clear any cached staff data for this ticket
+            sessionStorage.removeItem(`ticket_staff_${ticketId}`);
 
-        // Add retry logic with exponential backoff
-        let retries = 3;
-        let lastError = null;
-        
-        while (retries > 0) {
-            try {
-                const response = await api.patch(`/admin/tickets/${rawTicketId}/staff`, {
-                    id: staffId
-                });
-
-                // Clear ALL relevant cached data
-                [
-                    `ticket_staff_${rawTicketId}`,
-                    `ticket_staff_TKT-${rawTicketId}`,
-                    `ticket_detail_${rawTicketId}`,
-                    `ticket_detail_TKT-${rawTicketId}`,
-                    'staff_performance',
-                    'status_summary'
-                ].forEach(key => sessionStorage.removeItem(key));
-
-                if (!response.data) {
-                    throw new Error('Empty response received');
-                }
-
-                if (!response.data.success) {
-                    throw new Error(response.data?.message || 'Assignment failed without error message');
-                }
-
-                if (!response.data.ticket?.staff_id || !response.data.ticket?.staff_name) {
-                    throw new Error('Invalid response structure: missing staff details');
-                }
-
-                // Double check the assignment was correct
-                if (response.data.ticket.staff_id.toString() !== staffId.toString()) {
-                    throw new Error('Server returned mismatched staff ID');
-                }
-
-                console.log('📥 Assignment successful:', response.data);
-                
-                // Add a small delay to allow backend to finish processing
-                await new Promise(resolve => setTimeout(resolve, 500));
-                
-                return response.data;
-
-            } catch (error) {
-                lastError = error;
-                console.error(`Assignment attempt ${4 - retries} failed:`, error);
-                
-                // Clear cache on error to ensure fresh data on retry
-                [
-                    `ticket_staff_${rawTicketId}`,
-                    `ticket_staff_TKT-${rawTicketId}`,
-                    `ticket_detail_${rawTicketId}`,
-                    `ticket_detail_TKT-${rawTicketId}`,
-                    'staff_performance',
-                    'status_summary'
-                ].forEach(key => sessionStorage.removeItem(key));
-                
-                retries--;
-                
-                if (retries > 0) {
-                    const delay = Math.pow(2, 3 - retries) * 1000; // exponential backoff: 1s, 2s, 4s
-                    console.log(`Retrying assignment after ${delay}ms... (${retries} retries left)`);
-                    await new Promise(resolve => setTimeout(resolve, delay));
-                    continue;
-                }
-                
-                // All retries failed
-                console.error('❌ Assignment failed after all retries:', error.response?.data || error.message);
-                const errorMessage = error.response?.data?.message || error.message;
-                throw new Error(`Failed to assign ticket after ${4 - retries} attempts: ${errorMessage}`);
-            }
+            console.log(`📥 Assignment successful:`, response.data);
+            return response.data;
+        } catch (error) {
+            console.error(`❌ Assignment failed:`, error.response?.data || error.message);
+            
+            // Provide detailed error information
+            const errorMessage = error.response?.data?.message || error.message;
+            throw new Error(`Failed to assign ticket: ${errorMessage}`);
         }
-
-        // This shouldn't be reached, but just in case
-        throw lastError || new Error('Failed to assign ticket after all retries');
     },
 
     async getAdminStaffActivationStatus(staffId) {

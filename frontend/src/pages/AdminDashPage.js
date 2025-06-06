@@ -184,29 +184,23 @@ function AdminDashboard() {
     setIsAssignModalOpen(true);
   };  const handleStaffAssignment = async (ticketId, staffId, staffName) => {
     try {
-      // Remove TKT- prefix if present
-      const rawTicketId = ticketId.startsWith('TKT-') ? ticketId.replace('TKT-', '') : ticketId;
+      console.log(`Assigning staff ${staffId} (${staffName}) to ticket ${ticketId}`);
+      await authService.assignTicketToStaff(ticketId, staffId);
       
-      console.log(`🔄 Assigning staff ${staffId} (${staffName}) to ticket ${rawTicketId}`);
-      
-      // Show loading state in the UI
-      setLoading(true);
-      
-      const assignResult = await authService.assignTicketToStaff(rawTicketId, staffId);
-      
-      if (!assignResult.success || !assignResult.ticket) {
-        throw new Error(assignResult.message || 'Failed to assign staff');
-      }
-      
-      // Validate the assignment result
-      if (assignResult.ticket.staff_id !== staffId) {
-        throw new Error('Server returned mismatched staff ID');
-      }
-      
-      // Wait for database to sync (backend might need time to process)
-      await new Promise(resolve => setTimeout(resolve, 500));
+      // Optimistically update the local state first
+      setTickets(prevTickets => 
+        prevTickets.map(ticket => 
+          ticket.id === ticketId
+            ? {
+                ...ticket,
+                assignedStaff: { id: staffId, name: staffName },
+                status: 'In Progress' // Update status as well since backend will change it
+              }
+            : ticket
+        )
+      );
 
-      // Fetch fresh data to ensure we have the latest state
+      // Fetch fresh data in the background to ensure consistency
       const [updatedTickets, statsData] = await Promise.all([
         authService.getAdminTickets(),
         authService.getAdminStatusSummary()
@@ -242,12 +236,6 @@ function AdminDashboard() {
         };
       }));
 
-      // Verify the assigned ticket is in our updated data
-      const updatedTicket = ticketsWithStaff.find(t => t.id === rawTicketId);
-      if (!updatedTicket || !updatedTicket.assignedStaff || updatedTicket.assignedStaff.id !== staffId) {
-        throw new Error('Failed to verify assignment in updated data');
-      }
-
       setTickets(ticketsWithStaff);
       setStats(statsData);
       
@@ -265,9 +253,8 @@ function AdminDashboard() {
       // Show detailed error message
       const errorMessage = error.response?.data?.message || error.message || 'Unknown error';
       setError(`Failed to assign ticket: ${errorMessage}. Please try again.`);
-    } finally {
-      setLoading(false);
-      // Always refresh tickets to ensure consistent state
+      
+      // Refresh tickets to ensure consistent state
       handleRefresh();
     }
   };
