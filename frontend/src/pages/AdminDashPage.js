@@ -21,11 +21,14 @@ function AdminDashboard() {
     async function fetchTickets() {
       try {
         setLoading(true);
+        setError(null);
         const data = await authService.getAdminTickets();
         
         // Map and check staff assignment for each ticket
         const ticketsWithStaff = await Promise.all(data.map(async ticket => {
           let assignedStaff = null;
+          let staffError = null;
+
           try {
             const staffData = await authService.getStaffForTicket(ticket.ticket_id);
             if (staffData && staffData.length > 0) {
@@ -36,6 +39,7 @@ function AdminDashboard() {
             }
           } catch (err) {
             console.error(`Error fetching staff for ticket ${ticket.ticket_id}:`, err);
+            staffError = `Failed to load assigned staff: ${err.message}`;
           }
 
           return {
@@ -49,14 +53,30 @@ function AdminDashboard() {
             priority: ticket.Priority || null,
             name: ticket.User?.username || '',
             email: ticket.User?.email || '',
-            assignedStaff: assignedStaff
+            assignedStaff,
+            staffError
           };
         }));
 
+        // Update tickets state
         setTickets(ticketsWithStaff);
+
+        // Check if any staff lookup errors occurred
+        const staffErrors = ticketsWithStaff
+            .filter(t => t.staffError)
+            .map(t => `Ticket ${t.id}: ${t.staffError}`);
+
+        if (staffErrors.length > 0) {
+            console.warn('Some staff lookups failed:', staffErrors);
+            // Only show error if ALL staff lookups failed
+            if (staffErrors.length === ticketsWithStaff.length) {
+                setError('Failed to load staff assignments. Please try refreshing.');
+            }
+        }
+
       } catch (err) {
         console.error('Failed to fetch tickets:', err);
-        setError('Failed to fetch tickets. Please try again later.');
+        setError('Failed to load tickets. Please try again later.');
       } finally {
         setLoading(false);
       }
