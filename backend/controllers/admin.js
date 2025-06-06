@@ -239,6 +239,93 @@ export const editStaff = async (req, res) => {
 }
 
 // ticket actions start here
+const roundRobinAssignment = async (ticket_id, category_id, admin_id, email) => {
+    try {
+        // get all staff
+        console.log("this is category_id", category_id)
+        const staffs = await Staff.findAll({
+            where: {
+                field_id: category_id
+            },
+            raw: true
+        })
+
+        const assignment = await Assignment.findOne({
+            where: {
+                category_id: category_id
+            },
+            raw: true
+        })
+
+        const last_staff = assignment?.last_staff
+        const lastIndex = staffs.findIndex(staff => staff.id === last_staff); // returns -1 if last_staff doesnt exist
+        console.log(staffs)
+        for (let i = 1; i <= staffs.length; i++) {
+            const index = (lastIndex + i) % staffs.length
+            console.log("hello trying to see if this works")
+            const count = await Ticket.count({
+                where: {
+                    staff_id: staffs[index].id,
+                    status_id: {[Op.notIn]: [4, 3]} // not resolved, not cancelled
+                }
+            })
+
+            console.log("Hi this is ", count)
+
+            if (count < 3) {
+                // update the ticket
+                const ticket = await Ticket.update({
+                    status_id: 2,
+                    staff_id: staffs[index].id
+                }, {
+                    where: {
+                    id: ticket_id
+                  }
+                })
+                console.log("here is a email ", email)
+                const emailBody = `
+                Staff has been assigned! Please wait for follow up emails!
+                `;
+                await sendOTP(email, "Ticket in progress", emailBody);
+
+                // update the assignment
+                if (last_staff) {
+                    assignment.last_staff = staffs[index].id
+                    await assignment.save();
+                    // audit
+                    await logAudit(
+                        'Update',
+                        admin_id,
+                        `
+                        Ticket ID ${ticket_id} assigned to staff ID ${staffs[index].id}
+                        `
+                    )
+                    return true
+                }
+
+                const newAssignment = await Assignment.create({
+                    category_id: category_id,
+                    last_staff: staffs[index].id
+                })
+
+                // audit
+                await logAudit(
+                    'Update',
+                    admin_id,
+                    `
+                    Ticket ID ${ticket_id} assigned to staff ID ${staffs[index].id}
+                    `
+                )
+                return true // if true ticket has been automatically assigned
+            }
+            
+            // if false res.status(200).json({message: "Ticket sent to the ticket pool"})
+            return false
+        }
+    } catch(error) {
+        console.log(error.message)
+    }
+}
 
 // update ticket fields
 export const updateField = async (req, res) => {
@@ -264,6 +351,22 @@ export const updateField = async (req, res) => {
         
         if (count === 0) return res.status(400).json({message: "No row updated"});
 
+        // auto assign ticket 
+        const userTicket = await Ticket.findOne({
+            include: [{
+                model: User,
+                as: 'User',
+                required: true
+            }],
+            where: {
+                id: ticket_id
+            },
+            attributes: ['User.email']
+        })
+        const email = userTicket.User.email
+
+        const robin = await roundRobinAssignment(ticket_id, ticket[0].category_id, admin.id, email)
+
         await logAudit(
             "Update",
             req.user.id,
@@ -282,7 +385,7 @@ export const updateField = async (req, res) => {
 export const searchStaff = async (req, res) => {
     const ticket_id = req.params.ticketID;
     try {
-        // First get the ticket's details including its assigned staff and category
+        // First get the ticket's category
         const ticket = await Ticket.findByPk(ticket_id, {
             include: [{
                 model: Category,
@@ -293,17 +396,14 @@ export const searchStaff = async (req, res) => {
         if (!ticket) {
             return res.status(404).json({ message: 'Ticket not found' });
         }
-          // We'll get all eligible staff regardless of current assignment
-        // and just tag the currently assigned one
-        
-        console.log('Current staff assignment:', ticket.staff_id ? `Staff ID ${ticket.staff_id}` : 'None');        // Get ALL staff with matching field_id and their performance metrics
+
+        // Get staff with matching field_id and their performance metrics
         const [staffList] = await sequelize.query(`
             SELECT 
                 s.id as staff_id,
                 u.username as staff_name,
                 s.field_id,
                 u.is_guest,
-                CASE WHEN s.id = :current_staff_id THEN true ELSE false END as is_current_staff,
                 COUNT(t.id) as assigned,
                 SUM(CASE WHEN t.status_id = 2 THEN 1 ELSE 0 END) as in_progress,
                 SUM(CASE WHEN t.status_id = 3 THEN 1 ELSE 0 END) as resolved,
@@ -316,13 +416,10 @@ export const searchStaff = async (req, res) => {
             FROM staff s
             INNER JOIN "user" u ON u.staff_id = s.id
             LEFT JOIN ticket t ON t.staff_id = s.id
-            WHERE s.field_id = :category_id AND u.is_guest = false
+            WHERE s.field_id = :category_id
             GROUP BY s.id, u.username, s.field_id, u.is_guest
         `, {
-            replacements: { 
-                category_id: ticket.Category.id,
-                current_staff_id: ticket.staff_id || null
-            },
+            replacements: { category_id: ticket.Category.id },
             type: sequelize.QueryTypes.SELECT
         });
 
