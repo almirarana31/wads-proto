@@ -26,10 +26,14 @@ function AssignStaffModal({ isOpen, onClose, onAssign, ticketId }) {
         
         // Get the currently assigned staff ID for this ticket to exclude later
         const currentlyAssignedStaffId = ticketDetails.staff_id;
+          console.log('Raw ticket details:', ticketDetails);
+        console.log('All staff data:', allStaffData);
+        console.log('Currently assigned staff ID:', currentlyAssignedStaffId);
         
         const staffDetails = await Promise.all(
           allStaffData.map(async (staff) => {
             const details = await authService.getAdminStaffDetail(staff.staff_id);
+            console.log(`Staff ${staff.staff_id} details:`, details);
             return {
               ...staff,
               field_name: details[0]?.field_name,
@@ -37,23 +41,31 @@ function AssignStaffModal({ isOpen, onClose, onAssign, ticketId }) {
             };
           })
         );
-
-        // Filter staff to include all eligible staff regardless of current assignment
+        
+        console.log('Staff details after mapping:', staffDetails);        // Filter staff to include all eligible staff regardless of current assignment
         // This shows all staff matching the category, not just the currently assigned one
+        console.log('Ticket category name:', ticketDetails.Category?.name);
+        
         const eligibleStaff = staffDetails.filter(staff => {
           const matchesCategory = staff.field_name === ticketDetails.Category.name;
           const isActive = !staff.is_guest;
+          console.log(`Staff ${staff.staff_id} (${staff.staff_name}) - Match category: ${matchesCategory}, Active: ${isActive}, Field: ${staff.field_name}`);
           return matchesCategory && isActive;
-        });        const formattedStaff = eligibleStaff.map(staff => ({
-          staff_id: staff.staff_id,
+        });
+        
+        console.log('Eligible staff after filtering:', eligibleStaff);        const formattedStaff = eligibleStaff.map(staff => ({          staff_id: staff.staff_id,
           name: staff.staff_name,
           field_name: staff.field_name,
           resolution_rate: `${staff.resolution_rate}%`,
           in_progress: staff.assigned - staff.resolved,
           resolved: staff.resolved,
           is_guest: false,
-          isCurrentlyAssigned: staff.staff_id === ticketDetails.staff_id
+          isCurrentlyAssigned: staff.is_current_staff || (staff.staff_id === ticketDetails.staff_id)
         }));
+
+        console.log('Formatted staff to display:', formattedStaff);
+        console.log('Currently assigned staff highlighted:', 
+          formattedStaff.filter(staff => staff.isCurrentlyAssigned));
 
         setStaffList(formattedStaff);
 
@@ -66,19 +78,25 @@ function AssignStaffModal({ isOpen, onClose, onAssign, ticketId }) {
 
     fetchEligibleStaff();
   }, [isOpen, ticketId]);
-
   // filter staff based on search query
   const filteredStaff = useMemo(() => {
+    console.log('Filtering staff list with search query:', searchQuery);
+    console.log('Current staff list to filter:', staffList);
+    
+    let result;
     if (!searchQuery) {
-      return staffList.filter(staff => !staff.is_guest);
+      result = staffList.filter(staff => !staff.is_guest);
+    } else {
+      const searchLower = searchQuery.toLowerCase();
+      result = staffList.filter(staff => {
+        const nameMatch = staff.name?.toLowerCase().includes(searchLower);
+        const idMatch = staff.staff_id?.toString().includes(searchLower);
+        return (nameMatch || idMatch) && !staff.is_guest;
+      });
     }
     
-    const searchLower = searchQuery.toLowerCase();
-    return staffList.filter(staff => {
-      const nameMatch = staff.name?.toLowerCase().includes(searchLower);
-      const idMatch = staff.staff_id?.toString().includes(searchLower);
-      return (nameMatch || idMatch) && !staff.is_guest;
-    });
+    console.log('Filtered staff to display:', result);
+    return result;
   }, [staffList, searchQuery]);
 
   const handleAssign = async () => {
