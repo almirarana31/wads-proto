@@ -8,6 +8,7 @@ import AssignStaffModal from '../components/AssignStaffModal';
 import { PageTitle, Text, Subheading, StatText } from '../components/text';
 import StaffCard from '../components/StaffCard';
 import StaffEditModal from '../components/StaffEditModal';
+import SuccessModal from '../components/SuccessModal';
 import { authService } from '../api/authService';
 
 function AdminDashboard() {
@@ -125,6 +126,11 @@ function AdminDashboard() {
   const [categories, setCategories] = useState([]);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [adminUsername, setAdminUsername] = useState('');
+  const [successModal, setSuccessModal] = useState({
+    isOpen: false,
+    title: '',
+    message: ''
+  });
 
   useEffect(() => {
     async function fetchPriorities() {
@@ -176,8 +182,7 @@ function AdminDashboard() {
   const handleAssignTicket = (ticketId) => {
     setSelectedTicketId(ticketId);
     setIsAssignModalOpen(true);
-  };
-  const handleStaffAssignment = async (ticketId, staffId, staffName) => {
+  };  const handleStaffAssignment = async (ticketId, staffId, staffName) => {
     try {
       await authService.assignTicketToStaff(ticketId, staffId);
       
@@ -190,10 +195,15 @@ function AdminDashboard() {
         )
       );
       
-      alert(`Ticket ${ticketId} has been assigned to ${staffName}!`);
+      // Show success modal instead of alert
+      setSuccessModal({
+        isOpen: true,
+        title: "Staff Assignment Successful",
+        message: `Ticket ${ticketId} has been assigned to ${staffName}!`
+      });
     } catch (error) {
       console.error('Failed to assign ticket:', error);
-      alert('Failed to assign ticket. Please try again.');
+      setError('Failed to assign ticket. Please try again.');
     }
   };
   const handleCloseAssignModal = () => {
@@ -783,14 +793,22 @@ function AdminDashboard() {
         }}
         onSave={handleSaveStaff}
         staffData={selectedStaff}
-      />
-
+      />      
+      
       {/* Error Display */}
       {error && (
         <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
           {error}
         </div>
       )}
+      
+      {/* Success Modal for staff assignment */}
+      <SuccessModal
+        isOpen={successModal.isOpen}
+        onClose={() => setSuccessModal({ ...successModal, isOpen: false })}
+        title={successModal.title}
+        message={successModal.message}
+      />
     </div>
   );
 }

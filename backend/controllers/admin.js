@@ -441,11 +441,24 @@ export const assignStaff = async (req, res) => {
     const {id} = req.body;
     const admin = req.admin;
     try {
-        // update the staff assigned to the ticket and the status
-        const ticket = await Ticket.update({
-            staff_id: id,
-            status_id: 2 // update to be in progress
-        }, {
+        // Get the current ticket to check its status
+        const currentTicket = await Ticket.findByPk(ticket_id);
+        if (!currentTicket) {
+            return res.status(404).json({message: "Ticket not found"});
+        }
+        
+        // Prepare update object - always update staff_id
+        const updateData = {
+            staff_id: id
+        };
+        
+        // Only change status to "In Progress" if the ticket is not already cancelled
+        if (currentTicket.status_id !== 4) { // 4 is "Cancelled" status
+            updateData.status_id = 2; // "In Progress" status
+        }
+        
+        // update the staff assigned to the ticket and status if needed
+        const ticket = await Ticket.update(updateData, {
             where: {
                 id: ticket_id
             },
