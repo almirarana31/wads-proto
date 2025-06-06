@@ -244,62 +244,126 @@ export const authService = {
                 return [];
             }
 
-            console.log(`🔍 Fetching staff for ticket ${ticketId}`);
-            const response = await api.get(`/admin/staff/ticket/${ticketId}`);
-            
-            if (!response.data) {
-                console.log(`No staff data returned for ticket ${ticketId}`);
-                return [];
-            }
+            // Remove TKT- prefix if present
+            const rawTicketId = ticketId.toString().replace('TKT-', '');
 
-            // Normalize and validate the response data
-            const staffData = Array.isArray(response.data) ? response.data : [response.data];
-            const validStaffData = staffData.filter(staff => (
-                staff &&
-                staff.staff_id &&
-                staff.staff_name &&
-                !staff.is_guest &&
-                typeof staff.assigned === 'number'
-            ));
-
-            if (validStaffData.length === 0) {
-                console.log(`No valid staff data found for ticket ${ticketId}`);
-                return [];
-            }
-
-            // Sort staff by resolution_rate and assigned tickets
-            validStaffData.sort((a, b) => {
-                // First by resolution rate (descending)
-                if (b.resolution_rate !== a.resolution_rate) {
-                    return b.resolution_rate - a.resolution_rate;
+            // Try to get cached data first (with 15s TTL)
+            const cachedData = sessionStorage.getItem(`ticket_staff_${rawTicketId}`);
+            if (cachedData) {
+                const { data, timestamp } = JSON.parse(cachedData);
+                const age = Date.now() - timestamp;
+                if (age < 15000) { // 15 seconds TTL
+                    console.log(`📦 Using cached staff data for ticket ${rawTicketId} (${age}ms old)`);
+                    return data;
                 }
-                // Then by number of assigned tickets (ascending)
-                return a.assigned - b.assigned;
-            });
-
-            // Cache the result with a shorter TTL (15 seconds) to ensure fresher data
-            sessionStorage.setItem(`ticket_staff_${ticketId}`, JSON.stringify({
-                data: validStaffData,
-                timestamp: Date.now()
-            }));
-
-            console.log(`📊 Found ${validStaffData.length} eligible staff members for ticket ${ticketId}`);
-            return validStaffData;
-        } catch (error) {
-            console.error('Error fetching staff for ticket:', error);
-            // Clear cache on error
-            sessionStorage.removeItem(`ticket_staff_${ticketId}`);
-            
-            // Be more specific about the error
-            if (error.response?.status === 404) {
-                console.log('Ticket not found');
-                return [];
-            } else if (error.response?.status === 400) {
-                console.log('Invalid ticket data:', error.response.data?.message);
-                return [];
+                sessionStorage.removeItem(`ticket_staff_${rawTicketId}`);
             }
 
-            throw error; // Let the caller handle other types of errors
+            console.log(`🔍 Fetching staff for ticket ${rawTicketId}`);
+            
+            // Add retry logic for network issues
+            let retries = 2;
+            let lastError = null;
+
+            while (retries >= 0) {
+                try {
+                    const response = await api.get(`/admin/staff/ticket/${rawTicketId}`);
+
+                    // Validate response structure
+                    if (!response.data) {
+                        console.log(`No staff data returned for ticket ${rawTicketId}`);
+                        return [];
+                    }
+
+                    // Convert possible single object to array and ensure .data exists
+                    let staffArray = response.data.data || response.data;  
+                    if (!Array.isArray(staffArray)) {
+                        staffArray = [staffArray];
+                    }
+
+                    // Validate each staff record
+                    const validStaffData = staffArray.filter(staff => (
+                        staff &&
+                        staff.staff_id &&
+                        staff.staff_name &&
+                        !staff.is_guest &&
+                        typeof staff.assigned === 'number' &&
+                        typeof staff.in_progress === 'number' &&
+                        typeof staff.resolved === 'number'
+                    ));
+
+                    if (validStaffData.length === 0) {
+                        console.log(`No valid staff data found for ticket ${rawTicketId}`);
+                        return [];
+                    }
+
+                    // Sort staff by availability and performance:
+                    // 1. Staff with fewer than 5 active tickets
+                    // 2. Staff with higher resolution rate
+                    // 3. Staff with fewer total tickets
+                    validStaffData.sort((a, b) => {
+                        // First check if staff has capacity (less than 5 active tickets)
+                        const aHasCapacity = a.in_progress < 5;
+                        const bHasCapacity = b.in_progress < 5;
+                        if (aHasCapacity !== bHasCapacity) {
+                            return bHasCapacity - aHasCapacity;
+                        }
+                        // Then by resolution rate
+                        if (b.resolution_rate !== a.resolution_rate) {
+                            return b.resolution_rate - a.resolution_rate;
+                        }
+                        // Finally by total assigned tickets
+                        return a.assigned - b.assigned;
+                    });
+
+                    // Cache the result
+                    sessionStorage.setItem(`ticket_staff_${rawTicketId}`, JSON.stringify({
+                        data: validStaffData,
+                        timestamp: Date.now()
+                    }));
+
+                    console.log(`📊 Found ${validStaffData.length} eligible staff members for ticket ${rawTicketId}`);
+                    return validStaffData;
+
+                } catch (error) {
+                    console.error(`Error fetching staff for ticket ${rawTicketId} (attempt ${2 - retries}/3):`, error);
+                    lastError = error;
+                    
+                    // Clear cache on error
+                    sessionStorage.removeItem(`ticket_staff_${rawTicketId}`);
+                    
+                    // Handle specific error cases
+                    if (error.response?.status === 404) {
+                        console.log('Ticket not found');
+                        return [];
+                    } else if (error.response?.status === 400) {
+                        console.log('Invalid ticket data:', error.response.data?.message);
+                        return [];
+                    }
+                    
+                    // Only retry on network errors or 500s
+                    if (error.response?.status === 500 || !error.response) {
+                        retries--;
+                        if (retries >= 0) {
+                            const delay = Math.pow(2, 2 - retries) * 1000; // 1s, 2s, 4s
+                            console.log(`Retrying in ${delay}ms...`);
+                            await new Promise(resolve => setTimeout(resolve, delay));
+                            continue;
+                        }
+                    }
+                    
+                    // For other errors, or if we're out of retries, return empty array
+                    return [];
+                }
+            }
+
+            // This shouldn't be reached, but just in case
+            console.error('Failed to fetch staff after all retries');
+            return [];
+
+        } catch (error) {
+            console.error('Unexpected error in getStaffForTicket:', error);
+            return [];
         }
     },    async assignTicketToStaff(ticketId, staffId) {
         if (!ticketId || !staffId) {
