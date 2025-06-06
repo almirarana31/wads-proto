@@ -421,12 +421,11 @@ export const searchStaff = async (req, res) => {
         `, {
             replacements: { category_id: ticket.Category.id },
             type: sequelize.QueryTypes.SELECT
-        });
-
-        console.log('Ticket category:', ticket.Category.id);
+        });        console.log('Ticket category:', ticket.Category.id);
         console.log('Found staff:', staffList);
 
-        return res.json(staffList);
+        // Ensure we're always returning an array, even if no staff was found
+        return res.json(staffList || []);
     } catch (error) {
         console.error('Error in searchStaff:', error);
         return res.status(500).json({ message: 'Server error' });

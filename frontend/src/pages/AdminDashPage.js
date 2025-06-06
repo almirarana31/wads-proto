@@ -186,13 +186,20 @@ function AdminDashboard() {
     try {
       await authService.assignTicketToStaff(ticketId, staffId);
       
-      // Update UI
+      // Update UI - maintain current status for cancelled tickets
       setTickets(prevTickets => 
-        prevTickets.map(ticket => 
-          ticket.id === ticketId 
-            ? { ...ticket, assignedStaff: { id: staffId, name: staffName }, status: 'In Progress' }
-            : ticket
-        )
+        prevTickets.map(ticket => {
+          if (ticket.id === ticketId) {
+            // Only update status to 'In Progress' if it's not already 'Cancelled'
+            const updatedStatus = ticket.status === 'Cancelled' ? 'Cancelled' : 'In Progress';
+            return { 
+              ...ticket, 
+              assignedStaff: { id: staffId, name: staffName }, 
+              status: updatedStatus 
+            };
+          }
+          return ticket;
+        })
       );
       
       // Show success modal instead of alert

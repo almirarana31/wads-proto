@@ -237,9 +237,7 @@ export const authService = {
     async getCategories() {
         const response = await api.get('/ticket/categories');
         return response.data;
-    },
-
-    async getStaffForTicket(ticketId) {
+    },    async getStaffForTicket(ticketId) {
         try {
             // Add error checking for ticketId
             if (!ticketId) {
@@ -250,9 +248,10 @@ export const authService = {
             console.log('Raw API Response:', response);
             console.log('API Response data:', response.data);
 
-            // Ensure we have an array response
-            if (!response.data) {
-                throw new Error('No data received from server');
+            // If response.data is empty or null, return an empty array instead of throwing an error
+            if (!response.data || (Array.isArray(response.data) && response.data.length === 0)) {
+                console.log('No staff assigned to ticket', ticketId);
+                return [];
             }
 
             // If response.data is not an array, wrap it in an array
@@ -265,7 +264,8 @@ export const authService = {
                 response: error.response?.data,
                 status: error.response?.status
             });
-            throw new Error(`Failed to fetch staff: ${error.message}`);
+            // Return empty array instead of throwing an error to avoid breaking the UI
+            return [];
         }
     },
 
