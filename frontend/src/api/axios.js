@@ -12,8 +12,8 @@ const api = axios.create({
     },
     withCredentials: true, // Important for CORS with credentials
     validateStatus: function (status) {
-        // Consider any status less than 500 as success
-        return status < 500;
+        // Only consider 2xx status codes as success
+        return status >= 200 && status < 300;
     }
 });
 
@@ -51,11 +51,31 @@ api.interceptors.request.use(
 
 // Add a response interceptor for handling errors
 api.interceptors.response.use(
-    (response) => response,
+    (response) => {
+        // Additional validation of response structure for specific endpoints
+        if (response.config.url.includes('/staff') && !response.data) {
+            return Promise.reject(new Error('Invalid response structure from staff endpoint'));
+        }
+        return response;
+    },
     (error) => {
-        // Handle specific error cases here
+        // Enhanced error handling
         if (error.response) {
-            switch (error.response.status) {
+            const status = error.response.status;
+            const errorData = error.response.data;
+            
+            console.error(`API Error [${status}]:`, {
+                url: error.config.url,
+                method: error.config.method,
+                data: errorData,
+                headers: error.config.headers
+            });
+
+            switch (status) {
+                case 400:
+                    // Bad request - likely validation error
+                    console.error('Validation error:', errorData);
+                    break;
                 case 401:
                     // Clear tokens ONLY on unauthorized (invalid/expired token)
                     sessionStorage.removeItem('token');

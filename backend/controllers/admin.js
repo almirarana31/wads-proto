@@ -393,79 +393,129 @@ export const assignStaff = async (req, res) => {
     const admin = req.admin;
 
     try {
-        // Validate the input
+        // Input validation
         if (!ticket_id || !id) {
-            return res.status(400).json({ message: 'Ticket ID and Staff ID are required' });
+            return res.status(400).json({ 
+                success: false,
+                message: 'Ticket ID and Staff ID are required' 
+            });
         }
 
-        // Check if the ticket exists and isn't already resolved
-        const existingTicket = await Ticket.findOne({
-            where: {
-                id: ticket_id,
-                status_id: {
-                    [Op.ne]: 3 // not resolved
-                }
-            },
-            include: [
-                {
-                    model: Category,
-                    attributes: ['id', 'name']
-                }
-            ]
-        });
+        // Check if the ticket exists and isn't closed - use transaction for consistency
+        const transaction = await sequelize.transaction();
 
-        if (!existingTicket) {
-            return res.status(404).json({ message: 'Ticket not found or already resolved' });
-        }
-
-        // Verify that the staff exists and has the correct field/category
-        const staffMember = await Staff.findOne({
-            where: {
-                id: id,
-                field_id: existingTicket.Category.id
-            },
-            include: [
-                {
-                    model: User,
-                    attributes: ['username', 'is_guest'],
-                    where: {
-                        is_guest: false
+        try {
+            const existingTicket = await Ticket.findOne({
+                where: {
+                    id: ticket_id,
+                    status_id: {
+                        [Op.notIn]: [3, 4] // not resolved or cancelled
                     }
-                }
-            ]
-        });
+                },
+                include: [
+                    {
+                        model: Category,
+                        attributes: ['id', 'name'],
+                        required: true
+                    }
+                ],
+                transaction
+            });
 
-        if (!staffMember) {
-            return res.status(400).json({ message: 'Invalid staff assignment. Staff must be active and match ticket category.' });
-        }
-
-        // Update the ticket
-        await existingTicket.update({
-            staff_id: id,
-            status_id: 2 // In Progress
-        });
-
-        // Log the audit
-        await logAudit(
-            "Update",
-            req.user.id,
-            `Ticket ${ticket_id} assigned to staff ${staffMember.User.username} (ID: ${id})`
-        );
-
-        // Return updated ticket with staff info
-        return res.status(200).json({
-            success: true,
-            message: 'Ticket successfully assigned',
-            ticket: {
-                id: existingTicket.id,
-                staff_id: id,
-                staff_name: staffMember.User.username,
-                status: 'In Progress'
+            if (!existingTicket) {
+                await transaction.rollback();
+                return res.status(404).json({ 
+                    success: false,
+                    message: 'Ticket not found or cannot be assigned'
+                });
             }
-        });
+
+            // Verify staff eligibility
+            const staffMember = await Staff.findOne({
+                where: {
+                    id: id,
+                    field_id: existingTicket.Category.id
+                },
+                include: [
+                    {
+                        model: User,
+                        attributes: ['username', 'is_guest'],
+                        where: {
+                            is_guest: false
+                        },
+                        required: true
+                    }
+                ],
+                transaction
+            });
+
+            if (!staffMember) {
+                await transaction.rollback();
+                return res.status(400).json({ 
+                    success: false,
+                    message: 'Invalid staff assignment. Staff must be active and match ticket category.'
+                });
+            }
+
+            // Check staff's current workload
+            const currentWorkload = await Ticket.count({
+                where: {
+                    staff_id: id,
+                    status_id: 2 // In Progress
+                },
+                transaction
+            });
+
+            if (currentWorkload >= 5) {
+                await transaction.rollback();
+                return res.status(400).json({ 
+                    success: false,
+                    message: 'Staff member already has maximum number of tickets (5).'
+                });
+            }
+
+            // Update the ticket with staff assignment
+            await existingTicket.update({
+                staff_id: id,
+                status_id: 2, // In Progress
+                updatedAt: new Date() // Force update timestamp
+            }, { transaction });
+
+            // Log the audit
+            await logAudit(
+                "Update",
+                req.user.id,
+                `Ticket ${ticket_id} assigned to staff ${staffMember.User.username} (ID: ${id})`,
+                transaction
+            );
+
+            await transaction.commit();
+
+            // Return comprehensive response
+            return res.status(200).json({
+                success: true,
+                message: 'Ticket successfully assigned',
+                ticket: {
+                    id: existingTicket.id,
+                    staff_id: staffMember.id,
+                    staff_name: staffMember.User.username,
+                    status: 'In Progress',
+                    assigned_at: new Date(),
+                    category_id: existingTicket.Category.id,
+                    category_name: existingTicket.Category.name
+                }
+            });
+        } catch (error) {
+            await transaction.rollback();
+            throw error;
+        }
     } catch (error) {
-        return res.status(500).json({message: error.message})
-    };
+        console.error('Error in assignStaff:', error);
+        return res.status(500).json({
+            success: false,
+            message: error.message || 'Internal server error'
+        });
+    }
 }
 
 export const createStaff = async (req, res) => {
