@@ -244,16 +244,6 @@ export const authService = {
                 return [];
             }
 
-            // Check sessionStorage cache first
-            const cachedData = sessionStorage.getItem(`ticket_staff_${ticketId}`);
-            if (cachedData) {
-                const { data, timestamp } = JSON.parse(cachedData);
-                // Cache is valid for 30 seconds
-                if (Date.now() - timestamp < 30000) {
-                    return data;
-                }
-            }
-
             console.log(`🔍 Fetching staff for ticket ${ticketId}`);
             const response = await api.get(`/admin/staff/ticket/${ticketId}`);
             
@@ -262,23 +252,56 @@ export const authService = {
                 return [];
             }
 
-            // Normalize the response data
+            // Normalize and validate the response data
             const staffData = Array.isArray(response.data) ? response.data : [response.data];
-            
-            // Cache the result
+            const validStaffData = staffData.filter(staff => (
+                staff &&
+                staff.staff_id &&
+                staff.staff_name &&
+                !staff.is_guest &&
+                typeof staff.assigned === 'number'
+            ));
+
+            if (validStaffData.length === 0) {
+                console.log(`No valid staff data found for ticket ${ticketId}`);
+                return [];
+            }
+
+            // Sort staff by resolution_rate and assigned tickets
+            validStaffData.sort((a, b) => {
+                // First by resolution rate (descending)
+                if (b.resolution_rate !== a.resolution_rate) {
+                    return b.resolution_rate - a.resolution_rate;
+                }
+                // Then by number of assigned tickets (ascending)
+                return a.assigned - b.assigned;
+            });
+
+            // Cache the result with a shorter TTL (15 seconds) to ensure fresher data
             sessionStorage.setItem(`ticket_staff_${ticketId}`, JSON.stringify({
-                data: staffData,
+                data: validStaffData,
                 timestamp: Date.now()
             }));
 
-            return staffData;
+            console.log(`📊 Found ${validStaffData.length} eligible staff members for ticket ${ticketId}`);
+            return validStaffData;
         } catch (error) {
             console.error('Error fetching staff for ticket:', error);
             // Clear cache on error
             sessionStorage.removeItem(`ticket_staff_${ticketId}`);
-            return [];
+            
+            // Be more specific about the error
+            if (error.response?.status === 404) {
+                console.log('Ticket not found');
+                return [];
+            } else if (error.response?.status === 400) {
+                console.log('Invalid ticket data:', error.response.data?.message);
+                return [];
+            }
+
+            throw error; // Let the caller handle other types of errors
         }
-    },    async assignTicketToStaff(ticketId, staffId) {
+    },async assignTicketToStaff(ticketId, staffId) {
         if (!ticketId || !staffId) {
             throw new Error('Both ticketId and staffId are required');
         }

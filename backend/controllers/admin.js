@@ -283,25 +283,43 @@ export const searchStaff = async (req, res) => {
     const ticket_id = req.params.ticketID;
     try {
         // First get the ticket's details including its assigned staff and category
-        const ticket = await Ticket.findByPk(ticket_id, {
-            include: [{
-                model: Category,
-                attributes: ['id']
-            }]
+        const ticket = await Ticket.findOne({
+            where: { id: ticket_id },
+            include: [
+                {
+                    model: Category,
+                    attributes: ['id', 'name'],
+                    required: true
+                },
+                {
+                    model: Staff,
+                    attributes: ['id', 'field_id'],
+                    include: [
+                        {
+                            model: User,
+                            attributes: ['username', 'is_guest']
+                        }
+                    ]
+                }
+            ]
         });
 
         if (!ticket) {
             return res.status(404).json({ message: 'Ticket not found' });
         }
-        
+
+        if (!ticket.Category) {
+            return res.status(400).json({ message: 'Ticket category not found' });
+        }
+
         // If there's already a staff assigned to this ticket, return their info first
-        if (ticket.staff_id) {
-            // Get the currently assigned staff's information
+        if (ticket.Staff) {
             const [assignedStaff] = await sequelize.query(`
                 SELECT 
                     s.id as staff_id,
                     u.username as staff_name,
                     s.field_id,
+                    c.name as field_name,
                     u.is_guest,
                     COUNT(t.id) as assigned,
                     SUM(CASE WHEN t.status_id = 2 THEN 1 ELSE 0 END) as in_progress,
@@ -315,15 +333,16 @@ export const searchStaff = async (req, res) => {
                 FROM staff s
                 INNER JOIN "user" u ON u.staff_id = s.id
                 LEFT JOIN ticket t ON t.staff_id = s.id
+                LEFT JOIN category c ON s.field_id = c.id
                 WHERE s.id = :staff_id
-                GROUP BY s.id, u.username, s.field_id, u.is_guest
+                GROUP BY s.id, u.username, s.field_id, c.name, u.is_guest
             `, {
-                replacements: { staff_id: ticket.staff_id },
+                replacements: { staff_id: ticket.Staff.id },
                 type: sequelize.QueryTypes.SELECT
             });
             
-            if (assignedStaff && assignedStaff.length > 0) {
-                return res.json(assignedStaff);
+            if (assignedStaff) {
+                return res.json([assignedStaff]);
             }
         }
 
@@ -334,6 +353,7 @@ export const searchStaff = async (req, res) => {
                 s.id as staff_id,
                 u.username as staff_name,
                 s.field_id,
+                c.name as field_name,
                 u.is_guest,
                 COUNT(t.id) as assigned,
                 SUM(CASE WHEN t.status_id = 2 THEN 1 ELSE 0 END) as in_progress,
@@ -347,8 +367,10 @@ export const searchStaff = async (req, res) => {
             FROM staff s
             INNER JOIN "user" u ON u.staff_id = s.id
             LEFT JOIN ticket t ON t.staff_id = s.id
-            WHERE s.field_id = :category_id
-            GROUP BY s.id, u.username, s.field_id, u.is_guest
+            LEFT JOIN category c ON s.field_id = c.id
+            WHERE s.field_id = :category_id AND u.is_guest = false
+            GROUP BY s.id, u.username, s.field_id, c.name, u.is_guest
+            ORDER BY resolution_rate DESC, assigned ASC
         `, {
             replacements: { category_id: ticket.Category.id },
             type: sequelize.QueryTypes.SELECT
@@ -366,29 +388,81 @@ export const searchStaff = async (req, res) => {
 
 // assign staff to a ticket
 export const assignStaff = async (req, res) => {
-    // get ticket id from route parameter
-    const ticket_id = req.params.ticketID
-    // get selected staff info from the request body
+    const ticket_id = req.params.ticketID;
     const {id} = req.body;
     const admin = req.admin;
+
     try {
-        // update the staff assigned to the ticket and the status
-        const ticket = await Ticket.update({
-            staff_id: id,
-            status_id: 2 // update to be in progress
-        }, {
-            where: {
-                id: ticket_id
-            },
-            raw: true
+        // Validate the input
+        if (!ticket_id || !id) {
+            return res.status(400).json({ message: 'Ticket ID and Staff ID are required' });
         }
-    );
-        // audit here
+
+        // Check if the ticket exists and isn't already resolved
+        const existingTicket = await Ticket.findOne({
+            where: {
+                id: ticket_id,
+                status_id: {
+                    [Op.ne]: 3 // not resolved
+                }
+            },
+            include: [
+                {
+                    model: Category,
+                    attributes: ['id', 'name']
+                }
+            ]
+        });
+
+        if (!existingTicket) {
+            return res.status(404).json({ message: 'Ticket not found or already resolved' });
+        }
+
+        // Verify that the staff exists and has the correct field/category
+        const staffMember = await Staff.findOne({
+            where: {
+                id: id,
+                field_id: existingTicket.Category.id
+            },
+            include: [
+                {
+                    model: User,
+                    attributes: ['username', 'is_guest'],
+                    where: {
+                        is_guest: false
+                    }
+                }
+            ]
+        });
+
+        if (!staffMember) {
+            return res.status(400).json({ message: 'Invalid staff assignment. Staff must be active and match ticket category.' });
+        }
+
+        // Update the ticket
+        await existingTicket.update({
+            staff_id: id,
+            status_id: 2 // In Progress
+        });
+
+        // Log the audit
         await logAudit(
             "Update",
             req.user.id,
-        )
-        return res.status(200).json(ticket)
+            `Ticket ${ticket_id} assigned to staff ${staffMember.User.username} (ID: ${id})`
+        );
+
+        // Return updated ticket with staff info
+        return res.status(200).json({
+            success: true,
+            message: 'Ticket successfully assigned',
+            ticket: {
+                id: existingTicket.id,
+                staff_id: id,
+                staff_name: staffMember.User.username,
+                status: 'In Progress'
+            }
+        });
     } catch (error) {
         return res.status(500).json({message: error.message})
     };
