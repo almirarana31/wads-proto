@@ -490,8 +490,7 @@ function StaffTicketView() {  const { ticketId } = useParams();
             ) : conversationsError ? (
               <div className="bg-red-50 p-4 rounded-md border border-red-200 mb-6">
                 <Text color="text-red-600" align="center">{conversationsError}</Text>
-              </div>
-            ) : conversations.length > 0 ? (
+              </div>            ) : conversations.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                 {conversations.map((conversation) => (
                   <ConversationCard
@@ -512,20 +511,25 @@ function StaffTicketView() {  const { ticketId } = useParams();
                     <Text color="text-red-600" align="center">{createConversationError}</Text>
                   </div>
                 )}
-                <PrimaryButton 
-                  onClick={handleStartConversation} 
-                  fullWidth
-                  disabled={isCreatingConversation}
-                >
-                  {isCreatingConversation ? (
-                    <span className="flex items-center justify-center gap-2">
-                      <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-solid border-white border-r-transparent"></span>
-                      Creating Conversation...
-                    </span>
-                  ) : (
-                    'Start a New Conversation'
-                  )}
-                </PrimaryButton>
+                {/* Only show Start Conversation button when:
+                    1. The ticket status is "In Progress"
+                    2. There are no conversations yet */}
+                {ticket.status === "In Progress" && conversations.length === 0 && (
+                  <PrimaryButton 
+                    onClick={handleStartConversation} 
+                    fullWidth
+                    disabled={isCreatingConversation}
+                  >
+                    {isCreatingConversation ? (
+                      <span className="flex items-center justify-center gap-2">
+                        <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-solid border-white border-r-transparent"></span>
+                        Creating Conversation...
+                      </span>
+                    ) : (
+                      'Start a New Conversation'
+                    )}
+                  </PrimaryButton>
+                )}
               </div>
             ) : (
               <div className="mt-8">

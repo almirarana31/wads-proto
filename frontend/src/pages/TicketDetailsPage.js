@@ -432,9 +432,13 @@ function TicketDetailsPage() {
                     onClick={() => handleConversationClick(conversation.id, conversation.number)}
                   />
                 ))
-              ) : (
-                <div className="col-span-2 text-center py-8 bg-gray-50 rounded-lg border border-gray-200">
+              ) : (                <div className="col-span-2 text-center py-8 bg-gray-50 rounded-lg border border-gray-200">
                   <Text color="text-gray-500">No conversations available. Please wait for staff to initiate a conversation.</Text>
+                  <Text color="text-gray-400" size="sm" className="mt-2">
+                    {ticket.status === 'In Progress' ? 
+                      'The assigned staff member will start a conversation soon.' : 
+                      'A conversation can be started once your ticket is assigned to staff.'}
+                  </Text>
                 </div>
               )}
             </div>
@@ -444,7 +448,7 @@ function TicketDetailsPage() {
         <div className="w-full max-w-4xl mx-auto px-4 sm:px-6 mt-6">
           <div className="bg-gray-50 p-4 rounded-md border border-gray-200">
             <Text color="text-gray-600" align="center">
-              No conversation history is available for cancelled tickets.
+              No conversation history is available for {ticket.status.toLowerCase()} tickets.
             </Text>
           </div>
         </div>

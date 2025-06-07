@@ -29,7 +29,6 @@ function Chatroom() {
 
   // Helper function to check if user is staff or admin
   const isStaffOrAdmin = (role) => ['staff', 'admin'].includes(role?.toLowerCase());
-
   // Define fetchConversationData first
   const fetchConversationData = useCallback(async () => {
     try {
@@ -46,6 +45,9 @@ function Chatroom() {
         const closedItem = response.find(item => item.closed !== undefined);
         if (closedItem && closedItem.closed === true) {
           setConversationStatus('closed');
+        } else {
+          // If the conversation is not marked as closed, set it as open
+          setConversationStatus('open');
         }
         
         // Format messages for display
@@ -227,11 +229,10 @@ function Chatroom() {
   // let user send message with enter key
   const handleKeyDown = (e) => {
     if (e.key === 'Enter') handleSend();
-  };
-  // Poll for new messages
+  };  // Poll for new messages
   useEffect(() => {
-    // Don't poll if this is a new conversation, no conversation ID, or conversation is closed
-    if (isNewConversation || !actualConversationId || conversationStatus === 'closed') return;
+    // Don't poll if this is a new conversation, no conversation ID
+    if (isNewConversation || !actualConversationId) return;
     
     const pollForNewMessages = async () => {
       try {
@@ -239,12 +240,20 @@ function Chatroom() {
         // For now, we're refetching all messages but would only append new ones
         const response = await authService.getConversation(actualConversationId);
         
-        if (response && Array.isArray(response)) {          // Check for closed status in the response
+        if (response && Array.isArray(response)) {
+          // Check for closed status in the response
           const closedItem = response.find(item => item.closed !== undefined);
-          if (closedItem && closedItem.closed === true) {
-            setConversationStatus('closed');
-            // Don't continue processing messages if conversation is now closed
-            return;
+          
+          // Update conversation status based on the backend response
+          if (closedItem) {
+            const newStatus = closedItem.closed ? 'closed' : 'open';
+            if (newStatus !== conversationStatus) {
+              setConversationStatus(newStatus);
+              console.log(`Conversation status changed to: ${newStatus}`);
+              
+              // If conversation is now closed, stop processing messages
+              if (newStatus === 'closed') return;
+            }
           }
           
           // Filter out any items that are not actual messages
@@ -407,8 +416,7 @@ function Chatroom() {
           </div>
         )}
       </div>
-        {/* Chat input */}
-      <div className="max-w-2xl mx-auto w-full mt-4">
+        {/* Chat input */}      <div className="max-w-2xl mx-auto w-full mt-4">
         {conversationStatus === 'closed' ? (
           <div className="bg-gray-50 border border-gray-200 rounded-lg p-5 text-center">
             <div className="flex items-center justify-center mb-2">
@@ -420,7 +428,7 @@ function Chatroom() {
               </Text>
             </div>
             <Text color="text-gray-500" size="sm" className="max-w-md mx-auto mb-2">
-              This conversation has been marked as completed and can no longer be modified.
+              This conversation has been temporarily closed due to ticket resolution or reassignment.
             </Text>
           </div>
         ) : (
@@ -452,31 +460,6 @@ function Chatroom() {
                     </svg>
                   )}
                 </PrimaryButton>
-              </div>
-            )}
-
-            {/* Close Button - Show only for staff */}
-            {userRole === 'staff' && conversationStatus === 'open' && (
-              <div className="flex justify-end mt-3">
-                <button
-                  onClick={handleCloseConversation}
-                  className="text-sm text-red-600 hover:text-red-800 flex items-center px-3 py-1 border border-red-200 rounded-md hover:bg-red-50 transition-colors"
-                  disabled={isClosing}
-                >
-                  {isClosing ? (
-                    <>
-                      <div className="inline-block h-4 w-4 mr-2 animate-spin rounded-full border-2 border-solid border-red-600 border-r-transparent"></div>
-                      Closing...
-                    </>
-                  ) : (
-                    <>
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                      </svg>
-                      Close Conversation
-                    </>
-                  )}
-                </button>
               </div>
             )}
 
