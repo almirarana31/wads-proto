@@ -98,11 +98,12 @@ function SubmitTicketPage() {
           formData.category === 'Billing' ? 2 :
           formData.category === 'IT Support' ? 3 : 1, // Default to General if not matched
         description: formData.description
-      };
-      const res = await authService.sendTicket(ticketData);
+      };      const res = await authService.sendTicket(ticketData);
       setTicket({
         ticketId: res.ticket_id || res.id || 'TKT-' + Math.floor(Math.random() * 1000).toString().padStart(3, '0'),
         title: res.title || formData.title,
+        category: res.category || formData.category, // Include category from form data
+        description: res.description || formData.description, // Include description from form data
         createdAt: res.created_at || res.createdAt || new Date().toISOString(),
         email: res.email || formData.email
       });
