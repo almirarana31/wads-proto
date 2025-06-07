@@ -131,7 +131,8 @@ function SubmitTicketPage() {
       });
       setShowModal(true);
     }
-  };  if (ticket) {
+  };  
+  if (ticket) {
     return (
       <div className="min-h-screen py-6 sm:py-12 px-4 sm:px-6">
         <div className="w-full max-w-xl md:max-w-2xl lg:max-w-4xl mx-auto">
@@ -141,22 +142,28 @@ function SubmitTicketPage() {
             </Heading>
             <div className="flex justify-center mb-4 sm:mb-6">
               <img src={checkIcon} alt="Success" className="w-12 h-12 sm:w-16 sm:h-16" />
-            </div>            {isAuthenticated ? (
+            </div>            
+            {isAuthenticated ? (
               <div className="bg-gray-100 p-3 sm:p-4 rounded-md mb-4 sm:mb-6 break-words">
                 <p className="mb-1 text-sm sm:text-base">Ticket ID: <span className="text-blue-600 font-medium">{ticket.ticketId}</span></p>
                 <p className="mb-1 text-sm sm:text-base">Title: <span className="text-blue-600 font-medium">{ticket.title}</span></p>
+                <p className='mb-2 text-sm sm:text-base'>Category: <span className="text-blue-600 font-medium break-all">{ticket.category}</span></p>
+                <p className="mb-2 text-sm sm:text-base">Description: <span className="text-blue-600 font-medium break-all">{ticket.description}</span></p>
                 <p className="mb-2 sm:mb-4 text-sm sm:text-base">Created at: <span className="font-medium">{new Date(ticket.createdAt).toLocaleString()}</span></p>
               </div>
             ) : (
               <div className="bg-gray-100 p-3 sm:p-4 rounded-md mb-4 sm:mb-6 break-words">
                 <p className="mb-1 text-sm sm:text-base">Ticket ID: <span className="text-blue-600 font-medium">{ticket.ticketId}</span></p>
                 <p className="mb-1 text-sm sm:text-base">Title: <span className="text-blue-600 font-medium">{ticket.title}</span></p>
+                <p className='mb-2 text-sm sm:text-base'>Category: <span className="text-blue-600 font-medium break-all">{ticket.category}</span></p>
+                <p className="mb-2 text-sm sm:text-base">Description: <span className="text-blue-600 font-medium break-all">{ticket.description}</span></p>
                 <p className="mb-2 text-sm sm:text-base">Created at: <span className="font-medium">{new Date(ticket.createdAt).toLocaleString()}</span></p>
                 <hr className="my-3 sm:my-4 border-gray-300" />
                 <p className="mb-1 text-sm sm:text-base">We'll contact you via</p>
                 <p className="mb-1 text-sm sm:text-base">Email: <span className="text-blue-600 font-medium break-all">{ticket.email}</span></p>
               </div>
-            )}            {isAuthenticated ? (
+            )}            
+            {isAuthenticated ? (
               <>
                 <Text center className="mb-4 sm:mb-6 text-sm sm:text-base">
                   Our support team will review your ticket and respond as soon as possible.
@@ -202,7 +209,8 @@ function SubmitTicketPage() {
         </div>
       </div>
     );
-  }  return (    <div className="py-6 md:py-12 px-4 sm:px-6 flex-grow">
+  }  return (    
+    <div className="py-6 md:py-12 px-4 sm:px-6 flex-grow">
       <div className="bg-white p-5 sm:p-6 md:p-8 rounded shadow-md w-full max-w-2xl mx-auto">
         <PageTitle title="Submit a Ticket" subtitle="Submit your question or issue below" className="mb-4 sm:mb-6" />
         <div className="space-y-6">          <div>
