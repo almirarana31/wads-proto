@@ -308,7 +308,7 @@ export const forgetPassword = async (req, res) => {
 
     try {        // check for email validity
         if (!validateEmail(email)) return res.status(400).json({ message: "Invalid email" });        // create otp token with user info
-        const otpToken = createOTPToken({email: email});
+        const otpToken = createAccessToken({email: email});
         const actLink = `${process.env.FRONTEND_URL}/reset-password-verify?token=${otpToken}`;
           // Beautiful HTML email body for password reset
         const emailBody = `<div style="font-family: Arial, sans-serif; background: #f4f8fb; padding: 32px;">
@@ -322,7 +322,7 @@ export const forgetPassword = async (req, res) => {
               <div style="text-align: center; margin: 32px 0;">
                 <a href="${actLink}" style="display: inline-block; background: #2563eb; color: #fff; text-decoration: none; font-weight: 600; padding: 14px 32px; border-radius: 6px; font-size: 1.1rem; letter-spacing: 0.5px;">Reset Password</a>
               </div>
-              <p style="color: #666; font-size: 0.95rem; margin-bottom: 12px;"><strong>Security Note:</strong> This link will expire in 2 minutes for your security.</p>
+              <p style="color: #666; font-size: 0.95rem; margin-bottom: 12px;"><strong>Security Note:</strong> This link will expire in 1 hour for your security.</p>
               <p style="color: #666; font-size: 0.95rem;">If you did not request a password reset, you can safely ignore this email. Your password will remain unchanged.</p>
               <hr style="margin: 32px 0 16px 0; border: none; border-top: 1px solid #e3e9f1;" />
               <p style="color: #b0b8c1; font-size: 0.9rem; text-align: center;">&copy; ${new Date().getFullYear()} Bianca Aesthetic Clinic</p>
