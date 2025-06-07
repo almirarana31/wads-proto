@@ -253,7 +253,7 @@ function SubmitTicketPage() {
           </div>
           <div>
             <Label htmlFor="category">Category:</Label>
-            <div className="relative">
+            <div className="relative">              
               <select
                 id="category"
                 name="category"
@@ -262,8 +262,8 @@ function SubmitTicketPage() {
                 className="appearance-none w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-300"
               >
                 <option value="General">General</option>
-                <option value="IT Support">IT Support</option>
                 <option value="Billing">Billing</option>
+                <option value="IT Support">IT Support</option>
               </select>
               <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
                 <ChevronDown className="h-5 w-5 text-gray-500" />
