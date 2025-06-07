@@ -497,8 +497,8 @@ function TicketDetailsPage() {
               className="w-full p-2 border border-gray-300 rounded-md"
             >
               <option value="General">General</option>
-              <option value="Billing">Billing</option>
               <option value="IT Support">IT Support</option>
+              <option value="Billing">Billing</option>
             </select>
           </div>
         </div>
