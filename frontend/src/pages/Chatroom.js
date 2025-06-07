@@ -16,7 +16,6 @@ function Chatroom() {
   // State declarations
   const [chatMessages, setChatMessages] = useState([]);
   const [isLoading, setIsLoading] = useState(!isNewConversation);
-  const [isSilentRefreshing, setIsSilentRefreshing] = useState(false);
   const [error, setError] = useState(null);
   const [conversationStatus, setConversationStatus] = useState('open');
   const [actualConversationId, setActualConversationId] = useState(isNewConversation ? null : conversationId);
@@ -27,7 +26,6 @@ function Chatroom() {
   const [sendError, setSendError] = useState(null);
   const [isClosing, setIsClosing] = useState(false);
   const [userRole, setUserRole] = useState(null);
-  const [lastRefreshTime, setLastRefreshTime] = useState(Date.now());
 
   // Helper function to check if user is staff or admin
   const isStaffOrAdmin = (role) => ['staff', 'admin'].includes(role?.toLowerCase());
@@ -236,13 +234,11 @@ function Chatroom() {
     // Don't poll if this is a new conversation, no conversation ID
     if (isNewConversation || !actualConversationId) return;
     
-    let shouldScrollToBottom = false;
-      const pollForNewMessages = async () => {
+    const pollForNewMessages = async () => {
       try {
-        setIsSilentRefreshing(true);
-        // Using the existing conversation ID to fetch the latest conversation data
+        // In a real implementation, we'd use a specific endpoint to get only new messages
+        // For now, we're refetching all messages but would only append new ones
         const response = await authService.getConversation(actualConversationId);
-        setLastRefreshTime(Date.now());
         
         if (response && Array.isArray(response)) {
           // Check for closed status in the response
@@ -255,20 +251,13 @@ function Chatroom() {
               setConversationStatus(newStatus);
               console.log(`Conversation status changed to: ${newStatus}`);
               
-              // If conversation is now closed, still process messages but update UI
-              if (newStatus === 'closed') {
-                // We'll still display messages but show them as archived
-              }
+              // If conversation is now closed, stop processing messages
+              if (newStatus === 'closed') return;
             }
           }
           
           // Filter out any items that are not actual messages
           const messages = response.filter(item => !('closed' in item));
-          
-          // Check if there are new messages by comparing message counts
-          if (messages.length > chatMessages.length) {
-            shouldScrollToBottom = true;
-          }
           
           // Replace optimistic messages with real ones
           setChatMessages(prev => {
@@ -293,26 +282,14 @@ function Chatroom() {
           if (messages.length > 0) {
             setLastMessageId(messages[messages.length - 1].id);
           }
-          
-          // After updating the chat messages, scroll to bottom if new messages arrived
-          if (shouldScrollToBottom && chatContainerRef.current) {
-            setTimeout(() => {
-              chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
-            }, 100); // Small delay to ensure DOM is updated
-          }
-        }      } catch (err) {
+        }
+      } catch (err) {
         console.error('Error polling for new messages:', err);
-        // Don't show errors to the user during automatic polling
-      } finally {
-        setIsSilentRefreshing(false);
       }
     };
     
-    // Initial poll when component mounts or conversation ID changes
-    pollForNewMessages();
-    
-    // Poll every 3 seconds for real-time updates without visible refresh
-    const intervalId = setInterval(pollForNewMessages, 3000);
+    // Poll every 10 seconds
+    const intervalId = setInterval(pollForNewMessages, 10000);
     
     // Cleanup interval on unmount
     return () => clearInterval(intervalId);
@@ -377,47 +354,21 @@ function Chatroom() {
           {/* Use the conversation number we've determined */}
           <PageTitle title={isNewConversation ? 'New Conversation' : `Conversation ${conversationNumber || '#'}`} />
           
-          {/* Display status indicator for closed conversations */}          {conversationStatus === 'closed' && (
-            <div className="inline-flex items-center px-3 py-1 mt-2 bg-amber-50 border border-amber-100 rounded-full text-sm">
-              <span className="h-2 w-2 bg-amber-500 rounded-full mr-2"></span>
-              <span className="text-amber-700">Archived</span>
+          {/* Display status indicator for closed conversations */}
+          {conversationStatus === 'closed' && (
+            <div className="inline-flex items-center px-3 py-1 mt-2 bg-gray-100 border border-gray-200 rounded-full text-sm">
+              <span className="h-2 w-2 bg-red-500 rounded-full mr-2"></span>
+              <span className="text-gray-700">Closed</span>
             </div>
           )}
-          
-          {/* Subtle indicator for last refresh time - only visible on hover */}
-          <div className="mt-1 opacity-50 hover:opacity-100 transition-opacity text-xs text-gray-400">
-            {isSilentRefreshing ? (
-              <span className="inline-flex items-center">
-                <svg className="animate-spin -ml-1 mr-2 h-3 w-3 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-                Refreshing...
-              </span>
-            ) : (
-              <span>Updated: {new Date(lastRefreshTime).toLocaleTimeString()}</span>
-            )}
-          </div>
         </div>
-      </div>      <div className="border-b border-gray-200 my-6"></div>
-
-      {conversationStatus === 'closed' && (
-        <div className="max-w-2xl mx-auto mb-2 px-2">
-          <div className="bg-amber-50 border border-amber-100 rounded p-2 text-sm text-amber-700">
-            <div className="flex items-center">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              <span>You're viewing an archived conversation. Messages cannot be sent.</span>
-            </div>
-          </div>
-        </div>
-      )}
+      </div>
+      <div className="border-b border-gray-200 my-6"></div>
 
       {/* Chat content with loading and error states */}
       <div
         ref={chatContainerRef}
-        className="flex flex-col gap-2 max-w-2xl mx-auto mt-4 mb-6 h-96 overflow-y-auto p-2"
+        className="flex flex-col gap-2 max-w-2xl mx-auto mt-8 mb-6 h-96 overflow-y-auto p-2"
       >
         {isLoading ? (
           <div className="flex items-center justify-center h-full">
@@ -465,19 +416,19 @@ function Chatroom() {
           </div>
         )}
       </div>
-        {/* Chat input */}      <div className="max-w-2xl mx-auto w-full mt-4">        {conversationStatus === 'closed' ? (
-          <div className="bg-amber-50 border border-amber-200 rounded-lg p-5 text-center">
+        {/* Chat input */}      <div className="max-w-2xl mx-auto w-full mt-4">
+        {conversationStatus === 'closed' ? (
+          <div className="bg-gray-50 border border-gray-200 rounded-lg p-5 text-center">
             <div className="flex items-center justify-center mb-2">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-amber-600 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
               </svg>
-              <Text color="text-amber-700" weight="semibold" size="lg">
-                This conversation is archived
+              <Text color="text-gray-700" weight="semibold" size="lg">
+                This conversation is closed
               </Text>
             </div>
-            <Text color="text-amber-600" size="sm" className="max-w-md mx-auto mb-2">
-              This conversation has been archived due to ticket resolution or reassignment. 
-              It will be automatically reopened if the ticket status changes to "In Progress".
+            <Text color="text-gray-500" size="sm" className="max-w-md mx-auto mb-2">
+              This conversation has been temporarily closed due to ticket resolution or reassignment.
             </Text>
           </div>
         ) : (

@@ -32,7 +32,8 @@ const ConversationCard = ({ number, startedDate, endedDate, onClick, isLoading =
         </div>
       </div>
     );
-  }  // Determine if conversation is closed
+  }
+  // Determine if conversation is closed
   const isClosed = !!endedDate;
   
   return (
@@ -46,9 +47,9 @@ const ConversationCard = ({ number, startedDate, endedDate, onClick, isLoading =
         <h3 className={`${isClosed ? 'text-gray-700' : 'text-blue-800'} font-semibold text-lg mb-2 text-left`}>
           Conversation {number}
         </h3>        {isClosed && (
-          <span className="inline-flex items-center px-2 py-1 bg-amber-50 border border-amber-100 rounded-full text-xs">
-            <span className="h-1.5 w-1.5 bg-amber-500 rounded-full mr-1.5"></span>
-            <span className="text-amber-700 font-medium">Archived</span>
+          <span className="inline-flex items-center px-2 py-1 bg-red-50 border border-red-100 rounded-full text-xs">
+            <span className="h-1.5 w-1.5 bg-red-500 rounded-full mr-1.5"></span>
+            <span className="text-red-600 font-medium">Closed</span>
           </span>
         )}
       </div>
