@@ -16,7 +16,6 @@ function AdminTicketView() {
   const { ticketId } = useParams();
   const navigate = useNavigate();
   const [ticket, setTicket] = useState(null);
-  const [sortOrder, setSortOrder] = useState('newest');
   const [isResolveModalOpen, setIsResolveModalOpen] = useState(false);
   const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -78,12 +77,15 @@ function AdminTicketView() {
       try {
         setIsLoadingConversations(true);
         const rawTicketId = ticketId.startsWith('TKT-') ? ticketId.replace('TKT-', '') : ticketId;
-        const conversationHistory = await authService.getConversationHistory(rawTicketId, sortOrder);
+        // Use 'newest' directly instead of sortOrder variable
+        const conversationHistory = await authService.getConversationHistory(rawTicketId, 'newest');
         
         const formattedConversations = conversationHistory.map(conv => ({
           id: conv.id,
           startedDate: conv.createdAt,
-          endedDate: conv.endedAt || null,
+          // For closed conversations, use updatedAt as the closed date
+          endedDate: conv.endedAt || (conv.closed ? conv.updatedAt : null),
+          status: conv.closed === true ? 'closed' : 'open',
           messages: conv.Messages?.map(msg => ({
             id: msg.id,
             content: msg.content,
@@ -108,7 +110,7 @@ function AdminTicketView() {
     if (ticket && ticket.status !== 'Cancelled') {
       fetchConversations();
     }
-  }, [ticket, ticketId, sortOrder]);
+  }, [ticket, ticketId]); // Remove sortOrder from dependencies
 
   // Handle back button
   const handleBack = () => {
@@ -130,12 +132,14 @@ function AdminTicketView() {
     const withNumbers = sortedByDate.map((conv, index) => {
       const number = conv.sequence || index + 1;
       sessionStorage.setItem(`conversation_number_${conv.id}`, number);
-      return { ...conv, number };
+      return { 
+        ...conv,
+        number,
+        status: conv.status || 'open' // Preserve status
+      };
     });
     
-    return sortOrder === 'newest' 
-      ? [...withNumbers].sort((a, b) => new Date(b.startedDate) - new Date(a.startedDate))
-      : withNumbers;
+    return withNumbers;
   };
 
   // Handle note changes
@@ -236,16 +240,8 @@ function AdminTicketView() {
             {/* Conversations Section */}
             {ticket.status !== 'Cancelled' && (
               <div className="mt-8">
-                <div className="flex justify-between items-center mb-4">
-                  <Subheading className="text-blue-800">Conversations</Subheading>
-                  <select
-                    value={sortOrder}
-                    onChange={(e) => setSortOrder(e.target.value)}
-                    className="border border-gray-300 rounded-md px-3 py-1"
-                  >
-                    <option value="newest">Newest first</option>
-                    <option value="oldest">Oldest first</option>
-                  </select>
+                <div className="mb-4">
+                  <Subheading className="text-blue-800">Conversation</Subheading>
                 </div>
 
                 {isLoadingConversations ? (
@@ -253,13 +249,14 @@ function AdminTicketView() {
                     <Text>Loading conversations...</Text>
                   </div>
                 ) : conversations.length > 0 ? (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="flex flex-col gap-4 mb-6">
                     {conversations.map((conversation) => (
                       <ConversationCard
                         key={conversation.id}
                         number={conversation.number}
                         startedDate={conversation.startedDate}
                         endedDate={conversation.endedDate}
+                        status={conversation.status}
                         onClick={() => handleViewConversation(conversation.id, conversation.number)}
                       />
                     ))}

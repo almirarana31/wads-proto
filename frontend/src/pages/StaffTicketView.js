@@ -11,11 +11,9 @@ import PrimaryButton from '../components/buttons/PrimaryButton';
 import Modal from '../components/Modal';
 import { PageTitle, Text, Subheading, Label } from '../components/text';
 import { authService } from '../api/authService';
-import ChatBubble from '../components/ChatBubble';
 
 function StaffTicketView() {  const { ticketId } = useParams();
   const navigate = useNavigate();
-  const [sortOrder, setSortOrder] = useState('newest');
   const [isResolveModalOpen, setIsResolveModalOpen] = useState(false);
   const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -80,13 +78,14 @@ function StaffTicketView() {  const { ticketId } = useParams();
       try {
         setIsLoadingConversations(true);
         const rawTicketId = ticketId.startsWith('TKT-') ? ticketId.replace('TKT-', '') : ticketId;
-        const conversationHistory = await authService.getConversationHistory(rawTicketId, sortOrder);
+        const conversationHistory = await authService.getConversationHistory(rawTicketId, 'newest');
         
         // Format conversation data
         const formattedConversations = conversationHistory.map(conv => ({
           id: conv.id,
           startedDate: conv.createdAt,
-          endedDate: conv.endedAt || null,
+          endedDate: conv.endedAt || (conv.closed ? conv.updatedAt : null), 
+          status: conv.closed === true ? 'closed' : 'open',
           messages: conv.Messages?.map(msg => ({
             id: msg.id,
             content: msg.content,
@@ -112,7 +111,7 @@ function StaffTicketView() {  const { ticketId } = useParams();
     if (ticket && ticket.status !== 'Cancelled') {
       fetchConversations();
     }
-  }, [ticket, ticketId, sortOrder]);
+  }, [ticket, ticketId]);
   
   // Re-sort conversations when sortOrder changes
   useEffect(() => {
@@ -120,12 +119,12 @@ function StaffTicketView() {  const { ticketId } = useParams();
       const sortedConversations = [...conversations].sort((a, b) => {
         const dateA = new Date(a.startedDate);
         const dateB = new Date(b.startedDate);
-        return sortOrder === 'newest' ? dateB - dateA : dateA - dateB;
+        return 'newest' === 'newest' ? dateB - dateA : dateA - dateB;
       });
       
       setConversations(sortedConversations);
     }
-  }, [sortOrder]);
+  }, []);
   const handleBack = () => {
   // Only need to check if we're in staff view now
   const path = window.location.pathname;
@@ -343,7 +342,7 @@ function StaffTicketView() {  const { ticketId } = useParams();
     });
     
     // Apply display sorting
-    return sortOrder === 'newest' 
+    return 'newest' 
       ? [...withNumbers].sort((a, b) => {
           const dateA = new Date(a.startedDate || a.createdAt);
           const dateB = new Date(b.startedDate || b.createdAt);
@@ -468,45 +467,37 @@ function StaffTicketView() {  const { ticketId } = useParams();
             {/* Conversations container */}
             {ticket.status !== 'Cancelled' ? (
               <div className="mt-8">
-                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-3">
-                  <Subheading className="text-bianca-primary">Conversation History</Subheading>
-                  <div className="flex items-center self-start sm:self-auto">
-                    <Label className="mr-2 whitespace-nowrap" size="sm">Sort by:</Label>
-                    <select
-                      id="sort-order"
-                      value={sortOrder}
-                      onChange={(e) => setSortOrder(e.target.value)}
-                      className="border border-gray-300 rounded-md px-3 py-1 text-sm"
-                    >
-                      <option value="newest">Newest first</option>
-                      <option value="oldest">Oldest first</option>
-                    </select>
+                <div className="mb-4">
+                  <Subheading className="text-bianca-primary">Conversation</Subheading>
+                </div>
+                
+                {isLoadingConversations ? (
+                  <div className="text-center py-6">
+                    <div className="inline-block h-6 w-6 animate-spin rounded-full border-3 border-solid border-bianca-primary border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite]"></div>
+                    <p className="mt-2 text-gray-600">Loading conversations...</p>
                   </div>
-                </div>            {isLoadingConversations ? (
-              <div className="text-center py-6">
-                <div className="inline-block h-6 w-6 animate-spin rounded-full border-3 border-solid border-bianca-primary border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite]"></div>
-                <p className="mt-2 text-gray-600">Loading conversations...</p>
-              </div>
-            ) : conversationsError ? (
-              <div className="bg-red-50 p-4 rounded-md border border-red-200 mb-6">
-                <Text color="text-red-600" align="center">{conversationsError}</Text>
-              </div>            ) : conversations.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                {conversations.map((conversation) => (
-                  <ConversationCard
-                    key={conversation.id}
-                    number={conversation.number}
-                    startedDate={conversation.startedDate}
-                    endedDate={conversation.endedDate}
-                    onClick={() => handleConversationClick(conversation.id, conversation.number)}
-                  />
-                ))}
-              </div>
-            ) : (
-              <div className="bg-gray-50 p-4 rounded-md border border-gray-200 mb-6">
-                <Text color="text-gray-600" align="center">No conversations found for this ticket.</Text>
-              </div>
-            )}                {createConversationError && (
+                ) : conversationsError ? (
+                  <div className="bg-red-50 p-4 rounded-md border border-red-200 mb-6">
+                    <Text color="text-red-600" align="center">{conversationsError}</Text>
+                  </div>
+                ) : conversations.length > 0 ? (
+                  <div className="flex flex-col gap-4 mb-6">
+                    {conversations.map((conversation) => (
+                      <ConversationCard
+                        key={conversation.id}
+                        number={conversation.number}
+                        startedDate={conversation.startedDate}
+                        endedDate={conversation.endedDate}
+                        status={conversation.status}
+                        onClick={() => handleConversationClick(conversation.id, conversation.number)}
+                      />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="bg-gray-50 p-4 rounded-md border border-gray-200 mb-6">
+                    <Text color="text-gray-600" align="center">No conversations found for this ticket.</Text>
+                  </div>
+                )}                {createConversationError && (
                   <div className="bg-red-50 p-4 rounded-md border border-red-200 mb-4">
                     <Text color="text-red-600" align="center">{createConversationError}</Text>
                   </div>

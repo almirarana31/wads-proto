@@ -199,7 +199,8 @@ export const resolveTicket = async (req, res) => {
         })
 
         for (const convo of conversation) {
-            convo.closed = true
+            convo.closed = true;
+            convo.endedAt = new Date(); // Add this line to set endedAt timestamp
             await convo.save();
         }
         
@@ -253,7 +254,8 @@ export const cancelTicket = async (req, res) => {
         })
 
         for (const convo of conversation) {
-            convo.closed = true
+            convo.closed = true;
+            convo.endedAt = new Date(); // Add this line to set endedAt timestamp
             await convo.save();
         }
         
