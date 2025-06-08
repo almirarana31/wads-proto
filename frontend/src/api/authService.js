@@ -244,16 +244,6 @@ export const authService = {
                 return [];
             }
 
-            // Check sessionStorage cache first
-            const cachedData = sessionStorage.getItem(`ticket_staff_${ticketId}`);
-            if (cachedData) {
-                const { data, timestamp } = JSON.parse(cachedData);
-                // Cache is valid for 30 seconds
-                if (Date.now() - timestamp < 30000) {
-                    return data;
-                }
-            }
-
             console.log(`🔍 Fetching staff for ticket ${ticketId}`);
             const response = await api.get(`/admin/staff/ticket/${ticketId}`);
             
@@ -262,20 +252,9 @@ export const authService = {
                 return [];
             }
 
-            // Normalize the response data
-            const staffData = Array.isArray(response.data) ? response.data : [response.data];
-            
-            // Cache the result
-            sessionStorage.setItem(`ticket_staff_${ticketId}`, JSON.stringify({
-                data: staffData,
-                timestamp: Date.now()
-            }));
-
-            return staffData;
+            return Array.isArray(response.data) ? response.data : [response.data];
         } catch (error) {
             console.error('Error fetching staff for ticket:', error);
-            // Clear cache on error
-            sessionStorage.removeItem(`ticket_staff_${ticketId}`);
             return [];
         }
     },    async assignTicketToStaff(ticketId, staffId) {
