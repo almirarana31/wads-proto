@@ -47,11 +47,25 @@ export const roundRobinAssignment = async (ticket_id, category_id, email, id) =>
                     where: {
                     id: ticket_id
                   }
-                })
+                })                
                 console.log("This is email", email)
-                const emailBody = `
-                Staff has been assigned! Please wait for follow up emails!
-                `;
+                const emailBody = `<div style="font-family: Arial, sans-serif; background: #f4f8fb; padding: 32px;">
+                    <div style="max-width: 480px; margin: 0 auto; background: #fff; border-radius: 12px; box-shadow: 0 2px 8px #e3e9f1; padding: 32px 24px;">
+                      <div style="text-align: center; margin-bottom: 24px;">
+                        <h2 style="color: #2563eb; margin: 0; font-size: 1.5rem;">Ticket Update</h2>
+                      </div>
+                      <p style="color: #222; font-size: 1.1rem; margin-bottom: 18px;">Hi,</p>
+                      <p style="color: #222; font-size: 1.1rem; margin-bottom: 18px;">Your ticket has been assigned to a staff member at <b>Bianca Aesthetic Helpdesk</b>.</p>
+                      <p style="color: #222; font-size: 1.1rem; margin-bottom: 18px;">Our team will be reviewing your request and will contact you shortly.</p>
+                      <div style="text-align: center; margin: 32px 0;">
+                        <div style="display: inline-block; background: #2563eb; color: #fff; text-decoration: none; font-weight: 600; padding: 14px 32px; border-radius: 6px; font-size: 1.1rem; letter-spacing: 0.5px;">Ticket In Progress</div>
+                      </div>
+                      <p style="color: #666; font-size: 0.95rem; margin-bottom: 12px;"><strong>Note:</strong> Please do not reply directly to this email. If you need to provide additional information, log in to your account or reply to any follow-up emails from our staff.</p>
+                      <p style="color: #666; font-size: 0.95rem;">Thank you for your patience as we work to resolve your issue.</p>
+                      <hr style="margin: 32px 0 16px 0; border: none; border-top: 1px solid #e3e9f1;" />
+                      <p style="color: #b0b8c1; font-size: 0.9rem; text-align: center;">&copy; ${new Date().getFullYear()} Bianca Aesthetic Clinic</p>
+                    </div>
+                  </div>`;
                 await sendOTP(email, "Ticket in progress", emailBody);
                 console.log("Email is sent?")
                 // update the assignment
