@@ -1,14 +1,21 @@
 import api from './axios';
 
-export const authService = {
-    async login(credentials) {
-        // Make sure rememberMe is included in credentials
-        const response = await api.post('/user/log-in', {
-            ...credentials,
-            rememberMe: credentials.rememberMe || false
-        });
-        return response.data;
-    },    async signup(userData) {
+export const authService = {    async login(credentials) {
+        try {
+            // Make sure rememberMe is included in credentials
+            const response = await api.post('/user/log-in', {
+                ...credentials,
+                rememberMe: credentials.rememberMe || false
+            });
+            return response.data;
+        } catch (error) {
+            if (error.response && error.response.status === 400) {
+                throw new Error('Invalid credentials. Please check your email and password.');
+            }
+            // Handle other potential errors
+            throw error;
+        }
+    },async signup(userData) {
         console.log('Signing up user...', userData);
         try {
             // The /api prefix is added by the interceptor
@@ -25,12 +32,26 @@ export const authService = {
         const response = await api.get(`/user/activate/${token}`);
         console.log("hello gigger");
         return response.data;
-    },
-
-    async getUserRoles() {
-        const response = await api.get('/user/user-roles');
-        console.log("Hello GIGGA");
-        return response.data;
+    },    async getUserRoles() {
+        try {
+            // Check if token exists before making the request
+            const token = sessionStorage.getItem('token') || localStorage.getItem('token');
+            if (!token) {
+                throw new Error('No authentication token available');
+            }
+            
+            const response = await api.get('/user/user-roles');
+            return response.data;
+        } catch (error) {
+            console.error('Error getting user roles:', error);
+            if (error.response?.status === 403 || error.message.includes('jwt')) {
+                // Clear any potentially invalid tokens
+                sessionStorage.removeItem('token');
+                localStorage.removeItem('token');
+                throw new Error('Authentication failed. Please log in again.');
+            }
+            throw error;
+        }
     },
 
     async sendTicket(ticketData) {

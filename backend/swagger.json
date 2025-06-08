@@ -21,6 +21,10 @@
     {
       "url": "http://localhost:5000/api/ticket",
       "description": "Ticket Management"
+    },
+    {
+      "url": "http://localhost:5000/api/conversation",
+      "description": "Conversation Endpoints"
     }
   ],
   "paths": {
@@ -770,10 +774,73 @@
                 }
               }
             }
-          }
-        }
+          }        }
       }
-    },    "/tickets": {
+    },
+      "patch": {
+        "tags": ["Conversations"],
+        "summary": "Close a conversation",
+        "description": "Closes an active conversation. Requires authentication of the staff assigned to the ticket.",
+        "security": [
+          { "bearerAuth": [] }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "ID of the conversation to close"
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Conversation successfully closed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": { "type": "string" }
+                  }
+                },
+                "example": {
+                  "message": "Conversation successfully closed"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - Authentication failed or not the assigned staff",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": { "type": "string" }
+                  }
+                },
+                "example": {
+                  "message": "Token Expired or Invalid Authentication"
+                }
+              }
+            }
+          }
+        } 
+    },    
+    "/tickets": {
       "post": {
         "tags": ["User"],
         "summary": "Submit a new ticket",
@@ -1010,6 +1077,64 @@
                   "message": "Token Expired or Invalid Authentication"
                 }
               }
+            }          }
+        }
+      },
+      "patch": {
+        "tags": ["Staff"],
+        "summary": "Claim a ticket",
+        "description": "Allows a staff member to claim a ticket from the pool",
+        "security": [
+          { "bearerAuth": [] }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "ticket_id": { 
+                    "type": "integer",
+                    "description": "ID of the ticket to claim"
+                  }
+                },
+                "required": ["ticket_id"]
+              },
+              "example": {
+                "ticket_id": 10
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Ticket successfully claimed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "rowsAffected": { "type": "integer" }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - Authentication failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": { "type": "string" }
+                  }
+                },
+                "example": {
+                  "message": "Token Expired or Invalid Authentication"
+                }
+              }
             }
           }
         }
@@ -1135,9 +1260,1180 @@
               }
             }
           }
+        }      }
+    },    "/summary": {
+      "get": {
+        "tags": ["Staff"],
+        "summary": "Get staff performance summary",
+        "description": "Retrieves performance metrics for the authenticated staff member",
+        "security": [
+          { "bearerAuth": [] }
+        ],
+        "responses": {
+          "200": {
+            "description": "Staff performance summary",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "assigned": { 
+                        "type": "string", 
+                        "description": "Number of tickets assigned to the staff member"
+                      },
+                      "in_progress": { 
+                        "type": "string", 
+                        "nullable": true,
+                        "description": "Number of tickets in progress" 
+                      },
+                      "resolved": { 
+                        "type": "string", 
+                        "nullable": true,
+                        "description": "Number of resolved tickets" 
+                      },
+                      "cancelled": { 
+                        "type": "string", 
+                        "nullable": true,
+                        "description": "Number of cancelled tickets" 
+                      }
+                    }
+                  }
+                },
+                "example": [
+                  {
+                    "assigned": "0",
+                    "in_progress": null,
+                    "resolved": null,
+                    "cancelled": null
+                  }
+                ]
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - Authentication failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": { "type": "string" }
+                  }
+                },
+                "example": {
+                  "message": "Token Expired or Invalid Authentication"
+                }
+              }
+            }
+          }
         }
       }
     },
+    "/tickets/{id}/resolve": {
+      "patch": {
+        "tags": ["Staff"],
+        "summary": "Resolve a ticket",
+        "description": "Marks a ticket as resolved. Requires staff authentication.",
+        "security": [
+          { "bearerAuth": [] }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "ID of the ticket to resolve"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Ticket successfully resolved",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean" },
+                    "message": { "type": "string" },
+                    "ticket": {
+                      "type": "object",
+                      "properties": {
+                        "id": { "type": "integer" },
+                        "user_id": { "type": "integer" },
+                        "staff_id": { "type": "integer" },
+                        "category_id": { "type": "integer" },
+                        "priority_id": { "type": "integer" },
+                        "status_id": { "type": "integer" },
+                        "note": { "type": "string", "nullable": true },
+                        "subject": { "type": "string" },
+                        "description": { "type": "string" },
+                        "resolved_at": { "type": "string", "format": "date-time" },
+                        "createdAt": { "type": "string", "format": "date-time" },
+                        "updatedAt": { "type": "string", "format": "date-time" }
+                      }
+                    }
+                  }
+                },
+                "example": {
+                  "success": true,
+                  "message": "Ticket resolved successfully",
+                  "ticket": {
+                    "id": 6,
+                    "user_id": 18,
+                    "staff_id": 3,
+                    "category_id": 1,
+                    "priority_id": 2,
+                    "status_id": 3,
+                    "note": null,
+                    "subject": "Test Ticket 2",
+                    "description": "To see the ticket poo",
+                    "resolved_at": "2025-05-31T11:31:45.320Z",
+                    "createdAt": "2025-05-30T12:55:19.184Z",
+                    "updatedAt": "2025-05-31T11:31:45.321Z"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - Authentication failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": { "type": "string" }
+                  }
+                },
+                "example": {
+                  "message": "Token Expired or Invalid Authentication"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found - Ticket does not exist or is not assigned to the staff member",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": { "type": "string" }
+                  }
+                },
+                "example": {
+                  "message": "Ticket not found"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/tickets/{id}/cancel": {
+      "patch": {
+        "tags": ["Staff"],
+        "summary": "Cancel a ticket",
+        "description": "Marks a ticket as cancelled. Requires staff authentication.",
+        "security": [
+          { "bearerAuth": [] }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "ID of the ticket to cancel"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Ticket successfully cancelled",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": { "type": "boolean" },
+                    "message": { "type": "string" },
+                    "ticket": {
+                      "type": "object",
+                      "properties": {
+                        "id": { "type": "integer" },
+                        "user_id": { "type": "integer" },
+                        "staff_id": { "type": "integer" },
+                        "category_id": { "type": "integer" },
+                        "priority_id": { "type": "integer" },
+                        "status_id": { "type": "integer" },
+                        "note": { "type": "string", "nullable": true },
+                        "subject": { "type": "string" },
+                        "description": { "type": "string" },
+                        "resolved_at": { "type": "string", "format": "date-time", "nullable": true },
+                        "createdAt": { "type": "string", "format": "date-time" },
+                        "updatedAt": { "type": "string", "format": "date-time" }
+                      }
+                    }
+                  }
+                },
+                "example": {
+                  "success": true,
+                  "message": "Ticket cancelled successfully",
+                  "ticket": {
+                    "id": 5,
+                    "user_id": 18,
+                    "staff_id": 3,
+                    "category_id": 1,
+                    "priority_id": 2,
+                    "status_id": 4,
+                    "note": null,
+                    "subject": "Test Ticket 1",
+                    "description": "This is to see the ticket pool",
+                    "resolved_at": null,
+                    "createdAt": "2025-05-30T12:55:07.221Z",
+                    "updatedAt": "2025-05-31T11:29:59.411Z"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - Authentication failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": { "type": "string" }
+                  }
+                },
+                "example": {
+                  "message": "Token Expired or Invalid Authentication"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found - Ticket does not exist or is not assigned to the staff member",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": { "type": "string" }
+                  }
+                },
+                "example": {
+                  "message": "Ticket not found"
+                }
+              }
+            }
+          }
+        }
+      }    },    "/status-summary": {
+      "get": {
+        "tags": ["Admin"],
+        "summary": "Get ticket status summary",
+        "description": "Retrieves counts of all tickets in the system grouped by status. Requires admin authentication.",
+        "security": [
+          { "bearerAuth": [] }
+        ],
+        "responses": {
+          "200": {
+            "description": "Ticket status summary",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "name": { 
+                        "type": "string", 
+                        "description": "Status name"
+                      },
+                      "count": { 
+                        "type": "string", 
+                        "description": "Number of tickets with this status" 
+                      }
+                    }
+                  }
+                },
+                "example": [
+                  {
+                    "name": "Resolved",
+                    "count": "2"
+                  },
+                  {
+                    "name": "In Progress",
+                    "count": "6"
+                  },
+                  {
+                    "name": "Cancelled",
+                    "count": "4"
+                  },
+                  {
+                    "name": "Pending",
+                    "count": "15"
+                  }
+                ]
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - Authentication failed or insufficient privileges",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": { "type": "string" }
+                  }
+                },
+                "example": {
+                  "message": "Token Expired or Invalid Authentication"
+                }
+              }
+            }
+          }
+        }
+      }    },
+    "/username": {
+      "get": {
+        "tags": ["Admin"],
+        "summary": "Get current admin username",
+        "description": "Retrieves the username of the currently authenticated admin. Requires admin authentication.",
+        "security": [
+          { "bearerAuth": [] }
+        ],
+        "responses": {
+          "200": {
+            "description": "Admin username",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                },
+                "example": "almiraAdmin"
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - Authentication failed or insufficient privileges",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": { "type": "string" }
+                  }
+                },
+                "example": {
+                  "message": "Token Expired or Invalid Authentication"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/all-tickets": {
+      "get": {
+        "tags": ["Admin"],
+        "summary": "Get all tickets in the system",
+        "description": "Retrieves all tickets in the system with optional filtering capabilities. Requires admin authentication.",
+        "security": [
+          { "bearerAuth": [] }
+        ],
+        "parameters": [
+          {
+            "name": "category",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Filter tickets by category"
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Filter tickets by status"
+          },
+          {
+            "name": "priority",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Filter tickets by priority"
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Search tickets by keyword"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of all tickets matching the filters",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "ticket_id": { "type": "integer" },
+                      "subject": { "type": "string" },
+                      "createdAt": { "type": "string", "format": "date-time" },
+                      "note": { "type": "string", "nullable": true },
+                      "Category": {
+                        "type": "object",
+                        "properties": {
+                          "name": { "type": "string" }
+                        }
+                      },
+                      "Status": {
+                        "type": "object",
+                        "properties": {
+                          "name": { "type": "string" }
+                        }
+                      },
+                      "Priority": {
+                        "type": "object",
+                        "nullable": true,
+                        "properties": {
+                          "name": { "type": "string" }
+                        }
+                      },
+                      "User": {
+                        "type": "object",
+                        "properties": {
+                          "username": { "type": "string" },
+                          "email": { "type": "string" }
+                        }
+                      }
+                    }
+                  }
+                },
+                "example": [
+                  {
+                    "ticket_id": 2,
+                    "subject": "meow again",
+                    "createdAt": "2025-05-30T09:24:37.440Z",
+                    "note": null,
+                    "Category": {
+                      "name": "Billing"
+                    },
+                    "Status": {
+                      "name": "Pending"
+                    },
+                    "Priority": null,
+                    "User": {
+                      "username": "Ally CUSTOMER",
+                      "email": "ranaalmira@gmail.com"
+                    }
+                  },
+                  {
+                    "ticket_id": 3,
+                    "subject": "I hate all shinger",
+                    "createdAt": "2025-05-30T09:31:01.826Z",
+                    "note": null,
+                    "Category": {
+                      "name": "General"
+                    },
+                    "Status": {
+                      "name": "Cancelled"
+                    },
+                    "Priority": null,
+                    "User": {
+                      "username": "almira",
+                      "email": "almira.rana31@gmail.com"
+                    }
+                  },
+                  {
+                    "ticket_id": 1,
+                    "subject": "test",
+                    "createdAt": "2025-05-30T09:20:51.262Z",
+                    "note": null,
+                    "Category": {
+                      "name": "General"
+                    },
+                    "Status": {
+                      "name": "In Progress"
+                    },
+                    "Priority": {
+                      "name": "High"
+                    },
+                    "User": {
+                      "username": "Ally CUSTOMER",
+                      "email": "ranaalmira@gmail.com"
+                    }
+                  }
+                ]
+              }
+            }
+          },          "403": {
+            "description": "Forbidden - Authentication failed or insufficient privileges",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": { "type": "string" }
+                  }
+                },
+                "example": {
+                  "message": "Token Expired or Invalid Authentication"                }
+              }            }          }        }
+      }    },
+    "/tickets/{ticketId}/staff": {
+      "patch": {
+        "tags": ["Admin"],
+        "summary": "Assign ticket to staff",
+        "description": "Assigns a ticket to a specific staff member. Requires admin authentication.",
+        "security": [
+          { "bearerAuth": [] }
+        ],
+        "parameters": [
+          {
+            "name": "ticketId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "ID of the ticket to assign"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "id": { 
+                    "type": "integer",
+                    "description": "ID of the staff member to assign the ticket to"
+                  }
+                },
+                "required": ["id"]
+              },
+              "example": {
+                "id": 1
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Ticket successfully assigned",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - Authentication failed or insufficient privileges",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": { "type": "string" }
+                  }
+                },
+                "example": {
+                  "message": "Token Expired or Invalid Authentication"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/staff-performance": {
+      "get": {
+        "tags": ["Admin"],
+        "summary": "Get staff performance metrics",
+        "description": "Retrieves performance metrics for all staff members. Requires admin authentication.",
+        "security": [
+          { "bearerAuth": [] }
+        ],
+        "responses": {
+            "200": {
+              "description": "Staff performance statistics",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "staff_name": { 
+                          "type": "string", 
+                          "description": "Name of the staff member" 
+                        },
+                        "user_id": { 
+                          "type": "integer", 
+                          "description": "User ID associated with this staff member" 
+                        },
+                        "staff_id": { 
+                          "type": "integer", 
+                          "description": "Staff ID" 
+                        },
+                        "assigned": { 
+                          "type": "string", 
+                          "description": "Number of tickets assigned to this staff member" 
+                        },
+                        "resolved": { 
+                          "type": "string", 
+                          "description": "Number of tickets resolved by this staff member" 
+                        },
+                        "resolution_rate": { 
+                          "type": "string", 
+                          "description": "Resolution rate as a percentage" 
+                        }
+                      }
+                    }
+                  },
+                  "example": [
+                    {
+                      "staff_name": "almira",
+                      "user_id": 16,
+                      "staff_id": 3,
+                      "assigned": "13",
+                      "resolved": "3",
+                      "resolution_rate": "23.08"
+                    }
+                  ]
+                }
+              }
+            },
+            "403": {
+              "description": "Forbidden - Authentication failed or insufficient privileges",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "object",
+                    "properties": {
+                      "message": { "type": "string" }
+                    }
+                  },
+                  "example": {
+                    "message": "Token Expired or Invalid Authentication"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },   
+    "/tickets/{id}": {
+      "patch": {
+        "tags": ["Admin"],
+        "summary": "Update ticket priority",
+        "description": "Assigns a new priority level to a ticket. Requires admin authentication.",
+        "security": [
+          { "bearerAuth": [] }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "ID of the ticket to update priority"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "priority_id": { 
+                    "type": "integer",
+                    "description": "ID of the priority level to assign to the ticket"
+                  }
+                },
+                "required": ["priority_id"]
+              },
+              "example": {
+                "priority_id": 3
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Priority successfully updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": { "type": "integer" },
+                    "user_id": { "type": "integer" },
+                    "staff_id": { "type": "integer", "nullable": true },
+                    "category_id": { "type": "integer" },
+                    "priority_id": { "type": "integer" },
+                    "status_id": { "type": "integer" },
+                    "note": { "type": "string", "nullable": true },
+                    "subject": { "type": "string" },
+                    "description": { "type": "string" },
+                    "resolved_at": { "type": "string", "format": "date-time", "nullable": true },
+                    "createdAt": { "type": "string", "format": "date-time" },
+                    "updatedAt": { "type": "string", "format": "date-time" }
+                  }
+                },
+                "example": {
+                  "id": 7,
+                  "user_id": 18,
+                  "staff_id": null,
+                  "category_id": 1,
+                  "priority_id": 3,
+                  "status_id": 1,
+                  "note": null,
+                  "subject": "Test Ticket 3",
+                  "description": "I hate all",
+                  "resolved_at": null,
+                  "createdAt": "2025-05-30T12:55:30.013Z",
+                  "updatedAt": "2025-05-30T12:57:51.398Z"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - Authentication failed or insufficient privileges",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": { "type": "string" }
+                  }
+                },
+                "example": {
+                  "message": "Token Expired or Invalid Authentication"
+                }
+              }
+            }
+          }
+        }
+      }    },    "/ticket/{id}": {
+      "post": {
+        "tags": ["Conversations"],
+        "summary": "Start or reopen a conversation",
+        "description": "Starts a new conversation or reopens a closed conversation for a ticket. Requires authentication of the staff assigned to the ticket.",
+        "security": [
+          { "bearerAuth": [] }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "ID of the ticket for which to start/reopen a conversation"
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Conversation successfully created or reopened",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": { "type": "string" }
+                  }
+                },
+                "examples": {
+                  "created": {
+                    "value": {
+                      "message": "Successfully created conversation"
+                    }
+                  },
+                  "reopened": {
+                    "value": {
+                      "message": "Conversation re-opened"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request - Ticket is closed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": { "type": "string" }
+                  }
+                },
+                "example": {
+                  "message": "Ticket is already closed."
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - Authentication failed or not the assigned staff",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": { "type": "string" }
+                  }
+                },
+                "example": {
+                  "message": "Token Expired or Invalid Authentication"
+                }
+              }
+            }
+          }        }
+      }
+    },    "/ticket/{ticketId}/history": {
+      "get": {
+        "tags": ["Conversations"],
+        "summary": "Get conversation history",
+        "description": "Retrieves the history of conversations for a specific ticket. Requires authentication of a user or staff associated with the ticket.",
+        "security": [
+          { "bearerAuth": [] }
+        ],
+        "parameters": [
+          {
+            "name": "ticketId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "ID of the ticket to retrieve conversation history for"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Conversation history retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": { "type": "integer" },
+                    "createdAt": { "type": "string", "format": "date-time" },
+                    "endedAt": { "type": "string", "format": "date-time", "nullable": true },
+                    "closed": { "type": "boolean" },
+                    "Ticket": {
+                      "type": "object",
+                      "properties": {
+                        "user_id": { "type": "integer" },
+                        "staff_id": { "type": "integer", "nullable": true }
+                      }
+                    }
+                  }
+                },
+                "example": {
+                  "id": 1,
+                  "createdAt": "2025-05-31T15:12:23.374Z",
+                  "endedAt": "2025-06-08T15:09:42.595Z",
+                  "closed": true,
+                  "Ticket": {
+                    "user_id": 18,
+                    "staff_id": 3
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - Authentication failed or unauthorized access",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": { "type": "string" }
+                  }
+                },
+                "example": {
+                  "message": "Forbidden access"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No conversation history found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": { "type": "string" }
+                  }
+                },
+                "example": {
+                  "message": "No conversation history found"
+                }
+              }
+            }
+          }
+        }
+      }
+    },    
+    "/{conversationId}": {
+      "get": {
+        "tags": ["Conversations"],
+        "summary": "Get full conversation",
+        "description": "Retrieves the complete conversation history including all messages. Requires authentication of a user or staff associated with the conversation.",
+        "security": [
+          { "bearerAuth": [] }
+        ],
+        "parameters": [
+          {
+            "name": "conversationId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "ID of the conversation to retrieve"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Conversation retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "oneOf": [
+                      {
+                        "properties": {
+                          "id": { "type": "integer" },
+                          "content": { "type": "string" },
+                          "sentAt": { "type": "string", "format": "date-time" },
+                          "sender_id": { "type": "integer" },
+                          "sender_username": { "type": "string" },
+                          "isSender": { "type": "boolean" }
+                        }
+                      },
+                      {
+                        "properties": {
+                          "closed": { "type": "boolean" }
+                        }
+                      }
+                    ]
+                  }
+                },
+                "example": [
+                  {
+                    "id": 5,
+                    "content": "hello user",
+                    "sentAt": "2025-05-31T17:55:34.277Z",
+                    "sender_id": 16,
+                    "sender_username": "almira",
+                    "isSender": true
+                  },
+                  {
+                    "id": 6,
+                    "content": "how are you",
+                    "sentAt": "2025-05-31T17:55:38.686Z",
+                    "sender_id": 16,
+                    "sender_username": "almira",
+                    "isSender": true
+                  },
+                  {
+                    "id": 7,
+                    "content": "hello",
+                    "sentAt": "2025-05-31T18:00:42.211Z",
+                    "sender_id": 18,
+                    "sender_username": "Ally CUSTOMER",
+                    "isSender": false
+                  },
+                  {
+                    "id": 8,
+                    "content": "hello!",
+                    "sentAt": "2025-06-01T06:55:02.712Z",
+                    "sender_id": 16,
+                    "sender_username": "almira",
+                    "isSender": true
+                  },
+                  {
+                    "closed": true
+                  }
+                ]
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - Authentication failed or user not associated with conversation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": { "type": "string" }
+                  }
+                },
+                "example": {
+                  "message": "Token Expired or Invalid Authentication"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Conversation not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": { "type": "string" }
+                  }
+                },
+                "example": {
+                  "message": "Conversation not found"
+                }
+              }
+            }
+          }        }
+      }
+    },
+    "/{conversationId}/message": {
+      "post": {
+        "tags": ["Conversations"],
+        "summary": "Send a message in a conversation",
+        "description": "Sends a message in an active conversation. Requires authentication of a user or staff associated with the conversation.",
+        "security": [
+          { "bearerAuth": [] }
+        ],
+        "parameters": [
+          {
+            "name": "conversationId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "ID of the conversation to send a message to"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "content": {
+                    "type": "string",
+                    "description": "The message content to be sent"
+                  }
+                },
+                "required": ["content"]
+              },
+              "example": {
+                "content": "Example text!"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Message successfully sent",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": { "type": "string" }
+                  }
+                },
+                "example": {
+                  "message": "message successfully sent"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - Authentication failed or user not associated with conversation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": { "type": "string" }
+                  }
+                },
+                "example": {
+                  "message": "Token Expired or Invalid Authentication"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Conversation not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": { "type": "string" }
+                  }
+                },
+                "example": {
+                  "message": "Conversation not found"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
   "components": {
     "securitySchemes": {
       "bearerAuth": {
@@ -1147,5 +2443,4 @@
     }
   },
   "security": [{ "bearerAuth": [] }]
-}
 }

@@ -20,7 +20,6 @@ function LoginPage({ onLogin }) {
       [name]: type === 'checkbox' ? checked : value
     });
   };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
@@ -38,17 +37,30 @@ function LoginPage({ onLogin }) {
       // Store tokens
       if (res.sessionToken) {
         sessionStorage.setItem('token', res.sessionToken);
-      }
-      if (formData.rememberMe && res.localToken) {
-        localStorage.setItem('token', res.localToken);
-      }
-      const role = await authService.getUserRoles();
-      if (role.isAdmin) {
-        window.location.href = '/admin-dashboard';
-      } else if (role.isStaff) {
-        window.location.href = '/staff-dashboard';
-      } else if (role.isUser) {
-        window.location.href = '/view-tickets';
+        
+        // Only call getUserRoles if login was successful and we have a token
+        try {
+          const role = await authService.getUserRoles();
+          if (role.isAdmin) {
+            window.location.href = '/admin-dashboard';
+          } else if (role.isStaff) {
+            window.location.href = '/staff-dashboard';
+          } else if (role.isUser) {
+            window.location.href = '/view-tickets';
+          }
+        } catch (roleError) {
+          console.error('Error getting user roles:', roleError);
+          setError('Login successful but there was an error loading your profile. Please try again.');
+          // Clean up session token if we can't determine the role
+          sessionStorage.removeItem('token');
+        }
+        
+        // Handle remember me token
+        if (formData.rememberMe && res.localToken) {
+          localStorage.setItem('token', res.localToken);
+        }
+      } else {
+        throw new Error('No session token received from server');
       }
     } catch (error) {
       setError(

@@ -34,12 +34,23 @@ api.interceptors.request.use(
 
 // Add a request interceptor for handling tokens
 api.interceptors.request.use(
-    (config) => {        // Try to get token from sessionStorage first, then localStorage
+    (config) => {        
+        // Check if this is a protected route that requires authentication
+        const isAuthRoute = config.url && !config.url.includes('/log-in') && !config.url.includes('/sign-up') && 
+                           !config.url.includes('/forget-password') && !config.url.includes('/verify-reset-link') &&
+                           !config.url.includes('/enter-new-password') && !config.url.includes('/activate');
+        
+        // Try to get token from sessionStorage first, then localStorage
         const token = sessionStorage.getItem('token') || localStorage.getItem('token');
+        
         if (token) {
             config.headers.Authorization = `Bearer ${token}`;
             console.log('Request headers:', config.headers); // Debug log
+        } else if (isAuthRoute) {
+            // Only log this for routes that should have auth, to avoid noise during login/signup
+            console.warn('No auth token available for protected route:', config.url);
         }
+        
         return config;
     },
     (error) => {
