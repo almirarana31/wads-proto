@@ -215,6 +215,34 @@ The Bianca Aesthetic Clinic Helpdesk System is a modern, responsive web applicat
    - **Main Application**: http://localhost:3000
    - **API Documentation**: http://localhost:3001/api-docs
 
+## 🌐 Deployed Links
+
+You can access the deployed version of the application using these links:
+
+- **Client (Frontend)**: https://e2425-wads-l4ccg3-client.csbihub.id
+- **Server (Backend)**: https://e2425-wads-l4ccg3-server.csbihub.id
+
+### Accessing Swagger Documentation
+To view the API documentation using Swagger:
+1. Navigate to: https://e2425-wads-l4ccg3-server.csbihub.id/api-docs
+2. The interactive Swagger UI will allow you to explore all available endpoints
+3. You can test API endpoints directly through the Swagger interface
+
+### Accessing Docusaurus Documentation
+To view the comprehensive system documentation:
+1. Clone the repository and navigate to the project directory
+2. Run the documentation site locally using the provided script:
+   ```bash
+   # From the project root
+   ./start-docs.bat
+   ```
+3. Access the documentation at http://localhost:3000
+4. For production build:
+   ```bash
+   # From the project root
+   ./build-docs.bat
+   ```
+
 ## 👥 User Roles & Permissions
 
 ### 🔓 Guest Users
@@ -313,7 +341,9 @@ Authorization: Bearer <your_jwt_token>
 - `POST /api/chatbot/message` - Send message to AI chatbot
 
 ### Complete API Documentation
-Visit `http://localhost:3001/api-docs` when the server is running for interactive Swagger documentation.
+- **Local Development**: Visit `http://localhost:3001/api-docs` when the server is running for interactive Swagger documentation.
+- **Production**: Access Swagger documentation at `https://e2425-wads-l4ccg3-server.csbihub.id/api-docs`
+- **Full Documentation**: Comprehensive system documentation is available through the Docusaurus site
 
 ## 📷 Screenshots of Working Web App
 ### Home Page
