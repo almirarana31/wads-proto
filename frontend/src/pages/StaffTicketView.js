@@ -263,18 +263,22 @@ function StaffTicketView() {  const { ticketId } = useParams();
       // Call API to update the ticket note
       const response = await authService.updateTicketNote(rawTicketId, note);
       
-      if (response && response.success) {
-        // Update the local state with the saved note
+      // check for successs in repsonse
+      if (response && (response.success || response.message === "Note successfully added")) {
+        // update local state with note
         setTicket(prevTicket => ({ ...prevTicket, note }));
         setIsNoteSaved(true);
+        setNoteError(null);
       } else {
         const errorMessage = response?.message || 'Failed to save note. Please try again.';
         console.error('Failed to save note:', errorMessage);
         setNoteError(errorMessage);
+        setIsNoteSaved(false);
       }
     } catch (err) {
       console.error('Error saving note:', err);
       setNoteError('Network error while saving note. Please check your connection and try again.');
+      setIsNoteSaved(false);
     } finally {
       setNoteSaving(false);
     }
@@ -403,14 +407,19 @@ function StaffTicketView() {  const { ticketId } = useParams();
             
             {/* Note Feature */}
             <div className="mt-6">
-              <Label className="mb-1">Internal Note (visible to staff & admin only)</Label>              {canEditNote ? (
+              <Label className="mb-1">Internal Note (visible to staff & admin only)</Label>
+              {canEditNote ? (
                 <div className="flex flex-col gap-2">
                   <div className="flex flex-col sm:flex-row gap-2 items-start">
                     <textarea
                       value={note}
                       onChange={handleNoteChange}
                       rows={2}
-                      className={`w-full p-2 border ${noteError ? 'border-red-300' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-2 focus:ring-bianca-primary/30`}
+                      className={`w-full p-2 border ${
+                        isNoteSaved ? 'border-green-300' : 
+                        noteError ? 'border-red-300' : 
+                        'border-gray-300'
+                      } rounded-md focus:outline-none focus:ring-2 focus:ring-bianca-primary/30`}
                       placeholder="Add a note for this ticket..."
                       maxLength={120}
                       disabled={noteSaving}
@@ -536,7 +545,7 @@ function StaffTicketView() {  const { ticketId } = useParams();
           </>
         ) : null}
       </div>
-        {/* Resolve Ticket Modal */}      {/* Resolve Ticket Modal */}
+      {/* Resolve Ticket Modal */}
       <Modal
         isOpen={isResolveModalOpen}
         onClose={() => setIsResolveModalOpen(false)}

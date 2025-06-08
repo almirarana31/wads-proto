@@ -672,7 +672,7 @@ function AdminDashboard() {
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
                       {sortedTickets.length > 0 ? sortedTickets.map((ticket) => (
-                        <tr key={ticket.id} className={`hover:bg-gray-50 ${ticket.note ? 'bg-blue-50' : ''}`}>
+                        <tr key={ticket.id} className={`hover:bg-gray-50 ${ticket.note ? 'bg-blue-50/30' : ''}`}>
                           <td className="p-3 text-sm text-gray-700 whitespace-nowrap flex items-center gap-2">
                             {ticket.id}
                             {ticket.note && (
