@@ -2,9 +2,7 @@ import axios from 'axios';
 
 // Create an axios instance with default config
 const api = axios.create({
-    baseURL: process.env.NODE_ENV === 'development' 
-        ? '' // Empty string for development - will use relative URLs with the proxy
-        : (process.env.BACKEND_URL),
+    baseURL: process.env.REACT_APP_BACKEND_URL,
     headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
