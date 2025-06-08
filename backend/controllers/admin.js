@@ -1,4 +1,4 @@
-import { Staff, User, Ticket, Status, Category, Priority, Assignment } from '../models/index.js';
+import { Staff, User, Ticket, Status, Category, Priority, Conversation } from '../models/index.js';
 import sequelize from '../config/sequelize.js';
 import { Op } from 'sequelize';
 import { logAudit } from './audit.js';
@@ -383,6 +383,13 @@ export const assignStaff = async (req, res) => {
             raw: true
         }
     );
+        const conversation = await Conversation.update({
+            closed: false
+        }, {
+            where: {
+                ticket_id: ticket_id
+            }
+        })
         // audit here
         await logAudit(
             "Update",
