@@ -238,6 +238,205 @@
         }
       }
     },
+    "/forget-password": {
+      "post": {
+        "tags": ["User"],
+        "summary": "Request password reset",
+        "description": "Initiates the password reset process by sending an email with a reset link",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "format": "email",
+                    "description": "User's registered email address"
+                  }
+                },
+                "required": ["email"]
+              },
+              "example": {
+                "email": "user@example.com"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Password reset email sent successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": { "type": "string" }
+                  }
+                },
+                "example": {
+                  "message": "Password reset link has been sent to your email"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": { "type": "string" }
+                  }
+                },
+                "example": {
+                  "message": "Invalid email"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/verify-reset-link/{token}": {
+      "get": {
+        "tags": ["User"],
+        "summary": "Verify password reset link",
+        "description": "Verifies the token in the password reset link",
+        "parameters": [
+          {
+            "name": "token",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Password reset token received via email"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Token verification successful",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": { "type": "string" },
+                    "valid": { "type": "boolean" }
+                  }
+                },
+                "example": {
+                  "message": "Token is valid",
+                  "valid": true
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": { "type": "string" },
+                    "valid": { "type": "boolean" }
+                  }
+                },
+                "example": {
+                  "message": "Token is expired or invalid",
+                  "valid": false
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/enter-new-password/{token}": {
+      "post": {
+        "tags": ["User"],
+        "summary": "Set new password",
+        "description": "Sets a new password using the reset token",
+        "parameters": [
+          {
+            "name": "token",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Password reset token received via email"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "password": {
+                    "type": "string",
+                    "description": "New password (must be 6-20 characters with 1 number, 1 lowercase, and 1 uppercase letter)"
+                  }
+                },
+                "required": ["password"]
+              },
+              "example": {
+                "password": "NewPass123"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Password reset successful",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": { "type": "string" }
+                  }
+                },
+                "example": {
+                  "message": "Password has been successfully reset"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": { "type": "string" }
+                  }
+                },
+                "examples": {
+                  "invalidToken": {
+                    "value": {
+                      "message": "Token is expired or invalid"
+                    }
+                  },
+                  "invalidPassword": {
+                    "value": {
+                      "message": "Password should be 6 to 20 characters long with a numeric, 1 lowercase and 1 uppercase letters"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/log-in": {
       "post": {
         "tags": ["User"],
@@ -320,7 +519,8 @@
           }
         }
       }
-    },    "/{id}": {
+    },    
+    "/{id}": {
       "get": {
         "tags": ["Ticket Management"],
         "summary": "Get ticket details",
@@ -573,8 +773,7 @@
           }
         }
       }
-    }, 
-    "/tickets": {
+    },    "/tickets": {
       "post": {
         "tags": ["User"],
         "summary": "Submit a new ticket",
@@ -681,18 +880,142 @@
       },
       "get": {
         "tags": ["Staff"],
-        "summary": "Get all assigned or pool tickets",
+        "summary": "Get all assigned tickets",
+        "description": "Retrieves all tickets assigned to the authenticated staff member",
+        "security": [
+          { "bearerAuth": [] }
+        ],
         "parameters": [
-          { "name": "priority", "in": "query", "schema": { "type": "string" } },
-          { "name": "status", "in": "query", "schema": { "type": "string" } },
-          { "name": "search", "in": "query", "schema": { "type": "string" } }
+          {
+            "name": "priority",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Filter tickets by priority"
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Filter tickets by status"
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Search tickets by keyword"
+          }
         ],
         "responses": {
           "200": {
-            "description": "A list of tickets"
+            "description": "List of staff's assigned tickets",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "ticket_id": { "type": "integer" },
+                      "subject": { "type": "string" },
+                      "createdAt": { "type": "string", "format": "date-time" },
+                      "Category": {
+                        "type": "object",
+                        "properties": {
+                          "name": { "type": "string" }
+                        }
+                      },
+                      "Priority": {
+                        "type": "object",
+                        "properties": {
+                          "name": { "type": "string" }
+                        }
+                      },
+                      "Status": {
+                        "type": "object",
+                        "properties": {
+                          "name": { "type": "string" }
+                        }
+                      },
+                      "User": {
+                        "type": "object",
+                        "properties": {
+                          "username": { "type": "string", "nullable": true },
+                          "email": { "type": "string" }
+                        }
+                      }
+                    }
+                  }
+                },
+                "example": [
+                  {
+                    "ticket_id": 14,
+                    "subject": "new ticket",
+                    "createdAt": "2025-06-01T15:36:04.817Z",
+                    "Category": {
+                      "name": "IT Support"
+                    },
+                    "Priority": {
+                      "name": "Low"
+                    },
+                    "Status": {
+                      "name": "In Progress"
+                    },
+                    "User": {
+                      "username": null,
+                      "email": "customer@bianca.com"
+                    }
+                  },
+                  {
+                    "ticket_id": 22,
+                    "subject": "Another Ticket for IT",
+                    "createdAt": "2025-06-02T05:16:11.174Z",
+                    "Category": {
+                      "name": "IT Support"
+                    },
+                    "Priority": {
+                      "name": "Low"
+                    },
+                    "Status": {
+                      "name": "In Progress"
+                    },
+                    "User": {
+                      "username": "Ally CUSTOMER",
+                      "email": "ranaalmira@gmail.com"
+                    }
+                  }
+                ]
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden - Authentication failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": { "type": "string" }
+                  }
+                },
+                "example": {
+                  "message": "Token Expired or Invalid Authentication"
+                }
+              }
+            }
           }
         }
-      }    },    "/priorities": {
+      }
+    },
+    "/priorities": {
       "get": {
         "tags": ["Ticket Management"],
         "summary": "Get available ticket priorities",
@@ -751,7 +1074,8 @@
           }
         }
       }
-    },    "/statuses": {
+  },
+    "/statuses": {
       "get": {
         "tags": ["Ticket Management"],
         "summary": "Get available ticket statuses",
@@ -814,18 +1138,6 @@
         }
       }
     },
-    "/summary": {
-      "get": {
-        "tags": ["Admin"],
-        "summary": "Get ticket status summary",
-        "responses": {
-          "200": {
-            "description": "Summary of ticket statuses"
-          }
-        }
-      }
-    }
-  },
   "components": {
     "securitySchemes": {
       "bearerAuth": {
@@ -835,4 +1147,5 @@
     }
   },
   "security": [{ "bearerAuth": [] }]
+}
 }
