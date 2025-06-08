@@ -1,10 +1,10 @@
-import { createProxyMiddleware } from 'http-proxy-middleware';
+const { createProxyMiddleware } = require('http-proxy-middleware');
 
-export default function(app) {
+module.exports = function(app) {
   app.use(
     '/api/',
     createProxyMiddleware({
-      target: 'https://e2425-wads-l4ccg3-server.csbihub.id',
+      target: process.env.BACKEND_URL || 'http://localhost:5000',
       changeOrigin: true,
       secure: true,
       cookieDomainRewrite: '',

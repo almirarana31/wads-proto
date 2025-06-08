@@ -21,7 +21,7 @@ const app = express();
 const swaggerDocument = JSON.parse(fs.readFileSync('./swagger.json', 'utf8'));
 
 const corsOptions = {
-  origin: 'https://e2425-wads-l4ccg3-client.csbihub.id', // your frontend URL
+  origin: process.env.CORS_ORIGIN,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   credentials: true, // Allow cookies, authorization headers
 };
@@ -30,7 +30,6 @@ const corsOptions = {
 app.use(cors(corsOptions));
 
 app.use(express.json());
-// app.use('/api', users_router);
 
 // Swagger UI setup
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument, {
@@ -54,7 +53,7 @@ app.use('/api/audit', auditRoutes);
 app.use('/api/chatbot', chatbotRoutes);
 
 // PORT, .env variables
-const port = process.env.PORT || 30;
+const port = process.env.PORT;
 
 app.listen(port, (req, res) => {
     console.log(`Listening on port ${port}`);

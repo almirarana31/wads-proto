@@ -26,7 +26,7 @@ const cors = require('cors');
 const app = express();
 
 const corsOptions = {
-  origin: 'https://e2425-wads-l4ccg3-client.csbihub.id',
+  origin: process.env.CORS_ORIGIN,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   credentials: true
 };
@@ -66,6 +66,6 @@ app.get('/', (req, res) => {
 });
 
 app.listen(process.env.PORT, () => {
-        console.log(`Connected to the backend at https://e2425-wads-l4ccg3-server.csbihub.id/api-docs`);
-        console.log(`API documentation available at https://e2425-wads-l4ccg3-server.csbihub.id/api-docs`);
+        console.log(`Connected to the backend at ${process.env.PORT}`);
+        console.log(`API documentation available at ${process.env.PORT}/api-docs`);
 });
