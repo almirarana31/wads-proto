@@ -4,7 +4,7 @@ import axios from 'axios';
 const api = axios.create({
     baseURL: process.env.NODE_ENV === 'development' 
         ? '' // Empty string for development - will use relative URLs with the proxy
-        : (process.env.REACT_APP_API_URL || 'https://e2425-wads-l4ccg3-server.csbihub.id'),
+        : (process.env.BACKEND_URL),
     headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
