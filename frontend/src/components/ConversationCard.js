@@ -1,7 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 
-const ConversationCard = ({ number, startedDate, endedDate, onClick, isLoading = false, error = null }) => {
+const ConversationCard = ({ number, startedDate, endedDate, status, onClick, isLoading = false, error = null }) => {
   // format dates for display
   const formatDate = (dateString) => {
     if (!dateString) return 'N/A';
@@ -14,6 +14,7 @@ const ConversationCard = ({ number, startedDate, endedDate, onClick, isLoading =
       minute: '2-digit'
     });
   };
+  
   if (error) {
     return (
       <div className="bg-red-50 border border-red-200 rounded-lg p-5">
@@ -33,8 +34,11 @@ const ConversationCard = ({ number, startedDate, endedDate, onClick, isLoading =
       </div>
     );
   }
-  // Determine if conversation is closed
-  const isClosed = !!endedDate;
+  
+  // Determine if conversation is closed - now uses status prop if available
+  const isClosed = status === 'closed' || !!endedDate;
+  // For closed conversations, use the most appropriate timestamp available
+  const closedDate = endedDate || (isClosed ? startedDate : null);
   
   return (
     <div 
@@ -46,7 +50,8 @@ const ConversationCard = ({ number, startedDate, endedDate, onClick, isLoading =
       <div className="flex justify-between items-start">
         <h3 className={`${isClosed ? 'text-gray-700' : 'text-blue-800'} font-semibold text-lg mb-2 text-left`}>
           Conversation {number}
-        </h3>        {isClosed && (
+        </h3>
+        {isClosed && (
           <span className="inline-flex items-center px-2 py-1 bg-red-50 border border-red-100 rounded-full text-xs">
             <span className="h-1.5 w-1.5 bg-red-500 rounded-full mr-1.5"></span>
             <span className="text-red-600 font-medium">Closed</span>
@@ -61,7 +66,7 @@ const ConversationCard = ({ number, startedDate, endedDate, onClick, isLoading =
               <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-gray-400 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
               </svg>
-              Closed on: {formatDate(endedDate)}
+              Closed on: {formatDate(closedDate)}
             </span>
           ) : (
             <span className="flex items-center text-green-600">
@@ -81,6 +86,7 @@ ConversationCard.propTypes = {
   number: PropTypes.number.isRequired,
   startedDate: PropTypes.string.isRequired,
   endedDate: PropTypes.string,
+  status: PropTypes.string, // Add status prop
   onClick: PropTypes.func,
   isLoading: PropTypes.bool,
   error: PropTypes.string
@@ -88,7 +94,8 @@ ConversationCard.propTypes = {
 
 ConversationCard.defaultProps = {
   onClick: () => {},
-  endedDate: null
+  endedDate: null,
+  status: null // Default status
 };
 
 export default ConversationCard;

@@ -111,7 +111,7 @@ export const authService = {    async login(credentials) {
     },
       
     async updateTicketNote(ticketId, note) {
-        const response = await api.patch(`/staff/tickets/${ticketId}/note`, { note });
+        const response = await api.patch(`/ticket/${ticketId}/note`, { note });
         return response.data;
     },
       

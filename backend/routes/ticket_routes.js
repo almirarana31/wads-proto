@@ -13,6 +13,6 @@ router.get('/statuses', getStatus);
 router.get('/:id', userAuthZ, softAuthZ, getTicketDetail);
 
 // adding note to ticket
-router.post('/:id/note', staffAuthZ, addNote);
+router.patch('/:id/note', staffAuthZ, addNote);
 
 export default router;
