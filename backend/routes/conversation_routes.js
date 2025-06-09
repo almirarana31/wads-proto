@@ -19,7 +19,7 @@ router.post('/:conversationID/message', conversationAuthZ, sendMessage)
 router.post('/ticket/:ticketID', staffAuthZ, createConversation);
 
 // close conversation // this is conversation id
-router.patch('/:conversationID', conversationAuthZ, staffAuthZ, closeConversation); // this
+router.patch('/:conversationID', conversationAuthZ, staffAuthZ, closeConversation);
 
 export default router
 

@@ -11,8 +11,8 @@ router.get('/tickets', getTickets);
 router.get('/summary', getSummary);
 router.patch('/tickets/:id/resolve', resolveTicket);
 router.patch('/tickets/:id/cancel', cancelTicket);
-router.get('/tickets/pool', getTicketPool); // this
+router.get('/tickets/pool', getTicketPool); 
 router.patch('/tickets', claimTicket);
-router.get('/details', getUserDetail); // this
+router.get('/details', getUserDetail);
 
 export default router;
