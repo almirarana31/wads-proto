@@ -95,7 +95,8 @@ function AdminTicketView() {
       }
     };
     
-    if (ticket && ticket.status !== 'Cancelled') {
+    // Remove the condition that prevents fetching for cancelled tickets
+    if (ticket) {
       fetchConversations();
     }
   }, [ticket, ticketId]);
@@ -191,36 +192,35 @@ function AdminTicketView() {
             </div>
 
             {/*Conversations Section*/}
-            {ticket.status !== 'Cancelled' && (
-              <div className="mt-8">
-                <div className="mb-4">
-                  <Subheading className="text-blue-800">Conversation</Subheading>
-                </div>
-
-                {isLoadingConversations ? (
-                  <div className="text-center py-8">
-                    <Text>Loading conversations...</Text>
-                  </div>
-                ) : conversations.length > 0 ? (
-                  <div className="flex flex-col gap-4 mb-6">
-                    {conversations.map((conversation) => (
-                      <ConversationCard
-                        key={conversation.id}
-                        number={conversation.number}
-                        startedDate={conversation.startedDate}
-                        endedDate={conversation.endedDate}
-                        status={conversation.status}
-                        onClick={() => handleViewConversation(conversation.id, conversation.number)}
-                      />
-                    ))}
-                  </div>
-                ) : (
-                  <div className="text-center py-8 bg-gray-50 rounded-lg">
-                    <Text color="text-gray-500">No conversations available</Text>
-                  </div>
-                )}
+            <div className="mt-8">
+              <div className="mb-4">
+                <Subheading className="text-blue-800">Conversation</Subheading>
               </div>
-            )}
+
+              {isLoadingConversations ? (
+                <div className="text-center py-8">
+                  <div className="inline-block h-6 w-6 animate-spin rounded-full border-3 border-solid border-bianca-primary border-r-transparent align-[-0.125em]"></div>
+                  <p className="mt-2 text-gray-600">Loading conversations...</p>
+                </div>
+              ) : conversations.length > 0 ? (
+                <div className="flex flex-col gap-4 mb-6">
+                  {conversations.map((conversation) => (
+                    <ConversationCard
+                      key={conversation.id}
+                      number={conversation.number}
+                      startedDate={conversation.startedDate}
+                      endedDate={conversation.endedDate}
+                      status={conversation.status}
+                      onClick={() => handleViewConversation(conversation.id, conversation.number)}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8 bg-gray-50 rounded-lg">
+                  <Text color="text-gray-500">No conversations available</Text>
+                </div>
+              )}
+            </div>
           </>
         ) : null}
       </div>
