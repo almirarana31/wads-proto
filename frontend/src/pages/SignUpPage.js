@@ -55,7 +55,7 @@ function SignUpPage() {
       // Check for 400 status code which might indicate email already exists
       if (err.response?.status === 400) {
         const errorMessage = err.response?.data?.message || err.response?.data?.error;
-        
+        console.log("print hello world, does this land")
         // Check if the error message contains email related text
         if (errorMessage && 
             (errorMessage.toLowerCase().includes('email') || 
