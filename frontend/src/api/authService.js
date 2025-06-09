@@ -31,7 +31,6 @@ export const authService = {    async login(credentials) {
 
     async activate(token) {
         const response = await api.get(`/user/activate/${token}`);
-        console.log("hello gigger");
         return response.data;
     },    async getUserRoles() {
         try {
@@ -266,7 +265,7 @@ export const authService = {    async login(credentials) {
                 return [];
             }
 
-            console.log(`🔍 Fetching staff for ticket ${ticketId}`);
+            console.log(`Fetching staff for ticket ${ticketId}`);
             const response = await api.get(`/admin/staff/ticket/${ticketId}`);
             
             if (!response.data) {
@@ -284,7 +283,7 @@ export const authService = {    async login(credentials) {
             throw new Error('Both ticketId and staffId are required');
         }
 
-        console.log(`📤 Assigning ticket ${ticketId} to staff ${staffId}`);
+        console.log(`Assigning ticket ${ticketId} to staff ${staffId}`);
         try {
             const response = await api.patch(`/admin/tickets/${ticketId}/staff`, {
                 id: staffId
@@ -293,10 +292,10 @@ export const authService = {    async login(credentials) {
             // Clear any cached staff data for this ticket
             sessionStorage.removeItem(`ticket_staff_${ticketId}`);
 
-            console.log(`📥 Assignment successful:`, response.data);
+            console.log(`Assignment successful:`, response.data);
             return response.data;
         } catch (error) {
-            console.error(`❌ Assignment failed:`, error.response?.data || error.message);
+            console.error(`Assignment failed:`, error.response?.data || error.message);
             
             // Provide detailed error information
             const errorMessage = error.response?.data?.message || error.message;

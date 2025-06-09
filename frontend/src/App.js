@@ -5,7 +5,7 @@ import Header from './components/Header';
 import HomePage from './pages/HomePage';
 import SubmitTicketPage from './pages/SubmitTicketPage';
 import LoginPage from './pages/LoginPage';
-import SignUpPage from './pages/SignUpPage';
+import SignUpPage from './pages/SignupPage';
 import ViewTicketsPage from './pages/ViewTicketsPage';
 import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import ResetPasswordVerifyPage from './pages/ResetPasswordVerifyPage';
@@ -34,19 +34,15 @@ function App() {
       if (token) {
         try {
           const roles = await authService.getUserRoles();
-          console.log("giggaa")
           setIsAuthenticated(true);
           if (roles.isAdmin) {
             setUserRole('ADM'); 
-            console.log("giggaa2")
           }
           else if (roles.isStaff) {
             setUserRole('STF')
-            console.log("giggaa3")
           }
           else if (roles.isUser) {
             setUserRole('USR') 
-            console.log("giggaa4")
           }
           else setUserRole(null);
         } catch (err) {

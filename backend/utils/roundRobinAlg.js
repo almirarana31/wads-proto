@@ -28,7 +28,6 @@ export const roundRobinAssignment = async (ticket_id, category_id, email, id) =>
         
         for (let i = 1; i <= staffs.length; i++) {
             const index = (lastIndex + i) % staffs.length
-            console.log("hello trying to see if this works")
             const count = await Ticket.count({
                 where: {
                     staff_id: staffs[index].id,

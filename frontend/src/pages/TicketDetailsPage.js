@@ -114,7 +114,7 @@ function TicketDetailsPage() {
         description: editForm.description,
         category_id: getCategoryId(editForm.category)
       };
-      console.log('WE are changing');
+      // console.log('WE are changing');
       console.log('Ticket Data:', ticketData);
       
       await authService.editTicket(ticketId, ticketData);

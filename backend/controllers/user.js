@@ -180,8 +180,6 @@ export const activate = async (req, res) => {
     try {
         const decode = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
         const {username, password, email, staff_id} = decode;
-
-        console.log("ariel giggers");
         if(await emailExists(email)) {
             return res.status(400).json({message: "email already exists"})
         }   
@@ -424,13 +422,13 @@ export const submitTicket = async (req, res) => {
         }, {raw: true});
 
         await roundRobinAssignment(ticket.id, category_id, email, id);
-        console.log("HELLO WORLD")
+        // console.log("HELLO WORLD")
         await logAudit(
             "Create",
             id,
             `Ticket ID ${ticket.id} created`
         );
-        console.log("HELLO WORLD")
+        // console.log("HELLO WORLD")
         return res.status(200).json({message: "Ticket successfully created",
             ticket_id: ticket.id,
             title: ticket.subject,
@@ -450,7 +448,6 @@ export const editTicket = async (req, res) => {
     const user_id = req.user.id
 
     const {title, category_id, description} = req.body
-    console.log("Here 5")
     try {
         const ticket = await Ticket.update({
             ...(title ? {subject: title} : {}),

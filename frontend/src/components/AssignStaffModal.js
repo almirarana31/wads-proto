@@ -102,19 +102,19 @@ function AssignStaffModal({ isOpen, onClose, onAssign, ticketId }) {
     if (selectedStaff) {
       const staff = staffList.find(s => s.staff_id === selectedStaff);
       try {
-        console.log(`🔄 Calling API to assign staff: PATCH /admin/tickets/${ticketId}/staff`, { 
+        console.log(`Calling API to assign staff: PATCH /admin/tickets/${ticketId}/staff`, { 
           ticketId, 
           staffId: selectedStaff,
           staffName: staff?.name 
         });
         
         await authService.assignTicketToStaff(ticketId, selectedStaff);
-        console.log(`✅ Staff assignment successful for ticket ${ticketId} to staff ${selectedStaff}`);
+        console.log(`Staff assignment successful for ticket ${ticketId} to staff ${selectedStaff}`);
         
         onAssign(ticketId, selectedStaff, staff?.name);
         handleClose();
       } catch (err) {
-        console.error(`❌ Staff assignment failed:`, err);
+        console.error(`Staff assignment failed:`, err);
         setError('Failed to assign ticket');
       }
     }
