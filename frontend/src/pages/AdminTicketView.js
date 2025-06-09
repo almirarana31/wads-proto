@@ -1,14 +1,10 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react'; // useMemo is unused
 import { useParams, useNavigate } from 'react-router-dom';
 import ContentContainer from '../components/ContentContainer';
 import TicketDetailsCard from '../components/TicketDetailsCard';
 import ConversationCard from '../components/ConversationCard';
 import BackButton from '../components/buttons/BackButton';
-import DangerButton from '../components/buttons/DangerButton';
-import SuccessButton from '../components/buttons/SuccessButton';
-import SecondaryButton from '../components/buttons/SecondaryButton';
 import PrimaryButton from '../components/buttons/PrimaryButton';
-import Modal from '../components/Modal';
 import { PageTitle, Text, Subheading, Label } from '../components/text';
 import { authService } from '../api/authService';
 
@@ -16,17 +12,11 @@ function AdminTicketView() {
   const { ticketId } = useParams();
   const navigate = useNavigate();
   const [ticket, setTicket] = useState(null);
-  const [isResolveModalOpen, setIsResolveModalOpen] = useState(false);
-  const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [note, setNote] = useState('');
-  const [isNoteSaved, setIsNoteSaved] = useState(false);
-  const [noteError, setNoteError] = useState(null);
-  const [noteSaving, setNoteSaving] = useState(false);
   const [conversations, setConversations] = useState([]);
   const [isLoadingConversations, setIsLoadingConversations] = useState(false);
-  const [conversationsError, setConversationsError] = useState(null);
 
   // Fetch ticket details
   useEffect(() => {
@@ -98,20 +88,19 @@ function AdminTicketView() {
         const numberedConversations = processConversationsWithNumbers(formattedConversations);
         
         setConversations(numberedConversations);
-        setConversationsError(null);
       } catch (err) {
         console.error('Error fetching conversations:', err);
-        setConversationsError('Failed to load conversations. Please try again.');
       } finally {
         setIsLoadingConversations(false);
       }
     };
     
-    if (ticket && ticket.status !== 'Cancelled') {
+    // Remove the condition that prevents fetching for cancelled tickets
+    if (ticket) {
       fetchConversations();
     }
-  }, [ticket, ticketId]); // Remove sortOrder from dependencies
-
+  }, [ticket, ticketId]);
+  
   // Handle back button
   const handleBack = () => {
     navigate('/admin-dashboard');
@@ -142,35 +131,6 @@ function AdminTicketView() {
     return withNumbers;
   };
 
-  // Handle note changes
-  const handleNoteChange = (e) => {
-    setNote(e.target.value);
-    setIsNoteSaved(false);
-  };
-
-  // Save note
-  const handleSaveNote = async () => {
-    try {
-      setNoteSaving(true);
-      setNoteError(null);
-      
-      const rawTicketId = ticketId.startsWith('TKT-') ? ticketId.replace('TKT-', '') : ticketId;
-      const response = await authService.updateTicketNote(rawTicketId, note);
-      
-      if (response && response.success) {
-        setTicket(prevTicket => ({ ...prevTicket, note }));
-        setIsNoteSaved(true);
-      } else {
-        setNoteError(response?.message || 'Failed to save note');
-      }
-    } catch (err) {
-      console.error('Error saving note:', err);
-      setNoteError('Failed to save note. Please try again.');
-    } finally {
-      setNoteSaving(false);
-    }
-  };
-
   return (
     <ContentContainer>
       <div className="relative mb-5">
@@ -197,7 +157,7 @@ function AdminTicketView() {
           <>
             <TicketDetailsCard ticket={ticket} />
 
-            {/* Note Section */}
+            {/*Note Section*/}
             <div className="mt-6">
               <Label className="mb-1">Internal Note</Label>
               {ticket.note ? (
@@ -214,7 +174,7 @@ function AdminTicketView() {
               </Text>
             </div>
 
-            {/* Customer Information */}
+            {/*Customer Information*/}
             <div className="mt-8">
               <Subheading className="text-blue-800">Customer Information</Subheading>
               <div className="bg-white p-6 rounded-lg shadow-md">
@@ -231,37 +191,36 @@ function AdminTicketView() {
               </div>
             </div>
 
-            {/* Conversations Section */}
-            {ticket.status !== 'Cancelled' && (
-              <div className="mt-8">
-                <div className="mb-4">
-                  <Subheading className="text-blue-800">Conversation</Subheading>
-                </div>
-
-                {isLoadingConversations ? (
-                  <div className="text-center py-8">
-                    <Text>Loading conversations...</Text>
-                  </div>
-                ) : conversations.length > 0 ? (
-                  <div className="flex flex-col gap-4 mb-6">
-                    {conversations.map((conversation) => (
-                      <ConversationCard
-                        key={conversation.id}
-                        number={conversation.number}
-                        startedDate={conversation.startedDate}
-                        endedDate={conversation.endedDate}
-                        status={conversation.status}
-                        onClick={() => handleViewConversation(conversation.id, conversation.number)}
-                      />
-                    ))}
-                  </div>
-                ) : (
-                  <div className="text-center py-8 bg-gray-50 rounded-lg">
-                    <Text color="text-gray-500">No conversations available</Text>
-                  </div>
-                )}
+            {/*Conversations Section*/}
+            <div className="mt-8">
+              <div className="mb-4">
+                <Subheading className="text-blue-800">Conversation</Subheading>
               </div>
-            )}
+
+              {isLoadingConversations ? (
+                <div className="text-center py-8">
+                  <div className="inline-block h-6 w-6 animate-spin rounded-full border-3 border-solid border-bianca-primary border-r-transparent align-[-0.125em]"></div>
+                  <p className="mt-2 text-gray-600">Loading conversations...</p>
+                </div>
+              ) : conversations.length > 0 ? (
+                <div className="flex flex-col gap-4 mb-6">
+                  {conversations.map((conversation) => (
+                    <ConversationCard
+                      key={conversation.id}
+                      number={conversation.number}
+                      startedDate={conversation.startedDate}
+                      endedDate={conversation.endedDate}
+                      status={conversation.status}
+                      onClick={() => handleViewConversation(conversation.id, conversation.number)}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8 bg-gray-50 rounded-lg">
+                  <Text color="text-gray-500">No conversations available</Text>
+                </div>
+              )}
+            </div>
           </>
         ) : null}
       </div>

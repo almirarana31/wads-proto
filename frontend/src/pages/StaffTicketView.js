@@ -30,8 +30,6 @@ function StaffTicketView() {  const { ticketId } = useParams();
         const rawTicketId = ticketId.startsWith('TKT-') ? ticketId.replace('TKT-', '') : ticketId;
         const response = await authService.getTicketDetail(rawTicketId);
         
-        console.log('API Response:', response); // Useful for debugging
-        
         // Format the ticket data to match our component needs
         const formattedTicket = {
           id: `TKT-${response.id.toString().padStart(3, '0')}`,
@@ -108,7 +106,8 @@ function StaffTicketView() {  const { ticketId } = useParams();
       }
     };
     
-    if (ticket && ticket.status !== 'Cancelled') {
+    // Removed condition that prevented fetching for cancelled tickets
+    if (ticket) {
       fetchConversations();
     }
   }, [ticket, ticketId]);
@@ -126,7 +125,6 @@ function StaffTicketView() {  const { ticketId } = useParams();
     }
   }, []);
   const handleBack = () => {
-  // Only need to check if we're in staff view now
   const path = window.location.pathname;
   if (path.includes('/staff/')) {
     navigate('/staff-dashboard');
@@ -148,8 +146,6 @@ function StaffTicketView() {  const { ticketId } = useParams();
       console.log('Create conversation response:', response); // Debug log
       
       if (response && response.id) {
-        // Navigate to the new conversation - use raw ticket ID for consistency
-        // We're using the original ticketId from URL params for the navigation to maintain URL format
         navigate(`/chatroom/${ticketId}/${response.id}`);
       } else {
         // Provide more specific error based on response
@@ -166,8 +162,6 @@ function StaffTicketView() {  const { ticketId } = useParams();
       setIsCreatingConversation(false);
     }
   };  const handleConversationClick = (conversationId, conversationNumber) => {
-    // We're already storing conversation numbers when fetching conversations
-    // But for extra safety, store it again here before navigating
     sessionStorage.setItem(`conversation_number_${conversationId}`, conversationNumber);
     navigate(`/chatroom/${ticketId}/${conversationId}`);
   };
@@ -212,7 +206,7 @@ function StaffTicketView() {  const { ticketId } = useParams();
     }
   };
     const confirmCancelTicket = async () => {
-    // Only allow cancellation of In Progress tickets, not Resolved tickets
+    // Only allow cancellation of 'In Progress' tickets, not Resolved tickets
     if (ticket?.status !== 'In Progress') {
       setIsCancelModalOpen(false);
       return;
@@ -222,28 +216,25 @@ function StaffTicketView() {  const { ticketId } = useParams();
       // Remove 'TKT-' prefix if present in the ticketId
       const rawTicketId = ticketId.startsWith('TKT-') ? ticketId.replace('TKT-', '') : ticketId;
       
-      // Call API to cancel the ticket
+      // call API to cancel ticket
       const response = await authService.staffCancelTicket(rawTicketId);
       
       if (response && response.success) {
-        // Update the ticket status to 'Cancelled'
         setTicket(prevTicket => ({
           ...prevTicket,
           status: 'Cancelled',
           cancelledAt: new Date().toISOString()
         }));
       } else {
-        console.error('Failed to cancel ticket:', response?.message || 'Unknown error');
-        // Show an error message if needed
+        console.error('Failed to cancel ticket:', response?.message || 'Unknown error');  
       }
     } catch (err) {
       console.error('Error cancelling ticket:', err);
-      // Handle error state
     } finally {
       setIsCancelModalOpen(false);
     }
   };
-  // Only allow editing note if ticket is in progress and user is owner/assigned staff
+  // only allow editing note if ticket is in progress and user is owner/assigned staff
   const canEditNote = ticket?.status === 'In Progress';
 
   const handleNoteChange = (e) => {
@@ -257,10 +248,10 @@ function StaffTicketView() {  const { ticketId } = useParams();
       setNoteSaving(true);
       setNoteError(null);
       
-      // Remove 'TKT-' prefix if present in the ticketId
+      // remove 'TKT-' prefix if present in the ticketId
       const rawTicketId = ticketId.startsWith('TKT-') ? ticketId.replace('TKT-', '') : ticketId;
       
-      // Call API to update the ticket note
+      // call API to update the ticket note
       const response = await authService.updateTicketNote(rawTicketId, note);
       
       // check for successs in repsonse
@@ -294,7 +285,6 @@ function StaffTicketView() {  const { ticketId } = useParams();
     // Fetch the ticket data again
     authService.getTicketDetail(rawTicketId)
       .then(response => {
-        // Format the ticket data to match our component needs
         const formattedTicket = {
           id: `TKT-${response.id.toString().padStart(3, '0')}`,
           title: response.subject,
@@ -382,10 +372,9 @@ function StaffTicketView() {  const { ticketId } = useParams();
           </div>
         ) : ticket ? (
           <>
-            {/* Reusing TicketDetailsCard component */}
             <TicketDetailsCard ticket={ticket} />
             
-            {/* Staff Actions */}
+            {/*Staff Actions*/}
             <div className="flex flex-col sm:flex-row justify-center sm:justify-end gap-3 mt-6">          
               {ticket.status !== 'Cancelled' && ticket.status !== 'Resolved' && (
                 <>
@@ -405,7 +394,7 @@ function StaffTicketView() {  const { ticketId } = useParams();
               )}
             </div>
             
-            {/* Note Feature */}
+            {/*Notes*/}
             <div className="mt-6">
               <Label className="mb-1">Internal Note (visible to staff & admin only)</Label>
               {canEditNote ? (
@@ -449,15 +438,19 @@ function StaffTicketView() {  const { ticketId } = useParams();
                   )}
                 </div>
               ) : (
-                note && (
-                  <div className="inline-block px-3 py-1 bg-bianca-background/50 text-bianca-primary rounded-full text-sm font-medium mt-2">
+                note ? (
+                  <div className="p-3 bg-gray-50 border border-gray-200 rounded-md text-gray-700 min-h-[80px]">
                     {note}
+                  </div>
+                ) : (
+                  <div className="p-3 bg-gray-50 border border-gray-200 rounded-md text-gray-400 italic min-h-[80px]">
+                    No notes have been added to this ticket yet.
                   </div>
                 )
               )}
             </div>
             
-            {/* Customer Information */}
+            {/*Customer Info*/}
             <div className="mt-8">
               <Subheading className="text-bianca-primary">Customer Information</Subheading>
               <div className="bg-white p-4 sm:p-6 rounded-lg shadow-md">
@@ -473,8 +466,8 @@ function StaffTicketView() {  const { ticketId } = useParams();
               </div>
             </div>
             
-            {/* Conversations container */}
-            {ticket.status !== 'Cancelled' ? (
+            {/* Conversation Container */}
+            {ticket ? (
               <div className="mt-8">
                 <div className="mb-4">
                   <Subheading className="text-bianca-primary">Conversation</Subheading>
@@ -503,49 +496,49 @@ function StaffTicketView() {  const { ticketId } = useParams();
                     ))}
                   </div>
                 ) : (
-                  <div className="bg-gray-50 p-4 rounded-md border border-gray-200 mb-6">
-                    <Text color="text-gray-600" align="center">No conversations found for this ticket.</Text>
-                  </div>
-                )}                {createConversationError && (
-                  <div className="bg-red-50 p-4 rounded-md border border-red-200 mb-4">
+                  <>
+                    <div className="bg-gray-50 p-4 rounded-md border border-gray-200 mb-6">
+                      <Text color="text-gray-600" align="center">No conversations found for this ticket.</Text>
+                    </div>
+                    
+                    {createConversationError && (
+                      <div className="bg-red-50 p-4 rounded-md border border-red-200 mb-4">
+                        <Text color="text-red-600" align="center">{createConversationError}</Text>
+                      </div>
+                    )}
+                    
+                    {/*Only show "Start a New Conversation" button if ticket is In Progress AND there are no existing conversations*/}
+                    {ticket.status === "In Progress" && (
+                      <PrimaryButton 
+                        onClick={handleStartConversation} 
+                        fullWidth
+                        disabled={isCreatingConversation}
+                      >
+                        {isCreatingConversation ? (
+                          <span className="flex items-center justify-center gap-2">
+                            <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-solid border-white border-r-transparent"></span>
+                            Creating Conversation...
+                          </span>
+                        ) : (
+                          'Start a New Conversation'
+                        )}
+                      </PrimaryButton>
+                    )}
+                  </>
+                )}
+                
+                {/*Show error outside the conditional rendering for conversations*/}
+                {conversations.length > 0 && createConversationError && (
+                  <div className="bg-red-50 p-4 rounded-md border border-red-200 mt-4">
                     <Text color="text-red-600" align="center">{createConversationError}</Text>
                   </div>
                 )}
-                {/* Only show Start Conversation button when:
-                    1. The ticket status is "In Progress"
-                    2. There are no conversations yet */}
-                {ticket.status === "In Progress" && conversations.length === 0 && (
-                  <PrimaryButton 
-                    onClick={handleStartConversation} 
-                    fullWidth
-                    disabled={isCreatingConversation}
-                  >
-                    {isCreatingConversation ? (
-                      <span className="flex items-center justify-center gap-2">
-                        <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-solid border-white border-r-transparent"></span>
-                        Creating Conversation...
-                      </span>
-                    ) : (
-                      'Start a New Conversation'
-                    )}
-                  </PrimaryButton>
-                )}
               </div>
-            ) : (
-              <div className="mt-8">
-                <div className="max-w-4xl mx-auto mt-6">
-                  <div className="bg-gray-50 p-4 rounded-md border border-gray-200">
-                    <Text color="text-gray-600" align="center">
-                      No conversation history is available for cancelled tickets.
-                    </Text>
-                  </div>
-                </div>
-              </div>
-            )}
+            ) : null}
           </>
         ) : null}
       </div>
-      {/* Resolve Ticket Modal */}
+      {/*Resolve Ticket Modal*/}
       <Modal
         isOpen={isResolveModalOpen}
         onClose={() => setIsResolveModalOpen(false)}
@@ -573,7 +566,7 @@ function StaffTicketView() {  const { ticketId } = useParams();
         )}
       </Modal>
       
-      {/* Cancel Ticket Modal */}
+      {/*Cancel Ticket Modal*/}
       <Modal
         isOpen={isCancelModalOpen}
         onClose={() => setIsCancelModalOpen(false)}

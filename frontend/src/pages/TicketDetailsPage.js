@@ -64,8 +64,8 @@ function TicketDetailsPage() {
           title: formattedTicket.title,
           description: formattedTicket.description,
           category: formattedTicket.category
-        });        // If response contains conversations, set them
-        // Check if Conversations is directly in the response or check for a separate property
+        });
+
         if (response.Conversations || response.conversations) {
           try {
             const conversationData = response.Conversations || response.conversations || [];
@@ -79,7 +79,6 @@ function TicketDetailsPage() {
             }
           } catch (convErr) {
             console.error('Error processing conversations:', convErr);
-            // Continue with the ticket data even if conversations can't be processed
           }
         }
         
@@ -110,7 +109,6 @@ function TicketDetailsPage() {
 
     try {
       setIsLoading(true);
-      console.log('Hello giggas true');      // Map frontend data to backend structure
       const ticketData = {
         title: editForm.title,
         description: editForm.description,
@@ -120,7 +118,6 @@ function TicketDetailsPage() {
       console.log('Ticket Data:', ticketData);
       
       await authService.editTicket(ticketId, ticketData);
-      console.log('Hello giggas 1');
       
       // Update the ticket in state with the edited values
       setTicket(prevTicket => ({
@@ -131,7 +128,6 @@ function TicketDetailsPage() {
       }));
       
       setIsEditModalOpen(false);    } catch (err) {
-      console.log('Hello giggas');
       console.error('Error updating ticket:', err);
       setErrorMessage('Failed to update ticket. Please try again.');
       setShowErrorModal(true);
@@ -141,7 +137,7 @@ function TicketDetailsPage() {
     console.log('Edit form submitted:', editForm);
   };
 
-  // Helper function to map category name to ID (you'll need to adjust this)
+  // Helper function to map category name to ID
   const getCategoryId = (categoryName) => {
     const categoryMap = {
       'General': 1,
@@ -195,8 +191,6 @@ function TicketDetailsPage() {
   };
   // Handle conversation click
   const handleConversationClick = (conversationId, conversationNumber) => {
-    // We're already storing conversation numbers when fetching conversations
-    // But for extra safety, store it again here before navigating
     sessionStorage.setItem(`conversation_number_${conversationId}`, conversationNumber);
     navigate(`/chatroom/${ticketId}/${conversationId}`);
   };
@@ -207,7 +201,7 @@ function TicketDetailsPage() {
     try {
       setIsLoadingConversations(true);
       const rawTicketId = ticket.rawId;
-      // Use 'newest' directly instead of sortOrder variable
+      // use newest instead of sorted because feature is ggone
       const conversationHistory = await authService.getConversationHistory(rawTicketId, 'newest');
 
       // Format conversation data
@@ -226,7 +220,7 @@ function TicketDetailsPage() {
         })) || []
       }));
       
-      // Process and number conversations
+      // Process and number conversations (not rlly needed anymore)
       const numberedConversations = processConversationsWithNumbers(formattedConversations);
       
       setConversations(numberedConversations);
@@ -326,7 +320,7 @@ function TicketDetailsPage() {
         </div>
       </div>
 
-      {/* Ticket Details Card */}
+      {/*Ticket Details Card*/}
       <div className="w-full max-w-4xl mx-auto px-4 sm:px-6">
         <TicketDetailsCard ticket={ticket} />
         
@@ -359,7 +353,7 @@ function TicketDetailsPage() {
         <div className="border-b border-gray-200 my-6"></div>
       </div>
 
-      {/* Conversations container */}
+      {/*Conversations container*/}
       {ticket.status !== 'Cancelled' ? (
         <div className="w-full max-w-4xl mx-auto px-4 sm:px-6">
           <div className="mb-4">
@@ -416,7 +410,7 @@ function TicketDetailsPage() {
         </div>
       )}
 
-      {/* Edit Ticket Modal */}
+      {/*Edit Ticket Modal*/}
       <Modal
         isOpen={isEditModalOpen}
         onClose={() => setIsEditModalOpen(false)}
@@ -466,7 +460,7 @@ function TicketDetailsPage() {
         </div>
       </Modal>
 
-      {/* Cancel Ticket Modal */}
+      {/*Cancel Ticket Modal*/}
       <Modal
         isOpen={isCancelModalOpen}
         onClose={() => setIsCancelModalOpen(false)}
@@ -486,7 +480,7 @@ function TicketDetailsPage() {
           Are you sure you want to cancel this ticket? This action cannot be undone.
         </Text>      </Modal>
 
-      {/* Error Modal */}
+      {/*Error Modal*/}
       <Modal
         isOpen={showErrorModal}
         onClose={() => setShowErrorModal(false)}

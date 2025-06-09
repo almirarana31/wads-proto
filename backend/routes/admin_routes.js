@@ -25,11 +25,11 @@ router.get('/all-tickets', getTickets);
 
 router.get('/staff-performance', getStaffPerformance);
 
-router.get('/staff/ticket/:ticketID', searchStaff);
+router.get('/staff/ticket/:ticketID', searchStaff); 
 
 router.get('/staff-detail/:staffID', getStaff);
 
-router.patch('/staff-detail/:staffID', editStaff);
+router.patch('/staff-detail/:staffID', editStaff); 
 
 // attribures updating
 router.patch('/tickets/:ticketID', updateField)
