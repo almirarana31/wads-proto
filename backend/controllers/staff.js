@@ -186,7 +186,22 @@ export const resolveTicket = async (req, res) => {
             attributes: ['User.email']
         })
         const email = userTicket.User.email
-        const emailBody = `Ticket has been resolved. Thank you for using bianca ticketing service`;
+        const emailBody = `<div style="font-family: Arial, sans-serif; background: #f4f8fb; padding: 32px;">
+            <div style="max-width: 480px; margin: 0 auto; background: #fff; border-radius: 12px; box-shadow: 0 2px 8px #e3e9f1; padding: 32px 24px;">
+              <div style="text-align: center; margin-bottom: 24px;">
+                <h2 style="color: #2563eb; margin: 0; font-size: 1.5rem;">Ticket Resolved</h2>
+              </div>
+              <p style="color: #222; font-size: 1.1rem; margin-bottom: 18px;">Hi,</p>
+              <p style="color: #222; font-size: 1.1rem; margin-bottom: 18px;">We are pleased to inform you that your ticket <b>#${ticketId}</b> has been successfully resolved.</p>
+              <p style="color: #222; font-size: 1.1rem; margin-bottom: 18px;">Thank you for using the <b>Bianca Ticketing Service</b>. If you need further assistance, please don't hesitate to open a new ticket.</p>
+              <div style="text-align: center; margin: 32px 0;">
+                <a href="${process.env.FRONTEND_URL || 'http://localhost:3000'}" style="display: inline-block; background: #2563eb; color: #fff; text-decoration: none; font-weight: 600; padding: 14px 32px; border-radius: 6px; font-size: 1.1rem; letter-spacing: 0.5px;">Visit Dashboard</a>
+              </div>
+              <p style="color: #666; font-size: 0.95rem;">If you have any questions about your resolved ticket, please contact our support team.</p>
+              <hr style="margin: 32px 0 16px 0; border: none; border-top: 1px solid #e3e9f1;" />
+              <p style="color: #b0b8c1; font-size: 0.9rem; text-align: center;">&copy; ${new Date().getFullYear()} Bianca Aesthetic Clinic</p>
+            </div>
+          </div>`;
         await sendOTP(email, "Ticket has been resolved", emailBody);
 
         // Update the ticket

@@ -1,0 +1,27 @@
+{
+  "id": "user-guide/admin",
+  "title": "Administrator User Guide",
+  "description": "This guide is designed for administrators of the Bianca Helpdesk system. It covers all administrative functions and system management tasks.",
+  "source": "@site/docs/user-guide/admin.md",
+  "sourceDirName": "user-guide",
+  "slug": "/user-guide/admin",
+  "permalink": "/docs/user-guide/admin",
+  "draft": false,
+  "unlisted": false,
+  "editUrl": "https://github.com/facebook/docusaurus/tree/main/packages/create-docusaurus/templates/shared/docs/user-guide/admin.md",
+  "tags": [],
+  "version": "current",
+  "sidebarPosition": 3,
+  "frontMatter": {
+    "sidebar_position": 3
+  },
+  "sidebar": "tutorialSidebar",
+  "previous": {
+    "title": "Staff User Guide",
+    "permalink": "/docs/user-guide/staff"
+  },
+  "next": {
+    "title": "API Reference",
+    "permalink": "/docs/category/api-reference"
+  }
+}

@@ -10,11 +10,11 @@ Welcome to the Bianca Helpdesk API reference documentation. This guide provides 
 
 The Bianca Helpdesk API is organized into several base URLs for different types of operations:
 
-- **User and Guest Endpoints**: `http://localhost:5000/api/user`
-- **Staff Endpoints**: `http://localhost:5000/api/staff`
-- **Admin Endpoints**: `http://localhost:5000/api/admin`
-- **Ticket Management**: `http://localhost:5000/api/ticket`
-- **Conversation Endpoints**: `http://localhost:5000/api/conversation`
+- **User and Guest Endpoints**: `https://e2425-wads-l4ccg3-server.csbihub.id/api/user`
+- **Staff Endpoints**: `https://e2425-wads-l4ccg3-server.csbihub.id/api/staff`
+- **Admin Endpoints**: `https://e2425-wads-l4ccg3-server.csbihub.id/api/admin`
+- **Ticket Management**: `https://e2425-wads-l4ccg3-server.csbihub.id/api/ticket`
+- **Conversation Endpoints**: `https://e2425-wads-l4ccg3-server.csbihub.id/api/conversation`
 
 ## Authentication
 

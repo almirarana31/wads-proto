@@ -7,23 +7,23 @@
   },
   "servers": [
     {
-      "url": "http://localhost:5000/api/user",
+      "url": "https://e2425-wads-l4ccg3-server.csbihub.id/api/user",
       "description": "User and Guest Endpoints"
     },
     {
-      "url": "http://localhost:5000/api/staff",
+      "url": "https://e2425-wads-l4ccg3-server.csbihub.id/api/staff",
       "description": "Staff Endpoints"
     },
     {
-      "url": "http://localhost:5000/api/admin",
+      "url": "https://e2425-wads-l4ccg3-server.csbihub.id/api/admin",
       "description": "Admin Endpoints"
     },
     {
-      "url": "http://localhost:5000/api/ticket",
+      "url": "https://e2425-wads-l4ccg3-server.csbihub.id/api/ticket",
       "description": "Ticket Management"
     },
     {
-      "url": "http://localhost:5000/api/conversation",
+      "url": "https://e2425-wads-l4ccg3-server.csbihub.id/api/conversation",
       "description": "Conversation Endpoints"
     }
   ],

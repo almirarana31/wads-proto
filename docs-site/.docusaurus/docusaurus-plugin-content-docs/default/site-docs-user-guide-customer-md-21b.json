@@ -1,0 +1,27 @@
+{
+  "id": "user-guide/customer",
+  "title": "Customer User Guide",
+  "description": "Welcome to the Bianca Helpdesk customer guide. This document will help you understand how to use the helpdesk system to submit and track support requests.",
+  "source": "@site/docs/user-guide/customer.md",
+  "sourceDirName": "user-guide",
+  "slug": "/user-guide/customer",
+  "permalink": "/docs/user-guide/customer",
+  "draft": false,
+  "unlisted": false,
+  "editUrl": "https://github.com/facebook/docusaurus/tree/main/packages/create-docusaurus/templates/shared/docs/user-guide/customer.md",
+  "tags": [],
+  "version": "current",
+  "sidebarPosition": 1,
+  "frontMatter": {
+    "sidebar_position": 1
+  },
+  "sidebar": "tutorialSidebar",
+  "previous": {
+    "title": "User Guides",
+    "permalink": "/docs/category/user-guides"
+  },
+  "next": {
+    "title": "User Guide Overview",
+    "permalink": "/docs/user-guide/"
+  }
+}

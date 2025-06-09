@@ -103,11 +103,10 @@ function ResetPasswordPage() {
             </Text>
             
             <div className="text-center">
-              <Link 
-                to="/login" 
-                className="bg-blue-700 hover:bg-blue-800 text-white py-2 px-6 rounded-md inline-block transition-colors"
-              >
-                Go to Login
+              <Link to="/login">
+                <PrimaryButton>
+                  Go to Login
+                </PrimaryButton>
               </Link>
             </div>
           </div>
@@ -170,8 +169,10 @@ function ResetPasswordPage() {
             </div>
             
             <div className="text-center">
-              <Link to="/login" className="text-bianca-primary hover:underline">
-                Back to Login
+              <Link to="/login">
+                <PrimaryButton>
+                  Go to Login
+                </PrimaryButton>
               </Link>
             </div>
           </form>
