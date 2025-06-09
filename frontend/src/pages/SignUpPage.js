@@ -7,7 +7,7 @@ import warningIcon from '../assets/warning.png';
 import PrimaryButton from '../components/buttons/PrimaryButton';
 import { PageTitle, Text, Label, Heading } from '../components/text';
 
-function SignupPage() {
+function SignUpPage() {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
     username: '',
@@ -213,4 +213,4 @@ function SignupPage() {
   );
 }
 
-export default SignupPage;
+export default SignUpPage;

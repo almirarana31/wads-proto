@@ -5,7 +5,7 @@ import Header from './components/Header';
 import HomePage from './pages/HomePage';
 import SubmitTicketPage from './pages/SubmitTicketPage';
 import LoginPage from './pages/LoginPage';
-import SignupPage from './pages/SignupPage'; // Fixed casing to match actual filename
+import SignUpPage from './pages/SignUpPage';
 import ViewTicketsPage from './pages/ViewTicketsPage';
 import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import ResetPasswordVerifyPage from './pages/ResetPasswordVerifyPage';
@@ -108,7 +108,7 @@ function App() {
               path="/login" 
               element={<LoginPage onLogin={handleLogin} />} 
             />            
-            <Route path="/signup" element={<SignupPage />} />            
+            <Route path="/signup" element={<SignUpPage />} />            
             <Route path="/forgot-password" element={<ForgotPasswordPage />} />
             <Route path="/reset-password-verify" element={<ResetPasswordVerifyPage />} />
             <Route path="/reset-password" element={<ResetPasswordPage />} />
