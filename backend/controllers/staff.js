@@ -111,14 +111,18 @@ export const claimTicket = async (req, res) => {
         };
         
        
-        const ticket = await Ticket.update({
+        const [ticket] = await Ticket.update({
             staff_id: staff.staff_id,
             status_id: 2
         }, {
             where: {
-                id: ticket_id
-            }
+                id: ticket_id,
+                user_id: {[Op.ne]: staff.id}
+            },
+            returning: true
         })
+
+        if (!ticket) return res.status(401).json({message: "Cannot claim own ticket"});
 
         // audit here
         await logAudit(
