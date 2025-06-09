@@ -106,7 +106,8 @@ function StaffTicketView() {  const { ticketId } = useParams();
       }
     };
     
-    if (ticket && ticket.status !== 'Cancelled') {
+    // Removed condition that prevented fetching for cancelled tickets
+    if (ticket) {
       fetchConversations();
     }
   }, [ticket, ticketId]);
@@ -437,9 +438,13 @@ function StaffTicketView() {  const { ticketId } = useParams();
                   )}
                 </div>
               ) : (
-                note && (
-                  <div className="inline-block px-3 py-1 bg-bianca-background/50 text-bianca-primary rounded-full text-sm font-medium mt-2">
+                note ? (
+                  <div className="p-3 bg-gray-50 border border-gray-200 rounded-md text-gray-700 min-h-[80px]">
                     {note}
+                  </div>
+                ) : (
+                  <div className="p-3 bg-gray-50 border border-gray-200 rounded-md text-gray-400 italic min-h-[80px]">
+                    No notes have been added to this ticket yet.
                   </div>
                 )
               )}
@@ -461,8 +466,8 @@ function StaffTicketView() {  const { ticketId } = useParams();
               </div>
             </div>
             
-            {/*Conversation Container*/}
-            {ticket.status !== 'Cancelled' ? (
+            {/* Conversation Container */}
+            {ticket ? (
               <div className="mt-8">
                 <div className="mb-4">
                   <Subheading className="text-bianca-primary">Conversation</Subheading>
@@ -491,42 +496,45 @@ function StaffTicketView() {  const { ticketId } = useParams();
                     ))}
                   </div>
                 ) : (
-                  <div className="bg-gray-50 p-4 rounded-md border border-gray-200 mb-6">
-                    <Text color="text-gray-600" align="center">No conversations found for this ticket.</Text>
-                  </div>
-                )}                {createConversationError && (
-                  <div className="bg-red-50 p-4 rounded-md border border-red-200 mb-4">
+                  <>
+                    <div className="bg-gray-50 p-4 rounded-md border border-gray-200 mb-6">
+                      <Text color="text-gray-600" align="center">No conversations found for this ticket.</Text>
+                    </div>
+                    
+                    {createConversationError && (
+                      <div className="bg-red-50 p-4 rounded-md border border-red-200 mb-4">
+                        <Text color="text-red-600" align="center">{createConversationError}</Text>
+                      </div>
+                    )}
+                    
+                    {/*Only show "Start a New Conversation" button if ticket is In Progress AND there are no existing conversations*/}
+                    {ticket.status === "In Progress" && (
+                      <PrimaryButton 
+                        onClick={handleStartConversation} 
+                        fullWidth
+                        disabled={isCreatingConversation}
+                      >
+                        {isCreatingConversation ? (
+                          <span className="flex items-center justify-center gap-2">
+                            <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-solid border-white border-r-transparent"></span>
+                            Creating Conversation...
+                          </span>
+                        ) : (
+                          'Start a New Conversation'
+                        )}
+                      </PrimaryButton>
+                    )}
+                  </>
+                )}
+                
+                {/*Show error outside the conditional rendering for conversations*/}
+                {conversations.length > 0 && createConversationError && (
+                  <div className="bg-red-50 p-4 rounded-md border border-red-200 mt-4">
                     <Text color="text-red-600" align="center">{createConversationError}</Text>
                   </div>
                 )}
-                {ticket.status === "In Progress" && conversations.length === 0 && (
-                  <PrimaryButton 
-                    onClick={handleStartConversation} 
-                    fullWidth
-                    disabled={isCreatingConversation}
-                  >
-                    {isCreatingConversation ? (
-                      <span className="flex items-center justify-center gap-2">
-                        <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-solid border-white border-r-transparent"></span>
-                        Creating Conversation...
-                      </span>
-                    ) : (
-                      'Start a New Conversation'
-                    )}
-                  </PrimaryButton>
-                )}
               </div>
-            ) : (
-              <div className="mt-8">
-                <div className="max-w-4xl mx-auto mt-6">
-                  <div className="bg-gray-50 p-4 rounded-md border border-gray-200">
-                    <Text color="text-gray-600" align="center">
-                      No conversation history is available for cancelled tickets.
-                    </Text>
-                  </div>
-                </div>
-              </div>
-            )}
+            ) : null}
           </>
         ) : null}
       </div>
