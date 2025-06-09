@@ -20,15 +20,12 @@ function Chatroom() {
   const [conversationStatus, setConversationStatus] = useState('open');
   const [actualConversationId, setActualConversationId] = useState(isNewConversation ? null : conversationId);
   const [lastMessageId, setLastMessageId] = useState(null);
-  const [input, setInput] = useState('');
+  const [input, setInput] = useState(''); 
   const [conversationNumber, setConversationNumber] = useState(null);
   const [isSending, setIsSending] = useState(false);
   const [sendError, setSendError] = useState(null);
-  const [isClosing, setIsClosing] = useState(false);
   const [userRole, setUserRole] = useState(null);
 
-  // Helper function to check if user is staff or admin
-  const isStaffOrAdmin = (role) => ['staff', 'admin'].includes(role?.toLowerCase());
   // Define fetchConversationData first
   const fetchConversationData = useCallback(async () => {
     try {
@@ -295,44 +292,6 @@ function Chatroom() {
     return () => clearInterval(intervalId);
   }, [actualConversationId, isNewConversation, conversationStatus, lastMessageId]);
 
-  // Function to close a conversation
-  const handleCloseConversation = async () => {
-    try {
-      // Make sure we have a valid conversation ID
-      const currentConversationId = isNewConversation ? actualConversationId : conversationId;
-      
-      if (!currentConversationId) {
-        throw new Error('No valid conversation ID found');
-      }
-      
-      // Set closing state for UI feedback
-      setIsClosing(true);
-      
-      console.log(`Closing conversation with ID: ${currentConversationId}`);
-      
-      // Call the API to close the conversation
-      const response = await authService.closeConversation(currentConversationId);
-      
-      console.log('API response:', response);
-      
-      // Update local UI state after successful API call
-      setConversationStatus('closed');
-      
-      // Show a success message or notification
-      alert('Conversation has been closed successfully.');
-      
-      // Refresh conversation data to ensure UI is up to date
-      if (!isNewConversation) {
-        fetchConversationData();
-      }
-    } catch (err) {
-      console.error('Error closing conversation:', err);
-      alert('Failed to close conversation. Please try again.');
-    } finally {
-      setIsClosing(false);
-    }
-  };
-
   // Fetch user role on mount
   useEffect(() => {
     const getUserRole = async () => {
@@ -351,10 +310,8 @@ function Chatroom() {
   return (
     <ContentContainer>      <div className="relative mb-5">
         <BackButton onClick={handleBack} className="absolute -top-2 -left-2" />        <div className="text-center pt-8">
-          {/* Use the conversation number we've determined */}
           <PageTitle title={isNewConversation ? 'New Conversation' : `Conversation ${conversationNumber || '#'}`} />
           
-          {/* Display status indicator for closed conversations */}
           {conversationStatus === 'closed' && (
             <div className="inline-flex items-center px-3 py-1 mt-2 bg-gray-100 border border-gray-200 rounded-full text-sm">
               <span className="h-2 w-2 bg-red-500 rounded-full mr-2"></span>
@@ -365,7 +322,6 @@ function Chatroom() {
       </div>
       <div className="border-b border-gray-200 my-6"></div>
 
-      {/* Chat content with loading and error states */}
       <div
         ref={chatContainerRef}
         className="flex flex-col gap-2 max-w-2xl mx-auto mt-8 mb-6 h-96 overflow-y-auto p-2"
@@ -409,14 +365,13 @@ function Chatroom() {
           </div>
         )}
         
-        {/* Show sending error if any */}
         {sendError && (
           <div className="bg-red-50 border border-red-200 rounded-lg p-3 mt-2 text-center">
             <Text color="text-red-600">{sendError}</Text>
           </div>
         )}
       </div>
-        {/* Chat input */}      <div className="max-w-2xl mx-auto w-full mt-4">
+      <div className="max-w-2xl mx-auto w-full mt-4">
         {conversationStatus === 'closed' ? (
           <div className="bg-gray-50 border border-gray-200 rounded-lg p-5 text-center">
             <div className="flex items-center justify-center mb-2">
@@ -433,7 +388,7 @@ function Chatroom() {
           </div>
         ) : (
           <>
-            {/* Chat Input - Show for everyone except admin */}
+            {/*Chat Input - Show for everyone except admin*/}
             {userRole !== 'admin' && (
               <div className="flex bg-white rounded-xl shadow-md border border-gray-200">
                 <input
@@ -463,7 +418,7 @@ function Chatroom() {
               </div>
             )}
 
-            {/* Admin Message - Show only for admin */}
+            {/*Admin Message - Show only for admin*/}
             {userRole === 'admin' && (
               <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 text-center">
                 <Text color="text-gray-600">
