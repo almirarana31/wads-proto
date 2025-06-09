@@ -21,7 +21,7 @@ const app = express();
 const swaggerDocument = JSON.parse(fs.readFileSync('./swagger.json', 'utf8'));
 
 const corsOptions = {
-  origin: process.env.CORS_ORIGIN,
+  origin: process.env.CORS_ORIGIN || "https://e2425-wads-l4ccg3-client.csbihub.id",
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   credentials: true, // Allow cookies, authorization headers
 };
