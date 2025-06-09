@@ -26,7 +26,7 @@ const NoteTooltipPortal = ({ note, show, position }) => {
         pointerEvents: 'none',
       }}
     >
-      <p className="font-medium text-blue-700 mb-2">Staff Note:</p>
+      <p className="font-medium text-blue-700 mb-2">Admin Note:</p>
       <p className="text-gray-700 text-sm">{note}</p>
     </div>,
     document.body
@@ -803,7 +803,7 @@ function AdminDashboard() {
                             >
                               View
                             </SecondaryButton>
-                            {ticket.assignedStaff && (
+                            {ticket.assignedStaff && ticket.status === "Cancelled" && (
                               <PrimaryButton
                                 onClick={() => handleAssignTicket(ticket.id)}
                                 className="text-xs"
