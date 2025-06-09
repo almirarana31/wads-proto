@@ -16,14 +16,15 @@ export const authService = {    async login(credentials) {
             throw error;
         }
     },async signup(userData) {
-        console.log('Signing up user...', userData);
         try {
-            // The /api prefix is added by the interceptor
             const response = await api.post('/user/sign-up', userData);
-            console.log('Signup successful', response.data);
             return response.data;
         } catch (error) {
-            console.error('Signup failed:', error);
+            // Always throw an Error with the backend message if available
+            const backendMsg = error.response?.data?.message;
+            if (backendMsg) {
+                throw new Error(backendMsg);
+            }
             throw error;
         }
     },
