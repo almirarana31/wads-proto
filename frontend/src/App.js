@@ -5,7 +5,7 @@ import Header from './components/Header';
 import HomePage from './pages/HomePage';
 import SubmitTicketPage from './pages/SubmitTicketPage';
 import LoginPage from './pages/LoginPage';
-import SignUpPage from './pages/SignupPage';
+import SignupPage from './pages/SignupPage'; // Fixed casing to match actual filename
 import ViewTicketsPage from './pages/ViewTicketsPage';
 import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import ResetPasswordVerifyPage from './pages/ResetPasswordVerifyPage';
@@ -20,7 +20,7 @@ import StaffDashPage from './pages/StaffDashPage';
 import StaffTicketView from './pages/StaffTicketView';
 import AdminTicketView from './pages/AdminTicketView';
 import ActivateAccountPage from './pages/ActivateAccountPage';
-import Chatbot from './components/Chatbot'; // Import Chatbot component
+import Chatbot from './components/Chatbot';
 
 function App() {
   // For demo purposes - in a real app, this would come from auth context/state
@@ -108,7 +108,7 @@ function App() {
               path="/login" 
               element={<LoginPage onLogin={handleLogin} />} 
             />            
-            <Route path="/signup" element={<SignUpPage />} />            
+            <Route path="/signup" element={<SignupPage />} />            
             <Route path="/forgot-password" element={<ForgotPasswordPage />} />
             <Route path="/reset-password-verify" element={<ResetPasswordVerifyPage />} />
             <Route path="/reset-password" element={<ResetPasswordPage />} />

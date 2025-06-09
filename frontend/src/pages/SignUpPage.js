@@ -2,8 +2,8 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { authService } from '../api/authService';
 import checkIcon from '../assets/accept.png';
-import infoIcon from '../assets/information.png';      // <-- Add this
-import warningIcon from '../assets/warning.png';// <-- Add this
+import infoIcon from '../assets/information.png';
+import warningIcon from '../assets/warning.png';
 import PrimaryButton from '../components/buttons/PrimaryButton';
 import { PageTitle, Text, Label, Heading } from '../components/text';
 
@@ -20,7 +20,7 @@ function SignUpPage() {
   const [success, setSuccess] = useState(false);
   const [successEmail, setSuccessEmail] = useState('');
   const [showModal, setShowModal] = useState(false);
-  const [modalType, setModalType] = useState('info'); // 'info' or 'warning'
+  const [modalType, setModalType] = useState('info'); 
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
