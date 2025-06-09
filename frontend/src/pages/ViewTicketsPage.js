@@ -18,7 +18,7 @@ function ViewTicketsPage() {
   useEffect(() => {
     const fetchUserData = async () => {
       try {
-        setIsLoading(true);        // Fetch user details to get username
+        setIsLoading(true);
         setIsLoadingUsername(true);
         try {
           const userDetails = await authService.getUserDetail();
@@ -45,7 +45,7 @@ function ViewTicketsPage() {
         }
         
         // Fetch tickets
-        const response = await authService.getUserTickets();        // Transform backend data to match frontend structure if needed
+        const response = await authService.getUserTickets();
         const formattedTickets = response.tickets.map(ticket => {
           const rawId = ticket.id || ticket.ticketId;
           return {
@@ -89,8 +89,7 @@ function ViewTicketsPage() {
   };
     // View ticket details
   const handleViewDetails = (ticketId, rawId) => {
-    // If rawId is provided, use that for the API call
-    // Otherwise, extract the raw ID if the ticket ID is formatted as "TKT-XXX"
+
     const idForApi = rawId || (ticketId.startsWith('TKT-') ? ticketId.substring(4).replace(/^0+/, '') : ticketId);
     navigate(`/ticket/${idForApi}`);
   };
@@ -120,7 +119,7 @@ function ViewTicketsPage() {
     <div className="min-h-screen">
       <div className="max-w-6xl mx-auto p-6">
         <div className="bg-white rounded-md shadow-md p-8">
-          {/* Page Header */}          
+          {/*Page Header*/}          
           <PageTitle 
             title="Your Tickets"
             subtitle={
@@ -130,7 +129,7 @@ function ViewTicketsPage() {
             }
           />
           
-          {/* Search and Filter */}
+          {/*Search and Filter*/}
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
             <div className="flex flex-col md:flex-row gap-4 w-full md:w-auto">
               <input
@@ -163,14 +162,14 @@ function ViewTicketsPage() {
             </PrimaryButton>
           </div>
           
-          {/* Loading State */}
+          {/*Loading State*/}
           {isLoading && (
             <div className="text-center py-10">
               <Text color="text-gray-500">Loading tickets...</Text>
             </div>
           )}
           
-          {/* Error State */}
+          {/*Error State*/}
           {error && !isLoading && (
             <div className="text-center py-10">
               <Text color="text-red-500">{error}</Text>              <button 
@@ -182,7 +181,7 @@ function ViewTicketsPage() {
             </div>
           )}
           
-          {/* Ticket List */}
+          {/*Ticket List*/}
           {!isLoading && !error && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {filteredTickets.length === 0 ? (

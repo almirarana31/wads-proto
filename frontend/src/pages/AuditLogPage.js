@@ -121,7 +121,8 @@ function AuditLogPage() {
           doc.internal.pageSize.height - 10
         );
       }
-    });    // Save the PDF
+    });
+    // Save the PDF
     const filename = `audit-log-${new Date().toISOString().split('T')[0]}.pdf`;
     doc.save(filename);
   };
@@ -192,7 +193,8 @@ function AuditLogPage() {
           <PageTitle 
             title="System Audit Log"
             subtitle="Track and monitor system activities"
-          />          {/* Action Buttons */}
+          />
+          {/*Action Buttons*/}
           <div className="flex justify-end gap-3 mb-6">
             <SecondaryButton onClick={exportToPDF}>
               Export as PDF
@@ -202,7 +204,7 @@ function AuditLogPage() {
             </SecondaryButton>
           </div>
 
-          {/* Filters */}
+          {/*Filters*/}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
             <div>
               <Label>Start Date</Label>
@@ -247,7 +249,7 @@ function AuditLogPage() {
             </div>
           </div>
 
-          {/* Loading and Error States */}
+          {/*Loading and Error States*/}
           {loading && (
             <div className="text-center py-4">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto"></div>
@@ -310,7 +312,7 @@ function AuditLogPage() {
             </div>
           )}
 
-          {/* No Results Message */}
+          {/*No Results Message*/}
           {!loading && !error && auditLogs.length === 0 && (
             <div className="text-center py-4 text-gray-500">
               No audit logs found matching the current filters.

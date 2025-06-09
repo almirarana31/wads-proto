@@ -362,7 +362,7 @@ export const enterNewPass = async (req, res) => {
             user[0].id,
             `User ${user[0].id} updated passwords`
         )
-        return res.status(200).json({message: "Successfully updated like a heck!"})
+        return res.status(200).json({message: "Password has been successfully reset"})
     } catch(error) {
         return res.status(500).json({message: error.message})
     }

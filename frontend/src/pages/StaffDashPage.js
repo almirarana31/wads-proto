@@ -1,11 +1,34 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { createPortal } from 'react-dom'; // Add this import
 import { PageTitle, Subheading, StatText } from '../components/text';
 import SecondaryButton from '../components/buttons/SecondaryButton';
 import StaffTicketQueuePage from './StaffTicketQueuePage';
 import PriorityPill from '../components/PriorityPill';
 import StatusPill from '../components/StatusPill';
 import { authService } from '../api/authService';
+import { FaStickyNote } from 'react-icons/fa';
+
+// tooltip, now uses react portal
+const NoteTooltipPortal = ({ note, show, position }) => {
+  if (!show) return null;
+  
+  return createPortal(
+    <div 
+      className="fixed bg-white border-2 border-blue-300 rounded-lg shadow-xl p-4 z-[9999]"
+      style={{
+        width: '300px',
+        top: `${position.y}px`,
+        left: `${position.x}px`,
+        pointerEvents: 'none',
+      }}
+    >
+      <p className="font-medium text-blue-700 mb-2">Staff Note:</p>
+      <p className="text-gray-700 text-sm">{note}</p>
+    </div>,
+    document.body // renders tooltip to body to avoid overflow (because it kept getting cut off)
+  );
+};
 
 function StaffDashPage() {
   const navigate = useNavigate();
@@ -17,7 +40,7 @@ function StaffDashPage() {
   });
   const [stats, setStats] = useState({
     total: 0,
-    pending: 0, // This is used for cancelled tickets
+    pending: 0,
     inProgress: 0,
     resolved: 0
   });
@@ -34,10 +57,29 @@ function StaffDashPage() {
       if (filterPriority && filterPriority !== 'All priority') queryParams.append('priority', filterPriority);
       if (filterStatus && filterStatus !== 'All status') queryParams.append('status', filterStatus);
       
-      const response = await authService.getStaffTickets(queryParams.toString());
-        // Transform backend data to match frontend structure
-      const formattedTickets = response.map(ticket => {
-        // Map priority IDs to display names
+      // gets the initial tickets list
+      const initialResponse = await authService.getStaffTickets(queryParams.toString());
+      
+      // fetches extra info with notes per ticket
+      const detailedTickets = await Promise.all(
+        initialResponse.map(async (ticket) => {
+          try {
+            // Get detailed ticket info including notes
+            const detailResponse = await authService.getTicketDetail(ticket.ticket_id);
+            return {
+              ...ticket,
+              note: detailResponse.note || ''
+            };
+          } catch (err) {
+            console.error(`Error fetching details for ticket ${ticket.ticket_id}:`, err);
+            return ticket; // return no notes if no details
+          }
+        })
+      );
+      
+      // format tickets with additional details
+      const formattedTickets = detailedTickets.map(ticket => {
+        // map specific priority IDs to display names
         let priorityName = 'Medium';
         if (ticket.Priority) {
           switch (ticket.Priority.name) {
@@ -60,16 +102,18 @@ function StaffDashPage() {
         }
         
         return {
-          id: `TKT-${ticket.ticket_id.toString().padStart(3, '0')}`,
+          id: ticket.ticket_id,
+          displayId: `TKT-${ticket.ticket_id.toString().padStart(3, '0')}`,
           title: ticket.subject,
           name: ticket.User?.username || 'Unknown',
           email: ticket.User?.email || 'N/A',
           createdAt: ticket.createdAt,
-          lastUpdated: ticket.updatedAt || ticket.createdAt, // Fallback to createdAt if updatedAt is not available
+          lastUpdated: ticket.updatedAt || ticket.createdAt,
           category: categoryName,
           priority: priorityName,
           status: ticket.Status?.name || 'In Progress',
-          assignedTo: 'staff1' // You may need to fetch this separately if needed
+          assignedTo: staffDetails?.username || 'You',
+          note: ticket.note || ''
         };
       });
       
@@ -127,7 +171,12 @@ function StaffDashPage() {
   };
 
   const handleViewTicket = (ticketId) => {
-    navigate(`/staff/ticket/${ticketId}`);
+    // If ticketId includes the prefix, remove it
+    const rawId = typeof ticketId === 'string' && ticketId.startsWith('TKT-') 
+      ? ticketId.replace('TKT-', '') 
+      : ticketId;
+    
+    navigate(`/staff/ticket/${rawId}`);
   };
 
   // Filter tickets based on search and filters (client-side filtering as a backup)
@@ -139,10 +188,6 @@ function StaffDashPage() {
       direction = 'desc';
     }
     setSortConfig({ key, direction });
-    
-    // When we have server-side sorting implemented, we can call the API with sort parameters
-    // For now, we'll let client-side sorting handle it
-    // fetchStaffTickets(searchQuery, filters.priority, filters.status, key, direction);
   };
 
   const getSortIcon = (columnKey) => {
@@ -191,6 +236,11 @@ function StaffDashPage() {
     }
     return sortableTickets;
   }, [filteredTickets, sortConfig]);
+  const [tooltipState, setTooltipState] = useState({ 
+    show: false, 
+    note: '',
+    position: { x: 0, y: 0 }
+  });
   return (
     <div className="min-h-screen py-6 sm:py-12 px-4">
       <div className="bg-white p-6 md:p-10 rounded shadow-md max-w-screen-2xl mx-auto">
@@ -202,7 +252,7 @@ function StaffDashPage() {
           }
           className="mb-8"
         />
-        {/* Tab Navigation */}
+        {/*Tab Navigation*/}
         <div className="flex gap-4 mb-8 border-b border-gray-200">
           <button
             className={`px-4 py-2 font-semibold border-b-2 transition-colors ${activeTab === 'my-tickets' ? 'border-bianca-primary text-bianca-primary' : 'border-transparent text-gray-500 hover:text-bianca-primary'}`}
@@ -216,10 +266,10 @@ function StaffDashPage() {
             Ticket Queue
           </button>
         </div>
-        {/* Tab Content */}
+        {/*Tab Content*/}
         {activeTab === 'my-tickets' ? (
           <>            
-            {/* Stats Cards */}
+            {/*Stats Cards*/}
             <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-8">
               <div className="bg-white p-4 rounded-lg shadow-md">
                 <StatText label="Total" value={stats.total} valueColor="gray-darker" labelColor="gray-dark" />
@@ -234,10 +284,11 @@ function StaffDashPage() {
                 <StatText label="Resolved" value={stats.resolved} valueColor="green" labelColor="green" />
               </div>
             </div>
-            {/* Ticket Management Section */}
+            {/*Ticket Management Section*/}
             <div className="bg-white p-6 rounded-lg shadow-md mb-8">
               <div className="flex justify-between items-center mb-4">
-                <Subheading size="2xl" color="blue">Ticket Management</Subheading>                <button 
+                <Subheading size="2xl" color="blue">Ticket Management</Subheading>
+                <button 
                   onClick={handleRefresh} 
                   className="flex items-center px-4 py-2 bg-bianca-primary text-white rounded hover:bg-bianca-primary/80 transition-colors" 
                   disabled={isRefreshing}
@@ -269,7 +320,8 @@ function StaffDashPage() {
                   Search
                 </button>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">                <select
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                <select
                   className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-bianca-primary/30 bg-white"
                   value={filters.priority}
                   onChange={(e) => {
@@ -295,7 +347,7 @@ function StaffDashPage() {
                   <option value="Resolved">Resolved</option>
                 </select>
               </div>              
-              {/* Tickets Table */}
+              {/*Tickets Table*/}
               <div className="overflow-x-auto w-full">
                 {isLoading ? (
                   <div className="text-center p-6">
@@ -309,7 +361,8 @@ function StaffDashPage() {
                       </svg>
                     </div>
                     <h3 className="text-lg font-semibold text-red-700 mb-2">Error Loading Tickets</h3>
-                    <p className="text-gray-700 mb-4">{error}</p>                    <button 
+                    <p className="text-gray-700 mb-4">{error}</p>
+                    <button 
                       onClick={handleRefresh} 
                       className="mt-4 px-4 py-2 bg-bianca-primary text-white rounded hover:bg-bianca-primary/80 transition-colors"
                     >
@@ -334,22 +387,58 @@ function StaffDashPage() {
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
                       {sortedTickets.length > 0 ? sortedTickets.map((ticket) => (
-                        <tr key={ticket.id} className="hover:bg-gray-50">
-                          <td className="p-3 text-sm text-gray-700 whitespace-nowrap">{ticket.id}</td>
-                          <td className="p-3 text-sm text-gray-700 whitespace-nowrap">{ticket.title}</td>
+                        <tr key={ticket.id} className={`hover:bg-gray-50 ${ticket.note ? 'bg-blue-50/30' : ''}`}>
+                          <td className="p-3 text-sm whitespace-nowrap">
+                            <div className="flex items-center gap-2">
+                              <span className="font-medium text-blue-700">
+                                {ticket.displayId || `TKT-${ticket.id.toString().padStart(3, '0')}`}
+                              </span>
+                              {ticket.note && (
+                                <span 
+                                  className="relative cursor-pointer"
+                                  onMouseEnter={(e) => {
+                                    // Set state to show tooltip and calculate position
+                                    setTooltipState({
+                                      show: true, 
+                                      note: ticket.note,
+                                      position: { 
+                                        x: e.clientX + 10,
+                                        y: e.clientY + 10
+                                      }
+                                    });
+                                  }}
+                                  onMouseLeave={() => {
+                                    setTooltipState({ show: false, note: '', position: { x: 0, y: 0 } });
+                                  }}
+                                >
+                                  <FaStickyNote className="text-blue-500" />
+                                </span>
+                              )}
+                            </div>
+                          </td>
+                          <td className="p-3 text-sm font-medium text-gray-800 whitespace-nowrap">{ticket.title}</td>
                           <td className="p-3 text-sm text-gray-700 whitespace-nowrap">{ticket.name}</td>
-                          <td className="p-3 text-sm text-gray-700 whitespace-nowrap">{ticket.email}</td>
-                          <td className="p-3 text-sm text-gray-700 whitespace-nowrap">{new Date(ticket.createdAt).toLocaleDateString()}</td>
-                          <td className="p-3 text-sm text-gray-700 whitespace-nowrap">{new Date(ticket.lastUpdated).toLocaleDateString()}</td>
-                          <td className="p-3 text-sm text-gray-700 whitespace-nowrap">{ticket.category}</td>
-                          <td className="p-3 text-sm text-gray-700 whitespace-nowrap">
+                          <td className="p-3 text-sm text-gray-500 whitespace-nowrap">{ticket.email}</td>
+                          <td className="p-3 text-sm text-gray-500 whitespace-nowrap">{new Date(ticket.createdAt).toLocaleDateString()}</td>
+                          <td className="p-3 text-sm text-gray-500 whitespace-nowrap">{new Date(ticket.lastUpdated).toLocaleDateString()}</td>
+                          <td className="p-3 text-sm whitespace-nowrap">
+                            <span className="px-2 py-1 bg-gray-100 rounded-md text-gray-600 text-xs font-medium">
+                              {ticket.category}
+                            </span>
+                          </td>
+                          <td className="p-3 text-sm whitespace-nowrap">
                             <PriorityPill priority={ticket.priority} />
                           </td>
-                          <td className="p-3 text-sm text-gray-700 whitespace-nowrap">
+                          <td className="p-3 text-sm whitespace-nowrap">
                             <StatusPill status={ticket.status} />
                           </td>
                           <td className="p-3 text-sm whitespace-nowrap">
-                            <SecondaryButton onClick={() => handleViewTicket(ticket.id)} className="mr-3">View</SecondaryButton>
+                            <SecondaryButton 
+                              onClick={() => handleViewTicket(ticket.id)} 
+                              className="px-3 py-1 text-sm"
+                            >
+                              View
+                            </SecondaryButton>
                           </td>
                         </tr>
                       )) : (
@@ -372,11 +461,13 @@ function StaffDashPage() {
           />
         )}
       </div>
+      <NoteTooltipPortal 
+        note={tooltipState.note}
+        show={tooltipState.show}
+        position={tooltipState.position}
+      />
     </div>
   );
 }
-
-// Utility functions for styling
-
 
 export default StaffDashPage;

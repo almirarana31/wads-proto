@@ -61,7 +61,7 @@ function StaffTicketQueuePage({ onClaimTicket }) {
             case '1': categoryName = 'General'; break;
             case '2': categoryName = 'Billing'; break;
             case '3': categoryName = 'IT Support'; break;
-            default: categoryName = ticket.Category?.name || 'General'; // Fall back to the name if it's already a string
+            default: categoryName = ticket.Category?.name || 'General';
           }
         }
         
@@ -147,7 +147,6 @@ function StaffTicketQueuePage({ onClaimTicket }) {
         // Refresh data to get updated counts and ticket pool
         refreshData();
         
-        // Show success notification (could use a toast component instead of alert in a real app)
         alert(`Successfully claimed ticket: ${selectedTicket.id}`);
       } catch (err) {
         console.error('Error claiming ticket:', err);

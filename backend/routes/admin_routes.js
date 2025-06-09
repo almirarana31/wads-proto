@@ -15,7 +15,7 @@ router.use(authN, adminAuthZ);
 // admin dashboard start here
 
 // check staff account status
-router.get('/account/:adminID/activation-status', getAccStatus)
+router.get('/account/:adminID/activation-status', getAccStatus) // this
 
 router.get('/status-summary', getStatusSummary);
 
@@ -25,11 +25,11 @@ router.get('/all-tickets', getTickets);
 
 router.get('/staff-performance', getStaffPerformance);
 
-router.get('/staff/ticket/:ticketID', searchStaff);
+router.get('/staff/ticket/:ticketID', searchStaff); // this
 
-router.get('/staff-detail/:staffID', getStaff);
+router.get('/staff-detail/:staffID', getStaff); // this
 
-router.patch('/staff-detail/:staffID', editStaff);
+router.patch('/staff-detail/:staffID', editStaff); // this
 
 // attribures updating
 router.patch('/tickets/:ticketID', updateField)
@@ -38,7 +38,7 @@ router.patch('/tickets/:ticketID', updateField)
 router.patch('/tickets/:ticketID/staff', assignStaff)
 
 // create new staff
-router.post('/staff', createStaff)
+router.post('/staff', createStaff) // this
 
 
 export default router;

@@ -90,7 +90,7 @@ function SubmitTicketPage() {
     try {
       // Call backend to submit ticket
       const ticketData = {
-        email: isAuthenticated ? userEmail : formData.email, // Use stored email for authenticated users
+        email: isAuthenticated ? userEmail : formData.email,
         title: formData.title,
         category_id:
           formData.category === 'General' ? 1 :
@@ -103,8 +103,6 @@ function SubmitTicketPage() {
       const res = await authService.sendTicket(ticketData);
       console.log('Server response:', res);
       
-      // Store the selected category name directly from the form data
-      // instead of relying on the response
       const categoryName = formData.category;
       
       setTicket({
@@ -292,7 +290,7 @@ function SubmitTicketPage() {
         </div>
       </div>
 
-      {/* Modal for alerts */}
+      {/* Alert Modal */}
       <Modal
         isOpen={showModal}
         onClose={() => setShowModal(false)}

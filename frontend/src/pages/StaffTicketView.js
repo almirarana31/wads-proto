@@ -11,11 +11,9 @@ import PrimaryButton from '../components/buttons/PrimaryButton';
 import Modal from '../components/Modal';
 import { PageTitle, Text, Subheading, Label } from '../components/text';
 import { authService } from '../api/authService';
-import ChatBubble from '../components/ChatBubble';
 
 function StaffTicketView() {  const { ticketId } = useParams();
   const navigate = useNavigate();
-  const [sortOrder, setSortOrder] = useState('newest');
   const [isResolveModalOpen, setIsResolveModalOpen] = useState(false);
   const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -31,8 +29,6 @@ function StaffTicketView() {  const { ticketId } = useParams();
         // Remove 'TKT-' prefix if present in the ticketId
         const rawTicketId = ticketId.startsWith('TKT-') ? ticketId.replace('TKT-', '') : ticketId;
         const response = await authService.getTicketDetail(rawTicketId);
-        
-        console.log('API Response:', response); // Useful for debugging
         
         // Format the ticket data to match our component needs
         const formattedTicket = {
@@ -80,13 +76,14 @@ function StaffTicketView() {  const { ticketId } = useParams();
       try {
         setIsLoadingConversations(true);
         const rawTicketId = ticketId.startsWith('TKT-') ? ticketId.replace('TKT-', '') : ticketId;
-        const conversationHistory = await authService.getConversationHistory(rawTicketId, sortOrder);
+        const conversationHistory = await authService.getConversationHistory(rawTicketId, 'newest');
         
         // Format conversation data
         const formattedConversations = conversationHistory.map(conv => ({
           id: conv.id,
           startedDate: conv.createdAt,
-          endedDate: conv.endedAt || null,
+          endedDate: conv.endedAt || (conv.closed ? conv.updatedAt : null), 
+          status: conv.closed === true ? 'closed' : 'open',
           messages: conv.Messages?.map(msg => ({
             id: msg.id,
             content: msg.content,
@@ -109,10 +106,11 @@ function StaffTicketView() {  const { ticketId } = useParams();
       }
     };
     
-    if (ticket && ticket.status !== 'Cancelled') {
+    // Removed condition that prevented fetching for cancelled tickets
+    if (ticket) {
       fetchConversations();
     }
-  }, [ticket, ticketId, sortOrder]);
+  }, [ticket, ticketId]);
   
   // Re-sort conversations when sortOrder changes
   useEffect(() => {
@@ -120,14 +118,13 @@ function StaffTicketView() {  const { ticketId } = useParams();
       const sortedConversations = [...conversations].sort((a, b) => {
         const dateA = new Date(a.startedDate);
         const dateB = new Date(b.startedDate);
-        return sortOrder === 'newest' ? dateB - dateA : dateA - dateB;
+        return 'newest' === 'newest' ? dateB - dateA : dateA - dateB;
       });
       
       setConversations(sortedConversations);
     }
-  }, [sortOrder]);
+  }, []);
   const handleBack = () => {
-  // Only need to check if we're in staff view now
   const path = window.location.pathname;
   if (path.includes('/staff/')) {
     navigate('/staff-dashboard');
@@ -149,8 +146,6 @@ function StaffTicketView() {  const { ticketId } = useParams();
       console.log('Create conversation response:', response); // Debug log
       
       if (response && response.id) {
-        // Navigate to the new conversation - use raw ticket ID for consistency
-        // We're using the original ticketId from URL params for the navigation to maintain URL format
         navigate(`/chatroom/${ticketId}/${response.id}`);
       } else {
         // Provide more specific error based on response
@@ -167,8 +162,6 @@ function StaffTicketView() {  const { ticketId } = useParams();
       setIsCreatingConversation(false);
     }
   };  const handleConversationClick = (conversationId, conversationNumber) => {
-    // We're already storing conversation numbers when fetching conversations
-    // But for extra safety, store it again here before navigating
     sessionStorage.setItem(`conversation_number_${conversationId}`, conversationNumber);
     navigate(`/chatroom/${ticketId}/${conversationId}`);
   };
@@ -213,7 +206,7 @@ function StaffTicketView() {  const { ticketId } = useParams();
     }
   };
     const confirmCancelTicket = async () => {
-    // Only allow cancellation of In Progress tickets, not Resolved tickets
+    // Only allow cancellation of 'In Progress' tickets, not Resolved tickets
     if (ticket?.status !== 'In Progress') {
       setIsCancelModalOpen(false);
       return;
@@ -223,28 +216,25 @@ function StaffTicketView() {  const { ticketId } = useParams();
       // Remove 'TKT-' prefix if present in the ticketId
       const rawTicketId = ticketId.startsWith('TKT-') ? ticketId.replace('TKT-', '') : ticketId;
       
-      // Call API to cancel the ticket
+      // call API to cancel ticket
       const response = await authService.staffCancelTicket(rawTicketId);
       
       if (response && response.success) {
-        // Update the ticket status to 'Cancelled'
         setTicket(prevTicket => ({
           ...prevTicket,
           status: 'Cancelled',
           cancelledAt: new Date().toISOString()
         }));
       } else {
-        console.error('Failed to cancel ticket:', response?.message || 'Unknown error');
-        // Show an error message if needed
+        console.error('Failed to cancel ticket:', response?.message || 'Unknown error');  
       }
     } catch (err) {
       console.error('Error cancelling ticket:', err);
-      // Handle error state
     } finally {
       setIsCancelModalOpen(false);
     }
   };
-  // Only allow editing note if ticket is in progress and user is owner/assigned staff
+  // only allow editing note if ticket is in progress and user is owner/assigned staff
   const canEditNote = ticket?.status === 'In Progress';
 
   const handleNoteChange = (e) => {
@@ -258,24 +248,28 @@ function StaffTicketView() {  const { ticketId } = useParams();
       setNoteSaving(true);
       setNoteError(null);
       
-      // Remove 'TKT-' prefix if present in the ticketId
+      // remove 'TKT-' prefix if present in the ticketId
       const rawTicketId = ticketId.startsWith('TKT-') ? ticketId.replace('TKT-', '') : ticketId;
       
-      // Call API to update the ticket note
+      // call API to update the ticket note
       const response = await authService.updateTicketNote(rawTicketId, note);
       
-      if (response && response.success) {
-        // Update the local state with the saved note
+      // check for successs in repsonse
+      if (response && (response.success || response.message === "Note successfully added")) {
+        // update local state with note
         setTicket(prevTicket => ({ ...prevTicket, note }));
         setIsNoteSaved(true);
+        setNoteError(null);
       } else {
         const errorMessage = response?.message || 'Failed to save note. Please try again.';
         console.error('Failed to save note:', errorMessage);
         setNoteError(errorMessage);
+        setIsNoteSaved(false);
       }
     } catch (err) {
       console.error('Error saving note:', err);
       setNoteError('Network error while saving note. Please check your connection and try again.');
+      setIsNoteSaved(false);
     } finally {
       setNoteSaving(false);
     }
@@ -291,7 +285,6 @@ function StaffTicketView() {  const { ticketId } = useParams();
     // Fetch the ticket data again
     authService.getTicketDetail(rawTicketId)
       .then(response => {
-        // Format the ticket data to match our component needs
         const formattedTicket = {
           id: `TKT-${response.id.toString().padStart(3, '0')}`,
           title: response.subject,
@@ -343,7 +336,7 @@ function StaffTicketView() {  const { ticketId } = useParams();
     });
     
     // Apply display sorting
-    return sortOrder === 'newest' 
+    return 'newest' 
       ? [...withNumbers].sort((a, b) => {
           const dateA = new Date(a.startedDate || a.createdAt);
           const dateB = new Date(b.startedDate || b.createdAt);
@@ -379,10 +372,9 @@ function StaffTicketView() {  const { ticketId } = useParams();
           </div>
         ) : ticket ? (
           <>
-            {/* Reusing TicketDetailsCard component */}
             <TicketDetailsCard ticket={ticket} />
             
-            {/* Staff Actions */}
+            {/*Staff Actions*/}
             <div className="flex flex-col sm:flex-row justify-center sm:justify-end gap-3 mt-6">          
               {ticket.status !== 'Cancelled' && ticket.status !== 'Resolved' && (
                 <>
@@ -402,16 +394,21 @@ function StaffTicketView() {  const { ticketId } = useParams();
               )}
             </div>
             
-            {/* Note Feature */}
+            {/*Notes*/}
             <div className="mt-6">
-              <Label className="mb-1">Internal Note (visible to staff & admin only)</Label>              {canEditNote ? (
+              <Label className="mb-1">Internal Note (visible to staff & admin only)</Label>
+              {canEditNote ? (
                 <div className="flex flex-col gap-2">
                   <div className="flex flex-col sm:flex-row gap-2 items-start">
                     <textarea
                       value={note}
                       onChange={handleNoteChange}
                       rows={2}
-                      className={`w-full p-2 border ${noteError ? 'border-red-300' : 'border-gray-300'} rounded-md focus:outline-none focus:ring-2 focus:ring-bianca-primary/30`}
+                      className={`w-full p-2 border ${
+                        isNoteSaved ? 'border-green-300' : 
+                        noteError ? 'border-red-300' : 
+                        'border-gray-300'
+                      } rounded-md focus:outline-none focus:ring-2 focus:ring-bianca-primary/30`}
                       placeholder="Add a note for this ticket..."
                       maxLength={120}
                       disabled={noteSaving}
@@ -441,15 +438,19 @@ function StaffTicketView() {  const { ticketId } = useParams();
                   )}
                 </div>
               ) : (
-                note && (
-                  <div className="inline-block px-3 py-1 bg-bianca-background/50 text-bianca-primary rounded-full text-sm font-medium mt-2">
+                note ? (
+                  <div className="p-3 bg-gray-50 border border-gray-200 rounded-md text-gray-700 min-h-[80px]">
                     {note}
+                  </div>
+                ) : (
+                  <div className="p-3 bg-gray-50 border border-gray-200 rounded-md text-gray-400 italic min-h-[80px]">
+                    No notes have been added to this ticket yet.
                   </div>
                 )
               )}
             </div>
             
-            {/* Customer Information */}
+            {/*Customer Info*/}
             <div className="mt-8">
               <Subheading className="text-bianca-primary">Customer Information</Subheading>
               <div className="bg-white p-4 sm:p-6 rounded-lg shadow-md">
@@ -465,87 +466,79 @@ function StaffTicketView() {  const { ticketId } = useParams();
               </div>
             </div>
             
-            {/* Conversations container */}
-            {ticket.status !== 'Cancelled' ? (
+            {/* Conversation Container */}
+            {ticket ? (
               <div className="mt-8">
-                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-3">
-                  <Subheading className="text-bianca-primary">Conversation History</Subheading>
-                  <div className="flex items-center self-start sm:self-auto">
-                    <Label className="mr-2 whitespace-nowrap" size="sm">Sort by:</Label>
-                    <select
-                      id="sort-order"
-                      value={sortOrder}
-                      onChange={(e) => setSortOrder(e.target.value)}
-                      className="border border-gray-300 rounded-md px-3 py-1 text-sm"
-                    >
-                      <option value="newest">Newest first</option>
-                      <option value="oldest">Oldest first</option>
-                    </select>
+                <div className="mb-4">
+                  <Subheading className="text-bianca-primary">Conversation</Subheading>
+                </div>
+                
+                {isLoadingConversations ? (
+                  <div className="text-center py-6">
+                    <div className="inline-block h-6 w-6 animate-spin rounded-full border-3 border-solid border-bianca-primary border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite]"></div>
+                    <p className="mt-2 text-gray-600">Loading conversations...</p>
                   </div>
-                </div>            {isLoadingConversations ? (
-              <div className="text-center py-6">
-                <div className="inline-block h-6 w-6 animate-spin rounded-full border-3 border-solid border-bianca-primary border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite]"></div>
-                <p className="mt-2 text-gray-600">Loading conversations...</p>
-              </div>
-            ) : conversationsError ? (
-              <div className="bg-red-50 p-4 rounded-md border border-red-200 mb-6">
-                <Text color="text-red-600" align="center">{conversationsError}</Text>
-              </div>            ) : conversations.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                {conversations.map((conversation) => (
-                  <ConversationCard
-                    key={conversation.id}
-                    number={conversation.number}
-                    startedDate={conversation.startedDate}
-                    endedDate={conversation.endedDate}
-                    onClick={() => handleConversationClick(conversation.id, conversation.number)}
-                  />
-                ))}
-              </div>
-            ) : (
-              <div className="bg-gray-50 p-4 rounded-md border border-gray-200 mb-6">
-                <Text color="text-gray-600" align="center">No conversations found for this ticket.</Text>
-              </div>
-            )}                {createConversationError && (
-                  <div className="bg-red-50 p-4 rounded-md border border-red-200 mb-4">
+                ) : conversationsError ? (
+                  <div className="bg-red-50 p-4 rounded-md border border-red-200 mb-6">
+                    <Text color="text-red-600" align="center">{conversationsError}</Text>
+                  </div>
+                ) : conversations.length > 0 ? (
+                  <div className="flex flex-col gap-4 mb-6">
+                    {conversations.map((conversation) => (
+                      <ConversationCard
+                        key={conversation.id}
+                        number={conversation.number}
+                        startedDate={conversation.startedDate}
+                        endedDate={conversation.endedDate}
+                        status={conversation.status}
+                        onClick={() => handleConversationClick(conversation.id, conversation.number)}
+                      />
+                    ))}
+                  </div>
+                ) : (
+                  <>
+                    <div className="bg-gray-50 p-4 rounded-md border border-gray-200 mb-6">
+                      <Text color="text-gray-600" align="center">No conversations found for this ticket.</Text>
+                    </div>
+                    
+                    {createConversationError && (
+                      <div className="bg-red-50 p-4 rounded-md border border-red-200 mb-4">
+                        <Text color="text-red-600" align="center">{createConversationError}</Text>
+                      </div>
+                    )}
+                    
+                    {/*Only show "Start a New Conversation" button if ticket is In Progress AND there are no existing conversations*/}
+                    {ticket.status === "In Progress" && (
+                      <PrimaryButton 
+                        onClick={handleStartConversation} 
+                        fullWidth
+                        disabled={isCreatingConversation}
+                      >
+                        {isCreatingConversation ? (
+                          <span className="flex items-center justify-center gap-2">
+                            <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-solid border-white border-r-transparent"></span>
+                            Creating Conversation...
+                          </span>
+                        ) : (
+                          'Start a New Conversation'
+                        )}
+                      </PrimaryButton>
+                    )}
+                  </>
+                )}
+                
+                {/*Show error outside the conditional rendering for conversations*/}
+                {conversations.length > 0 && createConversationError && (
+                  <div className="bg-red-50 p-4 rounded-md border border-red-200 mt-4">
                     <Text color="text-red-600" align="center">{createConversationError}</Text>
                   </div>
                 )}
-                {/* Only show Start Conversation button when:
-                    1. The ticket status is "In Progress"
-                    2. There are no conversations yet */}
-                {ticket.status === "In Progress" && conversations.length === 0 && (
-                  <PrimaryButton 
-                    onClick={handleStartConversation} 
-                    fullWidth
-                    disabled={isCreatingConversation}
-                  >
-                    {isCreatingConversation ? (
-                      <span className="flex items-center justify-center gap-2">
-                        <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-solid border-white border-r-transparent"></span>
-                        Creating Conversation...
-                      </span>
-                    ) : (
-                      'Start a New Conversation'
-                    )}
-                  </PrimaryButton>
-                )}
               </div>
-            ) : (
-              <div className="mt-8">
-                <div className="max-w-4xl mx-auto mt-6">
-                  <div className="bg-gray-50 p-4 rounded-md border border-gray-200">
-                    <Text color="text-gray-600" align="center">
-                      No conversation history is available for cancelled tickets.
-                    </Text>
-                  </div>
-                </div>
-              </div>
-            )}
+            ) : null}
           </>
         ) : null}
       </div>
-        {/* Resolve Ticket Modal */}      {/* Resolve Ticket Modal */}
+      {/*Resolve Ticket Modal*/}
       <Modal
         isOpen={isResolveModalOpen}
         onClose={() => setIsResolveModalOpen(false)}
@@ -573,7 +566,7 @@ function StaffTicketView() {  const { ticketId } = useParams();
         )}
       </Modal>
       
-      {/* Cancel Ticket Modal */}
+      {/*Cancel Ticket Modal*/}
       <Modal
         isOpen={isCancelModalOpen}
         onClose={() => setIsCancelModalOpen(false)}

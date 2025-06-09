@@ -5,7 +5,7 @@ import { userAuthZ, guestAuthZ, authN, getUserRoles } from '../middleware/auth.j
 const router = express.Router();
 
 // sign up, login, sign out
-router.get('/sign-out', signOut);
+router.get('/sign-out', signOut); // this 
 
 router.post('/sign-up', signUp);
 
@@ -27,10 +27,10 @@ router.put('/tickets/:id', authN, userAuthZ, editTicket) // uses authN
 router.patch('/tickets/:id', authN, userAuthZ, cancelTicket) // uses authN
 
 // user dashboard -- use userAuthZ middleware
-router.get('/tickets', userAuthZ, getUserTickets); 
+router.get('/tickets', userAuthZ, getUserTickets);  // this 
 
-router.get('/user-roles', getUserRoles);
+router.get('/user-roles', getUserRoles); // this
 
-router.get('/details', userAuthZ, getUserDetail);
+router.get('/details', userAuthZ, getUserDetail); // this
 
 export default router;

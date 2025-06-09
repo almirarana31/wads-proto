@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { createPortal } from 'react-dom';
 import { FaStickyNote } from 'react-icons/fa';
 
 import PrimaryButton from '../components/buttons/PrimaryButton';
@@ -10,6 +11,27 @@ import StaffCard from '../components/StaffCard';
 import StaffEditModal from '../components/StaffEditModal';
 import SuccessModal from '../components/SuccessModal';
 import { authService } from '../api/authService';
+import StatusPill from '../components/StatusPill';
+
+const NoteTooltipPortal = ({ note, show, position }) => {
+  if (!show) return null;
+  
+  return createPortal(
+    <div 
+      className="fixed bg-white border-2 border-blue-300 rounded-lg shadow-xl p-4 z-[9999]"
+      style={{
+        width: '300px',
+        top: `${position.y}px`,
+        left: `${position.x}px`,
+        pointerEvents: 'none',
+      }}
+    >
+      <p className="font-medium text-blue-700 mb-2">Admin Note:</p>
+      <p className="text-gray-700 text-sm">{note}</p>
+    </div>,
+    document.body
+  );
+};
 
 function AdminDashboard() {
   const navigate = useNavigate();
@@ -40,6 +62,7 @@ function AdminDashboard() {
 
           return {
             id: ticket.ticket_id,
+            displayId: `TKT-${ticket.ticket_id.toString().padStart(3, '0')}`,
             subject: ticket.subject,
             createdAt: ticket.createdAt,
             lastUpdated: ticket.updatedAt || ticket.createdAt,
@@ -104,7 +127,6 @@ function AdminDashboard() {
         const data = await authService.getAdminStaffPerformance();
         setStaffPerformance(data);
       } catch (err) {
-        // Optionally handle error
       }
     }
     fetchStaffPerformance();
@@ -130,6 +152,11 @@ function AdminDashboard() {
     isOpen: false,
     title: '',
     message: ''
+  });
+  const [tooltipState, setTooltipState] = useState({ 
+    show: false, 
+    note: '',
+    position: { x: 0, y: 0 }
   });
 
   useEffect(() => {
@@ -223,6 +250,7 @@ function AdminDashboard() {
 
         return {
           id: ticket.ticket_id,
+          displayId: `TKT-${ticket.ticket_id.toString().padStart(3, '0')}`,
           subject: ticket.subject,
           createdAt: ticket.createdAt,
           lastUpdated: ticket.updatedAt || ticket.createdAt,
@@ -263,7 +291,7 @@ function AdminDashboard() {
     setSelectedTicketId('');
   };
   const handleAddStaff = () => {
-    setSelectedStaff(null); // Ensures we're in "add" mode
+    setSelectedStaff(null); // Ensures being in "add" mode
     setIsAddStaffModalOpen(true);
   };
   const handleEditStaff = (staff) => {
@@ -411,6 +439,7 @@ function AdminDashboard() {
 
         return {
           id: ticket.ticket_id,
+          displayId: `TKT-${ticket.ticket_id.toString().padStart(3, '0')}`,
           subject: ticket.subject,
           createdAt: ticket.createdAt,
           lastUpdated: ticket.updatedAt || ticket.createdAt,
@@ -438,7 +467,7 @@ function AdminDashboard() {
     }
   };
 
-  // First, add a new handler function for refreshing staff data
+  // Add a new handler function for refreshing staff data
   const handleStaffRefresh = async () => {
     setIsRefreshing(true);
     try {
@@ -465,7 +494,7 @@ function AdminDashboard() {
             }
           />
 
-          {/* Tab Navigation */}
+          {/*Tab Navigation*/}
           <div className="flex gap-4 mb-8 border-b border-gray-200">
             <button
               className={`px-4 py-2 font-semibold border-b-2 transition-colors ${
@@ -485,7 +514,7 @@ function AdminDashboard() {
             </button>
           </div>
 
-          {/* Tab Content */}
+          {/*Tab Content*/}
           {activeTab === 'tickets' ? (
             <>
               {/* Stats Cards */}
@@ -536,7 +565,7 @@ function AdminDashboard() {
                 )}
               </div>              
               
-              {/* Ticket Management Section */}
+              {/*Ticket Management Section*/}
               <div className="bg-white p-6 rounded-lg shadow-md mb-8">
                 <div className="flex justify-between items-center mb-4">
                   <Subheading className="text-blue-700">Ticket Management</Subheading>
@@ -601,7 +630,7 @@ function AdminDashboard() {
                     ))}
                   </select>
                 </div>               
-                {/* Tickets Table */}
+                {/*Tickets Table*/}
                 <div className="overflow-x-auto">
                   <table className="min-w-full table-auto border-collapse border border-gray-200">
                     <thead className="bg-gray-50">
@@ -672,19 +701,35 @@ function AdminDashboard() {
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
                       {sortedTickets.length > 0 ? sortedTickets.map((ticket) => (
-                        <tr key={ticket.id} className={`hover:bg-gray-50 ${ticket.note ? 'bg-blue-50' : ''}`}>
-                          <td className="p-3 text-sm text-gray-700 whitespace-nowrap flex items-center gap-2">
-                            {ticket.id}
-                            {ticket.note && (
-                              <span className="relative group cursor-pointer">
-                                <FaStickyNote className="text-blue-500" />
-                                <span className="absolute left-6 top-1/2 -translate-y-1/2 z-10 hidden group-hover:block bg-white border border-gray-300 rounded shadow-md px-3 py-2 text-xs text-gray-800 min-w-[180px] max-w-xs">
-                                  {ticket.note}
-                                </span>
+                        <tr key={ticket.id} className={`hover:bg-gray-50 ${ticket.note ? 'bg-blue-50/30' : ''}`}>
+                          <td className="p-3 text-sm text-gray-700 whitespace-nowrap">
+                            <div className="flex items-center gap-2">
+                              <span className="font-medium text-blue-700">
+                                {ticket.displayId || `TKT-${ticket.id.toString().padStart(3, '0')}`}
                               </span>
-                            )}
+                              {ticket.note && (
+                                <span 
+                                  className="relative cursor-pointer"
+                                  onMouseEnter={(e) => {
+                                    setTooltipState({
+                                      show: true, 
+                                      note: ticket.note,
+                                      position: { 
+                                        x: e.clientX + 10,
+                                        y: e.clientY + 10
+                                      }
+                                    });
+                                  }}
+                                  onMouseLeave={() => {
+                                    setTooltipState({ show: false, note: '', position: { x: 0, y: 0 } });
+                                  }}
+                                >
+                                  <FaStickyNote className="text-blue-500" />
+                                </span>
+                              )}
+                            </div>
                           </td>
-                          <td className="p-3 text-sm text-gray-700 whitespace-nowrap">{ticket.subject}</td>
+                          <td className="p-3 text-sm font-medium text-gray-800 whitespace-nowrap">{ticket.subject}</td>
                           <td className="p-3 text-sm text-gray-700 whitespace-nowrap">{ticket.name}</td>
                           <td className="p-3 text-sm text-gray-700 whitespace-nowrap">{ticket.email}</td>
                           <td className="p-3 text-sm text-gray-700 whitespace-nowrap">{new Date(ticket.createdAt).toLocaleDateString()}</td>
@@ -700,18 +745,27 @@ function AdminDashboard() {
                                 const newPriorityId = priorityMap[selectedName] || null;
                                 try {
                                   if (newPriorityId) {
-                                    await authService.updateAdminTicketPriority(ticket.id, newPriorityId);
+                                    await authService.updateTicketPriority(ticket.id, newPriorityId);
+                                    
                                     // Update local state to reflect the new priority
                                     setTickets(prev =>
                                       prev.map(t =>
                                         t.id === ticket.id
-                                          ? { ...t, priority: { name: selectedName } }
+                                          ? { ...t, priority: { name: selectedName, id: newPriorityId } }
                                           : t
                                       )
                                     );
+                                    
+                                    // Show a small success message
+                                    setSuccessModal({
+                                      isOpen: true,
+                                      title: "Priority Updated",
+                                      message: `Ticket ${ticket.displayId} priority set to ${selectedName}.`
+                                    });
                                   }
                                 } catch (err) {
-                                  alert('Failed to update priority');
+                                  console.error('Failed to update priority:', err);
+                                  setError(`Failed to update priority: ${err.message || 'Unknown error'}`);
                                 }
                               }}
                               className="p-1 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-blue-300 bg-white"
@@ -722,7 +776,9 @@ function AdminDashboard() {
                               <option value="Low">Low</option>
                             </select>
                           </td>
-                          <td className="p-3 text-sm text-gray-700 whitespace-nowrap">{ticket.status}</td>
+                          <td className="p-3 text-sm text-gray-700 whitespace-nowrap">
+                            <StatusPill status={ticket.status} />
+                          </td>
                           <td className="p-3 text-sm text-gray-700 whitespace-nowrap">
                             {loading ? (
                               <div className="animate-pulse bg-gray-200 h-6 w-24 rounded"></div>
@@ -747,7 +803,7 @@ function AdminDashboard() {
                             >
                               View
                             </SecondaryButton>
-                            {ticket.assignedStaff && (
+                            {ticket.assignedStaff && ticket.status === "Cancelled" && (
                               <PrimaryButton
                                 onClick={() => handleAssignTicket(ticket.id)}
                                 className="text-xs"
@@ -770,9 +826,8 @@ function AdminDashboard() {
             </>
           ) : (
             <>
-              {/* Staff Section */}
+              {/*Staff Section*/}
               <div className="mt-6">
-                {/* Add this container for the header and button */}
                 <div className="flex justify-between items-center mb-6">
                   <Subheading className="text-blue-700">Staff Management</Subheading>
                   <div className="flex gap-2">
@@ -800,7 +855,7 @@ function AdminDashboard() {
                   </div>
                 </div>
                 
-                {/* Existing staff grid */}
+                {/*Existing staff grid*/}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   {staffPerformance.map((staff) => (
                     <StaffCard 
@@ -811,22 +866,12 @@ function AdminDashboard() {
                   ))}
                 </div>
               </div>
-              
-              {/* Placeholder for the modal - we'll work on this later */}
-              {isAddStaffModalOpen && (
-                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-                  <div className="bg-white p-6 rounded-lg">
-                    <h2>Add Staff Modal</h2>
-                    <button onClick={() => setIsAddStaffModalOpen(false)}>Close</button>
-                  </div>
-                </div>
-              )}
             </>
           )}
         </div>
       </div>
 
-      {/* Assign Staff Modal */}
+      {/*Assign Staff Modal*/}
       <AssignStaffModal
         isOpen={isAssignModalOpen}
         onClose={handleCloseAssignModal}
@@ -835,7 +880,7 @@ function AdminDashboard() {
         ticketId={selectedTicketId}
       />
 
-      {/* Staff Edit Modal */}
+      {/*Staff Edit Modal*/}
       <StaffEditModal
         isOpen={isAddStaffModalOpen}
         mode={selectedStaff ? "edit" : "add"}
@@ -847,19 +892,26 @@ function AdminDashboard() {
         staffData={selectedStaff}
       />      
       
-      {/* Error Display */}
+      {/*Error Display*/}
       {error && (
         <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
           {error}
         </div>
       )}
       
-      {/* Success Modal for staff assignment */}
+      {/*Success Modal for staff assignment*/}
       <SuccessModal
         isOpen={successModal.isOpen}
         onClose={() => setSuccessModal({ ...successModal, isOpen: false })}
         title={successModal.title}
         message={successModal.message}
+      />
+
+      {/*Note Tooltip Portal*/}
+      <NoteTooltipPortal 
+        note={tooltipState.note}
+        show={tooltipState.show}
+        position={tooltipState.position}
       />
     </div>
   );

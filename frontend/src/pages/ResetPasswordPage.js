@@ -19,11 +19,8 @@ function ResetPasswordPage() {
     // Verify token and get email associated with it
     const verifyTokenAndGetEmail = async () => {
       try {
-        // First verify the token is still valid
+        // Verify the token for validity
         await authService.validResetLink(token);
-        
-        // For password reset, we don't need to fetch the email separately
-        // The token contains the email information for the backend
         setLoading(false);
       } catch (error) {
         console.error('Error verifying token:', error);
