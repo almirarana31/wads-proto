@@ -4,7 +4,7 @@ module.exports = function(app) {
   app.use(
     '/api/',
     createProxyMiddleware({
-      target: process.env.BACKEND_URL || 'http://localhost:5000',
+      target: process.env.BACKEND_URL || 'https://e2425-wads-l4ccg3-server.csbihub.id',
       changeOrigin: true,
       secure: true,
       cookieDomainRewrite: '',
