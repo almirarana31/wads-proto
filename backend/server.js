@@ -50,8 +50,7 @@ const port = process.env.PORT;
 
 app.listen(port, (req, res) => {
     console.log(`Listening on port ${port}`);
-    // console.log(`API Documentation available at https://e2425-wads-l4ccg3-server.csbihub.id/api-docs`);
-    console.log(`API Documentation available at http://localhost:${port}/api-docs`);
+    console.log(`API Documentation available at https://e2425-wads-l4ccg3-server.csbihub.id/api-docs`);
 });
 
 // setting basic endpoints
