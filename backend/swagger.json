@@ -839,7 +839,851 @@
             }
           }
         } 
-    },    
+    },
+    "/account/{adminID}/activation-status": {
+      "get": {
+        "tags": ["Admin"],
+        "summary": "Gets the activation status of a particular staff",
+        "description": "Returns the isGuest column of the user object. What determines guest status is the isGuest = true or isGuest = false. If true, account has been deactivated. Otherwise still a valid staff.",
+        "parameters": [
+          {
+            "name": "adminID",
+            "in": "path",
+            "description": "The ID of the staff being targeted",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "example": 12
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully retrieved staff activation status",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "is_guest": {
+                      "type": "boolean",
+                      "description": "True if the account is deactivated (guest status), false otherwise."
+                    }
+                  }
+                },
+                "example": {
+                  "is_guest": false
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "example": {
+                  "message": "An unexpected error occurred"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/staff/ticket/{ticketID}": {
+      "get": {
+        "tags": ["Admin"],
+        "summary": "Retrieve eligible staff for a ticket",
+        "description": "Fetches a list of eligible staff members who can be assigned to a specific ticket, based on its category. Includes staff details and their current assignment statistics.",
+        "parameters": [
+          {
+            "name": "ticketID",
+            "in": "path",
+            "description": "The ID of the ticket for which to find eligible staff.",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "example": 101
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully retrieved list of eligible staff.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "staff_id": {
+                        "type": "integer",
+                        "description": "The unique ID of the staff member."
+                      },
+                      "staff_name": {
+                        "type": "string",
+                        "description": "The username of the staff member."
+                      },
+                      "field_id": {
+                        "type": "integer",
+                        "description": "The ID of the field/category the staff member is assigned to."
+                      },
+                      "is_guest": {
+                        "type": "boolean",
+                        "description": "Indicates if the staff account is a guest (deactivated). Eligible staff will have this as false."
+                      },
+                      "assigned": {
+                        "type": "integer",
+                        "description": "Total number of tickets assigned to this staff member."
+                      },
+                      "in_progress": {
+                        "type": "integer",
+                        "description": "Number of tickets currently in progress for this staff member."
+                      },
+                      "resolved": {
+                        "type": "integer",
+                        "description": "Number of tickets resolved by this staff member."
+                      },
+                      "resolution_rate": {
+                        "type": "number",
+                        "format": "float",
+                        "description": "Resolution rate of the staff member (resolved tickets / total assigned tickets * 100)."
+                      },
+                      "is_current_staff": {
+                        "type": "boolean",
+                        "description": "True if this staff member is currently assigned to the ticket, false otherwise."
+                      }
+                    }
+                  }
+                },
+                "example": [
+                  {
+                    "staff_id": 1,
+                    "staff_name": "john.doe",
+                    "field_id": 5,
+                    "is_guest": false,
+                    "assigned": 5,
+                    "in_progress": 2,
+                    "resolved": 3,
+                    "resolution_rate": 60.00,
+                    "is_current_staff": true
+                  },
+                  {
+                    "staff_id": 2,
+                    "staff_name": "jane.smith",
+                    "field_id": 5,
+                    "is_guest": false,
+                    "assigned": 3,
+                    "in_progress": 1,
+                    "resolved": 2,
+                    "resolution_rate": 66.67,
+                    "is_current_staff": false
+                  }
+                ]
+              }
+            }
+          },
+          "404": {
+            "description": "Ticket not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "example": {
+                  "message": "Ticket not found"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "example": {
+                  "message": "Server error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
+      }
+    },"/staff-detail/{staffID}": {
+        "get": {
+          "tags": ["Admin"],
+          "summary": "Get detailed information for a specific staff member",
+          "description": "Retrieves comprehensive details about a staff member, including their username, assigned field, creation date, and statistics on tickets handled (in progress, resolved, cancelled).",
+          "parameters": [
+            {
+              "name": "staffID",
+              "in": "path",
+              "description": "The unique ID of the staff member to retrieve details for.",
+              "required": true,
+              "schema": {
+                "type": "integer",
+                "format": "int64"
+              },
+              "example": 1
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Successfully retrieved staff details.",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "staff_name": {
+                          "type": "string",
+                          "description": "The username of the staff member."
+                        },
+                        "field_name": {
+                          "type": "string",
+                          "description": "The name of the category/field the staff member belongs to."
+                        },
+                        "created_at": {
+                          "type": "string",
+                          "format": "date-time",
+                          "description": "The date and time the staff member's record was created."
+                        },
+                        "in_progress": {
+                          "type": "integer",
+                          "description": "Number of tickets currently in progress assigned to this staff member."
+                        },
+                        "resolved": {
+                          "type": "integer",
+                          "description": "Number of tickets resolved by this staff member."
+                        },
+                        "cancelled": {
+                          "type": "integer",
+                          "description": "Number of tickets cancelled that were assigned to this staff member."
+                        }
+                      }
+                    }
+                  },
+                  "example": [
+                    {
+                      "staff_name": "john.doe",
+                      "field_name": "Technical Support",
+                      "created_at": "2023-01-15T09:30:00Z",
+                      "in_progress": 5,
+                      "resolved": 20,
+                      "cancelled": 2
+                    }
+                  ]
+                }
+              }
+            },
+            "500": {
+              "description": "Internal server error",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "object",
+                    "properties": {
+                      "message": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  "example": {
+                    "message": "An unexpected error occurred"
+                  }
+                }
+              }
+            }
+          },
+          "security": [
+            {
+              "BearerAuth": []
+            }
+          ]
+        },
+        "patch": {
+          "tags": ["Admin"],
+          "summary": "Edit staff member details",
+          "description": "Allows an administrator to update a staff member's details, such as their assigned category and guest status. Changes are applied only for provided fields. General validation and resource not found errors are handled by middleware.",
+          "parameters": [
+            {
+              "name": "staffID",
+              "in": "path",
+              "description": "The unique ID of the staff member to update.",
+              "required": true,
+              "schema": {
+                "type": "integer",
+                "format": "int64"
+              },
+              "example": 1
+            }
+          ],
+          "requestBody": {
+            "required": false,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "category_id": {
+                      "type": "integer",
+                      "description": "The ID of the new category/field to assign to the staff member. Optional, if not provided, the category will not be updated."
+                    },
+                    "is_guest": {
+                      "type": "boolean",
+                      "description": "Set to true to deactivate the staff account (make them a guest), or false to activate/keep active. Optional, if not provided, the guest status will not be updated."
+                    }
+                  },
+                  "minProperties": 1,
+                  "nullable": true
+                },
+                "example": {
+                  "category_id": 5,
+                  "is_guest": false
+                }
+              }
+            }
+          },
+          "responses": {
+            "200": {
+              "description": "Staff details successfully updated.",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "object",
+                    "properties": {
+                      "message": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  "example": {
+                    "message": "Successfully editted staff"
+                  }
+                }
+              }
+            },
+            "500": {
+              "description": "Internal server error",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "object",
+                    "properties": {
+                      "message": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  "example": {
+                    "message": "An unexpected error occurred"
+                  }
+                }
+              }
+            }
+          },
+          "security": [
+            {
+              "BearerAuth": []
+            }
+          ]
+        }
+      },
+      "/staff": {
+        "post": {
+          "tags": ["Admin"],
+          "summary": "Create a new staff member",
+          "description": "Allows an administrator to create a new staff account by providing their email, assigned field, and role.",
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "email": {
+                      "type": "string",
+                      "format": "email",
+                      "description": "The email address of the new staff member. Must be unique."
+                    },
+                    "field_id": {
+                      "type": "integer",
+                      "format": "int64",
+                      "description": "The ID of the field/category the staff member will be assigned to."
+                    },
+                    "role_id": {
+                      "type": "integer",
+                      "format": "int64",
+                      "description": "The ID of the role assigned to the staff member."
+                    }
+                  },
+                  "required": ["email", "field_id", "role_id"]
+                },
+                "example": {
+                  "email": "new.staff@example.com",
+                  "field_id": 1,
+                  "role_id": 3
+                }
+              }
+            }
+          },
+          "responses": {
+            "200": {
+              "description": "Successfully created new staff member.",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "object",
+                    "properties": {
+                      "message": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  "example": {
+                    "message": "Successfully created new staff"
+                  }
+                }
+              }
+            },
+            "400": {
+              "description": "Bad Request",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "object",
+                    "properties": {
+                      "message": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  "examples": {
+                    "emailExists": {
+                      "value": {
+                        "message": "Email already exists"
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "500": {
+              "description": "Internal server error",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "object",
+                    "properties": {
+                      "message": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  "example": {
+                    "message": "An unexpected error occurred"
+                  }
+                }
+              }
+            }
+          },
+          "security": [
+            {
+              "BearerAuth": []
+            }
+          ]
+        }
+      }, 
+      "/sign-out": {
+        "get": {
+          "tags": ["User"],
+          "summary": "Sign out the current user",
+          "description": "Logs out the currently authenticated user. This endpoint sends a confirmation message and a flag to instruct the client (frontend) to clear any locally stored authentication tokens or session data.",
+          "responses": {
+            "200": {
+              "description": "Successfully signed out.",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "object",
+                    "properties": {
+                      "message": {
+                        "type": "string",
+                        "description": "Confirmation message for successful sign-out."
+                      },
+                      "clearLocalStorage": {
+                        "type": "boolean",
+                        "description": "A flag indicating that the client should clear its local storage (e.g., authentication tokens)."
+                      }
+                    },
+                    "required": ["message", "clearLocalStorage"]
+                  },
+                  "example": {
+                    "message": "Successfully signed out",
+                    "clearLocalStorage": true
+                  }
+                }
+              }
+            },
+            "500": {
+              "description": "Internal server error",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "object",
+                    "properties": {
+                      "error": {
+                        "type": "string",
+                        "description": "Error message if an unexpected server error occurs."
+                      }
+                    },
+                    "required": ["error"]
+                  },
+                  "example": {
+                    "error": "An unexpected error occurred"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "/details": {
+        "get": {
+          "tags": ["Staff", "User"],
+          "summary": "Get details of the authenticated user",
+          "description": "Retrieves the email, username, and dynamically determined role (user, staff, or admin) of the currently authenticated user. This endpoint is used to display the profile details of the logged-in user. The role is determined based on the user's association with staff records: if staff_id is present and role_id is 1, they are 'staff'; if staff_id is present and role_id is 2, they are 'admin'; otherwise, they are a 'user'.",
+          "responses": {
+            "200": {
+              "description": "Successfully retrieved user details.",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "object",
+                    "properties": {
+                      "email": {
+                        "type": "string",
+                        "format": "email",
+                        "description": "The email address of the authenticated user."
+                      },
+                      "username": {
+                        "type": "string",
+                        "description": "The username of the authenticated user."
+                      },
+                      "role": {
+                        "type": "string",
+                        "enum": ["user", "staff", "admin"],
+                        "description": "The role of the authenticated user."
+                      }
+                    },
+                    "required": ["email", "username", "role"]
+                  },
+                  "examples": {
+                    "userRole": {
+                      "summary": "Example for a regular user",
+                      "value": {
+                        "email": "user@example.com",
+                        "username": "regular_user",
+                        "role": "user"
+                      }
+                    },
+                    "staffRole": {
+                      "summary": "Example for a staff member",
+                      "value": {
+                        "email": "staff@example.com",
+                        "username": "staff_member",
+                        "role": "staff"
+                      }
+                    },
+                    "adminRole": {
+                      "summary": "Example for an administrator",
+                      "value": {
+                        "email": "admin@example.com",
+                        "username": "admin_user",
+                        "role": "admin"
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "500": {
+              "description": "Internal server error",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "object",
+                    "properties": {
+                      "message": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  "example": {
+                    "message": "An unexpected error occurred"
+                  }
+                }
+              }
+            }
+          },
+          "security": [
+            {
+              "BearerAuth": []
+            }
+          ]
+        }
+      }, 
+      "/tickets/pool": {
+        "get": {
+          "tags": ["Staff"],
+          "summary": "Retrieve available tickets in the pool for staff",
+          "description": "Fetches a list of unassigned tickets that are available for claiming by a staff member. Tickets in this pool are specifically filtered by the authenticated staff member's assigned category and are only those with a status of 'new' (status_id: 1). This pool serves as a fallback for tickets that couldn't be auto-assigned because all eligible staff in that category already had 3 or more tickets in progress.",
+          "responses": {
+            "200": {
+              "description": "Successfully retrieved the list of available tickets in the pool.",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "integer",
+                          "format": "int64",
+                          "description": "The unique ID of the ticket."
+                        },
+                        "subject": {
+                          "type": "string",
+                          "description": "The subject or title of the ticket."
+                        },
+                        "description": {
+                          "type": "string",
+                          "description": "The detailed description of the ticket issue."
+                        },
+                        "category_id": {
+                          "type": "integer",
+                          "format": "int64",
+                          "description": "The ID of the category this ticket belongs to (matches staff's field_id)."
+                        },
+                        "status_id": {
+                          "type": "integer",
+                          "format": "int32",
+                          "description": "The current status ID of the ticket (1 indicates new/unassigned in the pool)."
+                        },
+                        "priority_id": {
+                          "type": "integer",
+                          "format": "int32",
+                          "description": "The ID of the ticket's priority (1=High, 2=Medium, 3=Low, etc.)."
+                        },
+                        "createdAt": {
+                          "type": "string",
+                          "format": "date-time",
+                          "description": "Timestamp when the ticket was created."
+                        },
+                        "updatedAt": {
+                          "type": "string",
+                          "format": "date-time",
+                          "description": "Timestamp when the ticket was last updated."
+                        },
+                        "Priority": {
+                          "type": "object",
+                          "properties": {
+                            "name": {
+                              "type": "string",
+                              "description": "The name of the priority (e.g., 'High', 'Medium', 'Low')."
+                            }
+                          },
+                          "required": ["name"]
+                        },
+                        "User": {
+                          "type": "object",
+                          "properties": {
+                            "username": {
+                              "type": "string",
+                              "description": "The username of the ticket creator."
+                            },
+                            "email": {
+                              "type": "string",
+                              "format": "email",
+                              "description": "The email of the ticket creator."
+                            }
+                          },
+                          "required": ["username", "email"]
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "subject",
+                        "description",
+                        "category_id",
+                        "status_id",
+                        "priority_id",
+                        "createdAt",
+                        "updatedAt",
+                        "Priority",
+                        "User"
+                      ]
+                    }
+                  },
+                  "example": [
+                    {
+                      "id": 101,
+                      "subject": "Internet connection issue",
+                      "description": "My internet is completely down since yesterday evening.",
+                      "category_id": 1,
+                      "status_id": 1,
+                      "priority_id": 1,
+                      "createdAt": "2025-06-05T10:00:00Z",
+                      "updatedAt": "2025-06-05T10:00:00Z",
+                      "Priority": {
+                        "name": "High"
+                      },
+                      "User": {
+                        "username": "customer.one",
+                        "email": "customer.one@example.com"
+                      }
+                    },
+                    {
+                      "id": 102,
+                      "subject": "Software installation help",
+                      "description": "Need help installing new design software.",
+                      "category_id": 1,
+                      "status_id": 1,
+                      "priority_id": 2,
+                      "createdAt": "2025-06-06T14:30:00Z",
+                      "updatedAt": "2025-06-06T14:30:00Z",
+                      "Priority": {
+                        "name": "Medium"
+                      },
+                      "User": {
+                        "username": "customer.two",
+                        "email": "customer.two@example.com"
+                      }
+                    }
+                  ]
+                }
+              }
+            },
+            "500": {
+              "description": "Internal server error",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "object",
+                    "properties": {
+                      "message": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  "example": {
+                    "message": "An unexpected error occurred"
+                  }
+                }
+              }
+            }
+          },
+          "security": [
+            {
+              "BearerAuth": []
+            }
+          ]
+        }
+      }, 
+      "/{conversationID}": {
+        "patch": {
+          "tags": ["Conversations"],
+          "summary": "Close a conversation",
+          "description": "Allows an authenticated staff member to close a specific conversation, marking it as ended and setting its closed status to true. Authorization (conversation and staff) is handled by middleware.",
+          "parameters": [
+            {
+              "name": "conversationID",
+              "in": "path",
+              "description": "The unique ID of the conversation to be closed.",
+              "required": true,
+              "schema": {
+                "type": "integer",
+                "format": "int64"
+              },
+              "example": 456
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Conversation successfully closed.",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "object",
+                    "properties": {
+                      "message": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  "example": {
+                    "message": "Conversation successfully closed"
+                  }
+                }
+              }
+            },
+            "500": {
+              "description": "Internal server error",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "object",
+                    "properties": {
+                      "message": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  "example": {
+                    "message": "An unexpected error occurred"
+                  }
+                }
+              }
+            }
+          },
+          "security": [
+            {
+              "BearerAuth": []
+            }
+          ]
+        }
+      },
     "/tickets": {
       "post": {
         "tags": ["User"],
@@ -1138,6 +1982,254 @@
             }
           }
         }
+      },
+      "get": {
+          "tags": ["User"],
+          "summary": "Get tickets for the authenticated user",
+          "description": "Retrieves a list of tickets submitted by the currently authenticated user. Results can be filtered by ticket status and searched by keywords in the subject, description, or by exact ticket ID.",
+          "parameters": [
+            {
+              "name": "status",
+              "in": "query",
+              "description": "Optional: Filter tickets by their status.",
+              "required": false,
+              "schema": {
+                "type": "string",
+                "enum": ["Pending", "In Progress", "Resolved", "Cancelled"]
+              },
+              "example": "In Progress"
+            },
+            {
+              "name": "search",
+              "in": "query",
+              "description": "Optional: Search keywords in ticket subject, description, or by exact ticket ID.",
+              "required": false,
+              "schema": {
+                "type": "string"
+              },
+              "example": "internet"
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Successfully retrieved user's tickets.",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "object",
+                    "properties": {
+                      "tickets": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "integer",
+                              "format": "int64",
+                              "description": "The unique ID of the ticket."
+                            },
+                            "subject": {
+                              "type": "string",
+                              "description": "The subject or title of the ticket."
+                            },
+                            "description": {
+                              "type": "string",
+                              "description": "The detailed description of the ticket issue."
+                            },
+                            "createdAt": {
+                              "type": "string",
+                              "format": "date-time",
+                              "description": "Timestamp when the ticket was created."
+                            },
+                            "Category": {
+                              "type": "object",
+                              "properties": {
+                                "name": {
+                                  "type": "string",
+                                  "description": "The name of the ticket's category."
+                                }
+                              },
+                              "required": ["name"]
+                            },
+                            "Status": {
+                              "type": "object",
+                              "properties": {
+                                "name": {
+                                  "type": "string",
+                                  "description": "The current status name of the ticket."
+                                }
+                              },
+                              "required": ["name"]
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "subject",
+                            "description",
+                            "createdAt",
+                            "Category",
+                            "Status"
+                          ]
+                        }
+                      }
+                    }
+                  },
+                  "example": {
+                    "tickets": [
+                      {
+                        "id": 10,
+                        "subject": "Login Issue",
+                        "description": "Cannot log in to my account since yesterday.",
+                        "createdAt": "2025-06-01T08:00:00Z",
+                        "Category": {
+                          "name": "Account Support"
+                        },
+                        "Status": {
+                          "name": "In Progress"
+                        }
+                      },
+                      {
+                        "id": 15,
+                        "subject": "Software Bug Report",
+                        "description": "Facing a bug in the reporting module.",
+                        "createdAt": "2025-05-28T14:30:00Z",
+                        "Category": {
+                          "name": "Technical Support"
+                        },
+                        "Status": {
+                          "name": "New"
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            },
+            "500": {
+              "description": "Internal server error",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "object",
+                    "properties": {
+                      "message": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  "example": {
+                    "message": "An unexpected error occurred"
+                  }
+                }
+              }
+            }
+          },
+          "security": [
+            {
+              "BearerAuth": []
+            }
+          ]
+        }
+    },
+    "/user-roles": {
+      "get": {
+        "tags": ["User"],
+        "summary": "Get current user's role status",
+        "description": "Determines and returns the role of the authenticated user (user, staff, or admin) based on their JWT token. This endpoint provides boolean flags indicating the user's role for client-side authorization and UI adjustments.",
+        "responses": {
+          "200": {
+            "description": "Successfully retrieved user's role status.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "isUser": {
+                      "type": "boolean",
+                      "description": "True if the user is a regular application user (not associated with staff)."
+                    },
+                    "isStaff": {
+                      "type": "boolean",
+                      "description": "True if the user is a staff member (role_id 1)."
+                    },
+                    "isAdmin": {
+                      "type": "boolean",
+                      "description": "True if the user is an administrator (role_id 2)."
+                    }
+                  },
+                  "required": ["isUser", "isStaff", "isAdmin"]
+                },
+                "examples": {
+                  "userRole": {
+                    "summary": "Response for a regular user",
+                    "value": {
+                      "isUser": true,
+                      "isStaff": false,
+                      "isAdmin": false
+                    }
+                  },
+                  "staffRole": {
+                    "summary": "Response for a staff member",
+                    "value": {
+                      "isUser": false,
+                      "isStaff": true,
+                      "isAdmin": false
+                    }
+                  },
+                  "adminRole": {
+                    "summary": "Response for an administrator",
+                    "value": {
+                      "isUser": false,
+                      "isStaff": false,
+                      "isAdmin": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request - Invalid token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "example": {
+                  "message": "Invalid token"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "example": {
+                  "message": "An unexpected error occurred"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "BearerAuth": []
+          }
+        ]
       }
     },
     "/priorities": {
