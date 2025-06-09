@@ -6,6 +6,7 @@ import StaffTicketQueuePage from './StaffTicketQueuePage';
 import PriorityPill from '../components/PriorityPill';
 import StatusPill from '../components/StatusPill';
 import { authService } from '../api/authService';
+import { FaStickyNote } from 'react-icons/fa';
 
 function StaffDashPage() {
   const navigate = useNavigate();
@@ -17,7 +18,7 @@ function StaffDashPage() {
   });
   const [stats, setStats] = useState({
     total: 0,
-    pending: 0, // This is used for cancelled tickets
+    pending: 0,
     inProgress: 0,
     resolved: 0
   });
@@ -34,10 +35,29 @@ function StaffDashPage() {
       if (filterPriority && filterPriority !== 'All priority') queryParams.append('priority', filterPriority);
       if (filterStatus && filterStatus !== 'All status') queryParams.append('status', filterStatus);
       
-      const response = await authService.getStaffTickets(queryParams.toString());
-        // Transform backend data to match frontend structure
-      const formattedTickets = response.map(ticket => {
-        // Map priority IDs to display names
+      // gets the initial tickets list
+      const initialResponse = await authService.getStaffTickets(queryParams.toString());
+      
+      // fetches extra info with notes per ticket
+      const detailedTickets = await Promise.all(
+        initialResponse.map(async (ticket) => {
+          try {
+            // Get detailed ticket info including notes
+            const detailResponse = await authService.getTicketDetail(ticket.ticket_id);
+            return {
+              ...ticket,
+              note: detailResponse.note || ''
+            };
+          } catch (err) {
+            console.error(`Error fetching details for ticket ${ticket.ticket_id}:`, err);
+            return ticket; // return no notes if no details
+          }
+        })
+      );
+      
+      // format tickets with additional details
+      const formattedTickets = detailedTickets.map(ticket => {
+        // map specific priority IDs to display names
         let priorityName = 'Medium';
         if (ticket.Priority) {
           switch (ticket.Priority.name) {
@@ -65,11 +85,12 @@ function StaffDashPage() {
           name: ticket.User?.username || 'Unknown',
           email: ticket.User?.email || 'N/A',
           createdAt: ticket.createdAt,
-          lastUpdated: ticket.updatedAt || ticket.createdAt, // Fallback to createdAt if updatedAt is not available
+          lastUpdated: ticket.updatedAt || ticket.createdAt,
           category: categoryName,
           priority: priorityName,
           status: ticket.Status?.name || 'In Progress',
-          assignedTo: 'staff1' // You may need to fetch this separately if needed
+          assignedTo: staffDetails?.username || 'You',
+          note: ticket.note || ''
         };
       });
       
@@ -334,8 +355,20 @@ function StaffDashPage() {
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
                       {sortedTickets.length > 0 ? sortedTickets.map((ticket) => (
-                        <tr key={ticket.id} className="hover:bg-gray-50">
-                          <td className="p-3 text-sm text-gray-700 whitespace-nowrap">{ticket.id}</td>
+                        <tr key={ticket.id} className={`hover:bg-gray-50 ${ticket.note ? 'bg-blue-50/30' : ''}`}>
+                          <td className="p-3 text-sm text-gray-700 whitespace-nowrap">
+                            <div className="flex items-center gap-2">
+                              {ticket.id}
+                              {ticket.note && (
+                                <span className="relative group cursor-pointer">
+                                  <FaStickyNote className="text-blue-500" />
+                                  <span className="absolute left-6 top-0 z-50 hidden group-hover:block bg-white border border-blue-300 rounded shadow-lg px-3 py-2 text-xs text-gray-800 min-w-[200px] max-w-[300px] whitespace-normal">
+                                    {ticket.note}
+                                  </span>
+                                </span>
+                              )}
+                            </div>
+                          </td>
                           <td className="p-3 text-sm text-gray-700 whitespace-nowrap">{ticket.title}</td>
                           <td className="p-3 text-sm text-gray-700 whitespace-nowrap">{ticket.name}</td>
                           <td className="p-3 text-sm text-gray-700 whitespace-nowrap">{ticket.email}</td>

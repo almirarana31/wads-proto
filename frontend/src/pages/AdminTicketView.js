@@ -199,25 +199,19 @@ function AdminTicketView() {
 
             {/* Note Section */}
             <div className="mt-6">
-              <Label className="mb-1">Internal Note (Admin & Staff Only)</Label>
-              <div className="flex flex-col gap-2">
-                <textarea
-                  value={note}
-                  onChange={handleNoteChange}
-                  rows={2}
-                  className="w-full p-2 border border-gray-300 rounded-md"
-                  placeholder="Add an internal note..."
-                />
-                <div className="flex justify-end">
-                  <PrimaryButton
-                    onClick={handleSaveNote}
-                    disabled={noteSaving || isNoteSaved}
-                  >
-                    {noteSaving ? 'Saving...' : isNoteSaved ? 'Saved' : 'Save Note'}
-                  </PrimaryButton>
+              <Label className="mb-1">Internal Note</Label>
+              {ticket.note ? (
+                <div className="p-3 bg-gray-50 border border-gray-200 rounded-md text-gray-700 min-h-[80px]">
+                  {ticket.note}
                 </div>
-                {noteError && <Text color="text-red-600">{noteError}</Text>}
-              </div>
+              ) : (
+                <div className="p-3 bg-gray-50 border border-gray-200 rounded-md text-gray-400 italic min-h-[80px]">
+                  No notes have been added to this ticket yet.
+                </div>
+              )}
+              <Text color="text-gray-500 text-xs mt-1">
+                Notes can only be added by staff assigned to this ticket.
+              </Text>
             </div>
 
             {/* Customer Information */}
