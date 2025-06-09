@@ -7,12 +7,12 @@ const router = express.Router();
 
 router.use(authN, staffAuthZ);
 
-router.get('/tickets', getTickets);
+router.get('/tickets', getTickets); 
 router.get('/summary', getSummary);
 router.patch('/tickets/:id/resolve', resolveTicket);
 router.patch('/tickets/:id/cancel', cancelTicket);
-router.get('/tickets/pool', getTicketPool);
+router.get('/tickets/pool', getTicketPool); // this
 router.patch('/tickets', claimTicket);
-router.get('/details', getUserDetail);
+router.get('/details', getUserDetail); // this
 
 export default router;
