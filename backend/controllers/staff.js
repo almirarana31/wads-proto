@@ -195,7 +195,7 @@ export const resolveTicket = async (req, res) => {
               <p style="color: #222; font-size: 1.1rem; margin-bottom: 18px;">We are pleased to inform you that your ticket <b>#${ticketId}</b> has been successfully resolved.</p>
               <p style="color: #222; font-size: 1.1rem; margin-bottom: 18px;">Thank you for using the <b>Bianca Ticketing Service</b>. If you need further assistance, please don't hesitate to open a new ticket.</p>
               <div style="text-align: center; margin: 32px 0;">
-                <a href="${process.env.FRONTEND_URL || 'http://localhost:3000'}" style="display: inline-block; background: #2563eb; color: #fff; text-decoration: none; font-weight: 600; padding: 14px 32px; border-radius: 6px; font-size: 1.1rem; letter-spacing: 0.5px;">Visit Dashboard</a>
+                <a href="${process.env.FRONTEND_URL || 'https://e2425-wads-l4ccg3-client.csbihub.id'}" style="display: inline-block; background: #2563eb; color: #fff; text-decoration: none; font-weight: 600; padding: 14px 32px; border-radius: 6px; font-size: 1.1rem; letter-spacing: 0.5px;">Visit Dashboard</a>
               </div>
               <p style="color: #666; font-size: 0.95rem;">If you have any questions about your resolved ticket, please contact our support team.</p>
               <hr style="margin: 32px 0 16px 0; border: none; border-top: 1px solid #e3e9f1;" />
