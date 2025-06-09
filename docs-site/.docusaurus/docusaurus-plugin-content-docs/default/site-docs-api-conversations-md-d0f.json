@@ -1,0 +1,27 @@
+{
+  "id": "api/conversations",
+  "title": "Conversation Endpoints",
+  "description": "The conversation endpoints allow users and staff to communicate with each other regarding specific tickets.",
+  "source": "@site/docs/api/conversations.md",
+  "sourceDirName": "api",
+  "slug": "/api/conversations",
+  "permalink": "/docs/api/conversations",
+  "draft": false,
+  "unlisted": false,
+  "editUrl": "https://github.com/facebook/docusaurus/tree/main/packages/create-docusaurus/templates/shared/docs/api/conversations.md",
+  "tags": [],
+  "version": "current",
+  "sidebarPosition": 5,
+  "frontMatter": {
+    "sidebar_position": 5
+  },
+  "sidebar": "tutorialSidebar",
+  "previous": {
+    "title": "API Reference",
+    "permalink": "/docs/category/api-reference"
+  },
+  "next": {
+    "title": "Tutorial - Extras",
+    "permalink": "/docs/category/tutorial---extras"
+  }
+}
