@@ -1,5 +1,6 @@
-import React, { useState, useEffect, useMemo, createPortal } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { createPortal } from 'react-dom';
 import { FaStickyNote } from 'react-icons/fa';
 
 import PrimaryButton from '../components/buttons/PrimaryButton';
@@ -10,7 +11,6 @@ import StaffCard from '../components/StaffCard';
 import StaffEditModal from '../components/StaffEditModal';
 import SuccessModal from '../components/SuccessModal';
 import { authService } from '../api/authService';
-import PriorityPill from '../components/PriorityPill';
 import StatusPill from '../components/StatusPill';
 
 const NoteTooltipPortal = ({ note, show, position }) => {
