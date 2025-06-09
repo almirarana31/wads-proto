@@ -341,6 +341,21 @@ export const assignStaff = async (req, res) => {
     const {id} = req.body;
     const admin = req.admin;
     try {
+        // find the submitter
+        const user = await User.findOne({ 
+            include: [{
+                model: Ticket,
+                where: {
+                    id: ticket_id // make sure is the one who submitted the ticket
+                }
+            }],
+            where: {
+                staff_id: {[Op.ne]: id} // make sure the ticket submitter's staff id is not equal to the targetted staff
+            }
+        })
+
+        if (!user) return res.status(400).json({message: "Cannot assign a staff to their own ticket!"})
+            
         // update the staff assigned to the ticket and the status
         const ticket = await Ticket.update({
             staff_id: id,
