@@ -35,10 +35,11 @@ const ConversationCard = ({ number, startedDate, endedDate, status, onClick, isL
     );
   }
   
-  // Determine if conversation is closed - now uses status prop if available
-  const isClosed = status === 'closed' || !!endedDate;
-  // For closed conversations, use the most appropriate timestamp available
-  const closedDate = endedDate || (isClosed ? startedDate : null);
+  // Use status to determine if the conversation is closed or open
+  const isClosed = status === 'closed';
+  
+  // For closed conversations, use the provided end date if available
+  const closedDate = isClosed ? (endedDate || 'N/A') : null;
   
   return (
     <div 
@@ -51,10 +52,15 @@ const ConversationCard = ({ number, startedDate, endedDate, status, onClick, isL
         <h3 className={`${isClosed ? 'text-gray-700' : 'text-blue-800'} font-semibold text-lg mb-2 text-left`}>
           Conversation {number}
         </h3>
-        {isClosed && (
+        {isClosed ? (
           <span className="inline-flex items-center px-2 py-1 bg-red-50 border border-red-100 rounded-full text-xs">
             <span className="h-1.5 w-1.5 bg-red-500 rounded-full mr-1.5"></span>
             <span className="text-red-600 font-medium">Closed</span>
+          </span>
+        ) : (
+          <span className="inline-flex items-center px-2 py-1 bg-green-50 border border-green-100 rounded-full text-xs">
+            <span className="h-1.5 w-1.5 bg-green-500 rounded-full mr-1.5"></span>
+            <span className="text-green-600 font-medium">Open</span>
           </span>
         )}
       </div>
@@ -86,7 +92,7 @@ ConversationCard.propTypes = {
   number: PropTypes.number.isRequired,
   startedDate: PropTypes.string.isRequired,
   endedDate: PropTypes.string,
-  status: PropTypes.string, // Add status prop
+  status: PropTypes.string, 
   onClick: PropTypes.func,
   isLoading: PropTypes.bool,
   error: PropTypes.string
@@ -95,7 +101,7 @@ ConversationCard.propTypes = {
 ConversationCard.defaultProps = {
   onClick: () => {},
   endedDate: null,
-  status: null // Default status
+  status: 'open' // Default to open if no status is provided
 };
 
 export default ConversationCard;
