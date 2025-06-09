@@ -2,7 +2,7 @@ import axios from 'axios';
 
 // Create an axios instance with default config
 const api = axios.create({
-    baseURL: process.env.REACT_APP_API_URL,
+    baseURL: process.env.REACT_APP_API_URL || 'https://e2425-wads-l4ccg3-server.csbihub.id',
     headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
