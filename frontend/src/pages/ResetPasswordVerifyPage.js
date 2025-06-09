@@ -81,7 +81,7 @@ function ResetPasswordVerifyPage() {
     );
   }
 
-  return null; // This shouldn't render as we redirect when valid
+  return null;
 }
 
 export default ResetPasswordVerifyPage;

@@ -2,9 +2,7 @@ import axios from 'axios';
 
 // Create an axios instance with default config
 const api = axios.create({
-    baseURL: process.env.NODE_ENV === 'development' 
-        ? '' // Empty string for development - will use relative URLs with the proxy
-        : (process.env.REACT_APP_API_URL || 'https://e2425-wads-l4ccg3-server.csbihub.id'),
+    baseURL: process.env.REACT_APP_BACKEND_URL,
     headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
@@ -36,12 +34,23 @@ api.interceptors.request.use(
 
 // Add a request interceptor for handling tokens
 api.interceptors.request.use(
-    (config) => {        // Try to get token from sessionStorage first, then localStorage
+    (config) => {        
+        // Check if this is a protected route that requires authentication
+        const isAuthRoute = config.url && !config.url.includes('/log-in') && !config.url.includes('/sign-up') && 
+                           !config.url.includes('/forget-password') && !config.url.includes('/verify-reset-link') &&
+                           !config.url.includes('/enter-new-password') && !config.url.includes('/activate');
+        
+        // Try to get token from sessionStorage first, then localStorage
         const token = sessionStorage.getItem('token') || localStorage.getItem('token');
+        
         if (token) {
             config.headers.Authorization = `Bearer ${token}`;
             console.log('Request headers:', config.headers); // Debug log
+        } else if (isAuthRoute) {
+            // Only log this for routes that should have auth, to avoid noise during login/signup
+            console.warn('No auth token available for protected route:', config.url);
         }
+        
         return config;
     },
     (error) => {

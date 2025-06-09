@@ -31,10 +31,6 @@ function TicketDetailsPage() {
   // Modal state
   const [showErrorModal, setShowErrorModal] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
-  
-  // States for creating a new conversation
-  const [isCreatingConversation, setIsCreatingConversation] = useState(false);
-  const [createConversationError, setCreateConversationError] = useState(null);
 
   // Fetch ticket details when component mounts
   useEffect(() => {
@@ -68,8 +64,8 @@ function TicketDetailsPage() {
           title: formattedTicket.title,
           description: formattedTicket.description,
           category: formattedTicket.category
-        });        // If response contains conversations, set them
-        // Check if Conversations is directly in the response or check for a separate property
+        });
+
         if (response.Conversations || response.conversations) {
           try {
             const conversationData = response.Conversations || response.conversations || [];
@@ -83,7 +79,6 @@ function TicketDetailsPage() {
             }
           } catch (convErr) {
             console.error('Error processing conversations:', convErr);
-            // Continue with the ticket data even if conversations can't be processed
           }
         }
         
@@ -114,7 +109,6 @@ function TicketDetailsPage() {
 
     try {
       setIsLoading(true);
-      console.log('Hello giggas true');      // Map frontend data to backend structure
       const ticketData = {
         title: editForm.title,
         description: editForm.description,
@@ -124,7 +118,6 @@ function TicketDetailsPage() {
       console.log('Ticket Data:', ticketData);
       
       await authService.editTicket(ticketId, ticketData);
-      console.log('Hello giggas 1');
       
       // Update the ticket in state with the edited values
       setTicket(prevTicket => ({
@@ -135,7 +128,6 @@ function TicketDetailsPage() {
       }));
       
       setIsEditModalOpen(false);    } catch (err) {
-      console.log('Hello giggas');
       console.error('Error updating ticket:', err);
       setErrorMessage('Failed to update ticket. Please try again.');
       setShowErrorModal(true);
@@ -145,7 +137,7 @@ function TicketDetailsPage() {
     console.log('Edit form submitted:', editForm);
   };
 
-  // Helper function to map category name to ID (you'll need to adjust this)
+  // Helper function to map category name to ID
   const getCategoryId = (categoryName) => {
     const categoryMap = {
       'General': 1,
@@ -199,8 +191,6 @@ function TicketDetailsPage() {
   };
   // Handle conversation click
   const handleConversationClick = (conversationId, conversationNumber) => {
-    // We're already storing conversation numbers when fetching conversations
-    // But for extra safety, store it again here before navigating
     sessionStorage.setItem(`conversation_number_${conversationId}`, conversationNumber);
     navigate(`/chatroom/${ticketId}/${conversationId}`);
   };
@@ -211,18 +201,26 @@ function TicketDetailsPage() {
     try {
       setIsLoadingConversations(true);
       const rawTicketId = ticket.rawId;
-      const conversationHistory = await authService.getConversationHistory(rawTicketId, sortOrder);
+      // use newest instead of sorted because feature is ggone
+      const conversationHistory = await authService.getConversationHistory(rawTicketId, 'newest');
 
       // Format conversation data
       const formattedConversations = conversationHistory.map(conv => ({
         id: conv.id,
         startedDate: conv.createdAt,
-        endedDate: conv.endedAt || null,
-        // Check if the conversation is actually closed
-        isClosed: conv.status === 'Closed' || conv.isClosed === true
+        // For closed conversations, use updatedAt as the closed date
+        endedDate: conv.endedAt || (conv.closed ? conv.updatedAt : null),
+        status: conv.closed === true ? 'closed' : 'open',
+        messages: conv.Messages?.map(msg => ({
+          id: msg.id,
+          content: msg.content,
+          sender: msg.sender_type,
+          senderName: msg.sender_name,
+          timestamp: new Date(msg.createdAt).toLocaleString()
+        })) || []
       }));
       
-      // Process and number conversations
+      // Process and number conversations (not rlly needed anymore)
       const numberedConversations = processConversationsWithNumbers(formattedConversations);
       
       setConversations(numberedConversations);
@@ -269,40 +267,8 @@ function TicketDetailsPage() {
   // Fetch conversations when ticket loads or sort order changes
   useEffect(() => {
     fetchConversations();
-  }, [ticket, sortOrder]);
-
-  // Handle starting a new conversation
-  const handleStartConversation = async () => {
-    try {
-      setIsCreatingConversation(true);
-      setCreateConversationError(null);
-      
-      // Get raw ticket ID without 'TKT-' prefix
-      const rawTicketId = ticket.rawId;
-        // Create a new conversation
-      const response = await authService.createConversation(rawTicketId);
-      
-      console.log('Create conversation response:', response); // Debug log
-      
-      if (response && response.id) {
-        // Navigate to the new conversation
-        navigate(`/chatroom/${rawTicketId}/${response.id}`);
-      } else {
-        // Provide more specific error based on response
-        if (response && response.message) {
-          throw new Error(`Server message: ${response.message}`);
-        } else {
-          throw new Error('Failed to create conversation: missing conversation ID in response');
-        }
-      }
-    } catch (err) {
-      console.error('Error creating conversation:', err);
-      setCreateConversationError('Failed to create conversation. Please try again.');
-    } finally {
-      setIsCreatingConversation(false);
-    }
-  };
-
+  }, [ticket]);
+  
   // Loading and error states
   if (isLoading && !ticket) {
     return (
@@ -354,7 +320,7 @@ function TicketDetailsPage() {
         </div>
       </div>
 
-      {/* Ticket Details Card */}
+      {/*Ticket Details Card*/}
       <div className="w-full max-w-4xl mx-auto px-4 sm:px-6">
         <TicketDetailsCard ticket={ticket} />
         
@@ -387,23 +353,11 @@ function TicketDetailsPage() {
         <div className="border-b border-gray-200 my-6"></div>
       </div>
 
-      {/* Conversations container */}
+      {/*Conversations container*/}
       {ticket.status !== 'Cancelled' ? (
         <div className="w-full max-w-4xl mx-auto px-4 sm:px-6">
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-3">
-            <Subheading className="text-blue-800">Conversation History</Subheading>
-            <div className="flex items-center self-start sm:self-auto">
-              <Label className="mr-2 whitespace-nowrap" size="sm">Sort by:</Label>
-              <select
-                id="sort-order"
-                value={sortOrder}
-                onChange={(e) => setSortOrder(e.target.value)}
-                className="border border-gray-300 rounded-md px-3 py-1 text-sm"
-              >
-                <option value="newest">Newest first</option>
-                <option value="oldest">Oldest first</option>
-              </select>
-            </div>
+          <div className="mb-4">
+            <Subheading className="text-blue-800">Conversation</Subheading>
           </div>
           
           {isLoadingConversations ? (
@@ -421,7 +375,7 @@ function TicketDetailsPage() {
               </button>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="flex flex-col gap-4 mb-6">
               {sortedConversations.length > 0 ? (
                 sortedConversations.map((conversation) => (
                   <ConversationCard
@@ -429,10 +383,12 @@ function TicketDetailsPage() {
                     number={conversation.number}
                     startedDate={conversation.startedDate}
                     endedDate={conversation.endedDate}
+                    status={conversation.status}
                     onClick={() => handleConversationClick(conversation.id, conversation.number)}
                   />
                 ))
-              ) : (                <div className="col-span-2 text-center py-8 bg-gray-50 rounded-lg border border-gray-200">
+              ) : (
+                <div className="text-center py-8 bg-gray-50 rounded-lg border border-gray-200">
                   <Text color="text-gray-500">No conversations available. Please wait for staff to initiate a conversation.</Text>
                   <Text color="text-gray-400" size="sm" className="mt-2">
                     {ticket.status === 'In Progress' ? 
@@ -454,7 +410,7 @@ function TicketDetailsPage() {
         </div>
       )}
 
-      {/* Edit Ticket Modal */}
+      {/*Edit Ticket Modal*/}
       <Modal
         isOpen={isEditModalOpen}
         onClose={() => setIsEditModalOpen(false)}
@@ -504,7 +460,7 @@ function TicketDetailsPage() {
         </div>
       </Modal>
 
-      {/* Cancel Ticket Modal */}
+      {/*Cancel Ticket Modal*/}
       <Modal
         isOpen={isCancelModalOpen}
         onClose={() => setIsCancelModalOpen(false)}
@@ -524,7 +480,7 @@ function TicketDetailsPage() {
           Are you sure you want to cancel this ticket? This action cannot be undone.
         </Text>      </Modal>
 
-      {/* Error Modal */}
+      {/*Error Modal*/}
       <Modal
         isOpen={showErrorModal}
         onClose={() => setShowErrorModal(false)}
