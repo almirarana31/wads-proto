@@ -1,5 +1,6 @@
-import React, { useState, useEffect, useMemo, createPortal } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { createPortal } from 'react-dom';
 import { FaStickyNote } from 'react-icons/fa';
 
 import PrimaryButton from '../components/buttons/PrimaryButton';
@@ -10,7 +11,6 @@ import StaffCard from '../components/StaffCard';
 import StaffEditModal from '../components/StaffEditModal';
 import SuccessModal from '../components/SuccessModal';
 import { authService } from '../api/authService';
-import PriorityPill from '../components/PriorityPill';
 import StatusPill from '../components/StatusPill';
 
 const NoteTooltipPortal = ({ note, show, position }) => {
@@ -26,7 +26,7 @@ const NoteTooltipPortal = ({ note, show, position }) => {
         pointerEvents: 'none',
       }}
     >
-      <p className="font-medium text-blue-700 mb-2">Staff Note:</p>
+      <p className="font-medium text-blue-700 mb-2">Admin Note:</p>
       <p className="text-gray-700 text-sm">{note}</p>
     </div>,
     document.body
@@ -803,7 +803,7 @@ function AdminDashboard() {
                             >
                               View
                             </SecondaryButton>
-                            {ticket.assignedStaff && (
+                            {ticket.assignedStaff && ticket.status === "Cancelled" && (
                               <PrimaryButton
                                 onClick={() => handleAssignTicket(ticket.id)}
                                 className="text-xs"

@@ -311,13 +311,16 @@ function Chatroom() {
     <ContentContainer>      <div className="relative mb-5">
         <BackButton onClick={handleBack} className="absolute -top-2 -left-2" />        <div className="text-center pt-8">
           <PageTitle title={isNewConversation ? 'New Conversation' : `Conversation ${conversationNumber || '#'}`} />
-          
-          {conversationStatus === 'closed' && (
-            <div className="inline-flex items-center px-3 py-1 mt-2 bg-gray-100 border border-gray-200 rounded-full text-sm">
-              <span className="h-2 w-2 bg-red-500 rounded-full mr-2"></span>
-              <span className="text-gray-700">Closed</span>
-            </div>
-          )}
+          <div className="inline-flex items-center px-3 py-1 mt-2 bg-gray-50 border border-gray-200 rounded-full text-sm">
+            <span className={`h-2 w-2 ${
+              conversationStatus === 'closed'
+                ? 'bg-red-500'
+                : 'bg-green-500'
+            } rounded-full mr-2`}></span>
+            <span className="text-gray-700">
+              {conversationStatus === 'closed' ? 'Closed' : 'Active'}
+            </span>
+          </div>
         </div>
       </div>
       <div className="border-b border-gray-200 my-6"></div>
