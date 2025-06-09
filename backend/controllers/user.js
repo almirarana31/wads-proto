@@ -159,9 +159,9 @@ export const signUp = async (req, res) => {
         await sendOTP(email, "Verify your Bianca Helpdesk Account", emailBody);
 
         // only for development
-        console.log(otpToken);
+        // console.log(otpToken);
 
-        console.log("hello world");
+        // console.log("hello world");
 
         res.status(200).json({
             message: `Successfully sent otp. Please check your email at ${email}`,
